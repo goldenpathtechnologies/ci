@@ -79,7 +79,15 @@ func GetListUI(app *tview.Application, titleBox *tview.TextView) *tview.List {
 			HandleError(err)
 
 			if d.IsDir() {
-				list.AddItem(d.Name() + pathSeparator, "", 0, nil)
+				list.AddItem(d.Name() + pathSeparator, "", 0, func() {
+					path := currentDir + d.Name() + pathSeparator
+
+					app.Stop()
+					ExitScreenBuffer()
+
+					_, err := os.Stdout.WriteString(path)
+					HandleError(err)
+				})
 			}
 		}
 
