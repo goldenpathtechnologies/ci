@@ -1,15 +1,14 @@
 package main
 
 import (
-	"bytes"
 	"context"
-	"fmt"
 	"github.com/gdamore/tcell/v2"
+	"github.com/karrick/godirwalk"
 	"github.com/rivo/tview"
 	"log"
 	"os"
-	"os/exec"
 	"os/signal"
+	"path/filepath"
 	"strings"
 )
 
@@ -37,54 +36,10 @@ func ExitScreenBuffer() {
 	print("\033[?1049l")
 }
 
-func GetDirectoryList(location string) ([]string, error) {
-	var out bytes.Buffer
-
-	// TODO: Determine which OS is in use and use corresponding commands. Also, consider
-	//  using this library instead for cross-platform directory traversal:
-	//   https://github.com/karrick/godirwalk
-	cmd := exec.Command(
-		"powershell.exe",
-		"-Command",
-		"Get-ChildItem",
-		"-Directory",
-		fmt.Sprintf(`"%v"`, strings.TrimSpace(location)),
-		"|",
-		"Select-Object",
-		"-ExpandProperty",
-		"Name")
-	cmd.Stdout = &out
-	err := cmd.Run()
-
-	if len(out.String()) == 0 {
-		return nil, err
-	}
-
-	dirList := strings.Split(strings.TrimSpace(out.String()), "\n")
-	for i, _ := range dirList {
-		dirList[i] = strings.TrimSpace(dirList[i]) + pathSeparator
-	}
-
-	return dirList, err
-}
-
 func GetInitialDirectory() (string, error) {
-	var out bytes.Buffer
+	dir, err := filepath.Abs(".")
 
-	cmd := exec.Command(
-		"powershell.exe",
-		"-Command",
-		"Get-Location",
-		"|",
-		"Select-Object",
-		"-ExpandProperty",
-		"Path")
-	cmd.Stdout = &out
-	err := cmd.Run()
-
-	dir := strings.TrimSpace(out.String()) + pathSeparator
-
-	return dir, err
+	return dir + pathSeparator, err
 }
 
 func GetTitleBoxUI() *tview.TextView {
@@ -116,17 +71,21 @@ func GetListUI(app *tview.Application, titleBox *tview.TextView) *tview.List {
 	loadList := func(dir string) {
 		list.Clear()
 
-		dirs, err := GetDirectoryList(dir)
+		scanner, err := godirwalk.NewScanner(currentDir)
 		HandleError(err)
 
-		if dirs == nil {
-			list.AddItem("<Enter directory>", "", 0, nil)
-		} else {
-			for _, d := range dirs {
-				list.AddItem(d,"", 0, nil)
+		for scanner.Scan() {
+			d, err := scanner.Dirent()
+			HandleError(err)
+
+			if d.IsDir() {
+				list.AddItem(d.Name() + pathSeparator, "", 0, nil)
 			}
 		}
 
+		if list.GetItemCount() == 0 {
+			list.AddItem("<Enter directory>", "", 0, nil)
+		}
 
 		list.AddItem("<Quit>", "Press to exit", 'q', func() {
 			app.Stop()
@@ -144,12 +103,9 @@ func GetListUI(app *tview.Application, titleBox *tview.TextView) *tview.List {
 		switch event.Key() {
 		case tcell.KeyLeft:
 			if strings.Count(currentDir, pathSeparator) > 1 {
-				log.Println(fmt.Sprintf("Current directory when able to traverse: %v", currentDir))
 				paths := strings.Split(currentDir, pathSeparator)
-				log.Println(paths)
 				paths = paths[:len(paths)-2]
 				currentDir = strings.Join(paths, pathSeparator) + pathSeparator
-				log.Println(fmt.Sprintf("Current diirectory after mutation: %v", currentDir))
 				loadList(currentDir)
 			}
 			return nil
@@ -188,7 +144,7 @@ func InitFileLogging() func() {
 	return func() {
 		if err := file.Close(); err != nil {
 			log.SetOutput(os.Stdout)
-			log.Fatal(err)
+			HandleError(err)
 		}
 	}
 }
@@ -220,12 +176,11 @@ func run(app *tview.Application, args []string) error {
 
 func main() {
 	closeLogFile := InitFileLogging()
-
 	defer closeLogFile()
 
-	// Note: code taken from https://pace.dev/blog/2020/02/17/repond-to-ctrl-c-interrupt-signals-gracefully-with-context-in-golang-by-mat-ryer.html
 	EnterScreenBuffer()
 
+	// Note: code taken from https://pace.dev/blog/2020/02/17/repond-to-ctrl-c-interrupt-signals-gracefully-with-context-in-golang-by-mat-ryer.html
 	ctx := context.Background()
 	ctx, cancel := context.WithCancel(ctx)
 	signalChan := make(chan os.Signal, 1)
