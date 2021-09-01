@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"github.com/gdamore/tcell/v2"
 	"github.com/karrick/godirwalk"
 	"github.com/rivo/tview"
@@ -16,6 +17,7 @@ const (
 	exitCodeErr       = 1
 	exitCodeInterrupt = 2
 	pathSeparator = string(os.PathSeparator)
+	listUITitle = "Directory List"
 )
 
 func HandleError(err error) {
@@ -42,6 +44,32 @@ func GetInitialDirectory() (string, error) {
 	return dir + pathSeparator, err
 }
 
+func GetFilterUI() *tview.InputField {
+	// TODO: Put the field width and max length in a constant
+	filter := tview.NewInputField().
+		SetLabel("Enter filter text: ").
+		SetAcceptanceFunc(func(textToCheck string, lastChar rune) bool {
+			if lastChar == '/' || lastChar == '\\' {
+				return false
+			}
+
+			return len(textToCheck) <= 32
+		})
+
+	filter.SetBorder(true).
+		SetBorderPadding(1, 1, 1, 1).
+		SetTitle("Filter Directory List")
+
+	return filter
+}
+
+func CreateModalUI(widget tview.Primitive, width, height int) tview.Primitive {
+	return tview.NewGrid().
+		SetColumns(0, width, 0).
+		SetRows(0, height, 0).
+		AddItem(widget, 1, 1, 1, 1, 0, 0, false)
+}
+
 func GetTitleBoxUI() *tview.TextView {
 	titleBox := tview.NewTextView().
 		SetText("No directory has been selected yet!").
@@ -56,17 +84,19 @@ func GetTitleBoxUI() *tview.TextView {
 	return titleBox
 }
 
-func GetListUI(app *tview.Application, titleBox *tview.TextView) *tview.List {
+func GetListUI(app *tview.Application, titleBox *tview.TextView, filter *tview.InputField, pages *tview.Pages) *tview.List {
 	list := tview.NewList().ShowSecondaryText(false)
 	tview.Borders.HorizontalFocus = tview.Borders.Horizontal
 
-	list.SetBorder(true)
+	list.SetBorder(true).SetTitle(listUITitle)
 
 	currentDir, err := GetInitialDirectory()
 	HandleError(err)
 
 	titleBox.Clear()
 	titleBox.SetText(currentDir)
+
+	var filterText string
 
 	loadList := func(dir string) {
 		list.Clear()
@@ -79,20 +109,28 @@ func GetListUI(app *tview.Application, titleBox *tview.TextView) *tview.List {
 			HandleError(err)
 
 			if d.IsDir() {
-				list.AddItem(d.Name() + pathSeparator, "", 0, func() {
-					path := currentDir + d.Name() + pathSeparator
+				if isMatch, _ := filepath.Match(filterText, d.Name()); len(filterText) == 0 || isMatch {
+					list.AddItem(d.Name() + pathSeparator, "", 0, func() {
+						path := currentDir + d.Name() + pathSeparator
 
-					app.Stop()
-					ExitScreenBuffer()
+						app.Stop()
+						ExitScreenBuffer()
 
-					_, err := os.Stdout.WriteString(path)
-					HandleError(err)
-				})
+						_, err := os.Stdout.WriteString(path)
+						HandleError(err)
+					})
+				}
 			}
 		}
 
 		if list.GetItemCount() == 0 {
-			list.AddItem("<Enter directory>", "", 0, nil)
+			list.AddItem("<Enter directory>", "", 0, func() {
+				app.Stop()
+				ExitScreenBuffer()
+
+				_, err := os.Stdout.WriteString(currentDir)
+				HandleError(err)
+			})
 		}
 
 		list.AddItem("<Quit>", "Press to exit", 'q', func() {
@@ -102,15 +140,34 @@ func GetListUI(app *tview.Application, titleBox *tview.TextView) *tview.List {
 
 		list.AddItem("<Help>", "Get help with this program", 'h', func(){})
 
+		list.AddItem("<Filter>", "Filter directories by text", 'f', func() {
+			pages.ShowPage("Filter")
+			app.SetFocus(filter)
+		})
+
 		titleBox.Clear()
 		titleBox.SetText(currentDir)
 	}
 	loadList(currentDir)
 
+	filter.SetDoneFunc(func(key tcell.Key) {
+		filterText = filter.GetText()
+		if len(filterText) > 0 {
+			list.SetTitle(fmt.Sprintf("%v - Filter: %v", listUITitle, filterText))
+		} else {
+			list.SetTitle(listUITitle)
+		}
+		filter.SetText("")
+		pages.HidePage("Filter")
+		app.SetFocus(list)
+		loadList(currentDir)
+	})
+
 	list.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
 		switch event.Key() {
 		case tcell.KeyLeft:
 			if strings.Count(currentDir, pathSeparator) > 1 {
+				filterText = ""
 				paths := strings.Split(currentDir, pathSeparator)
 				paths = paths[:len(paths)-2]
 				currentDir = strings.Join(paths, pathSeparator) + pathSeparator
@@ -118,6 +175,7 @@ func GetListUI(app *tview.Application, titleBox *tview.TextView) *tview.List {
 			}
 			return nil
 		case tcell.KeyRight:
+			filterText = ""
 			selectedDir, _ := list.GetItemText(list.GetCurrentItem())
 			currentDir = currentDir +selectedDir
 			loadList(currentDir)
@@ -160,8 +218,11 @@ func InitFileLogging() func() {
 func run(app *tview.Application, args []string) error {
 	SetBoxBorderStyle()
 
+	pages := tview.NewPages()
+
+	filter := GetFilterUI()
 	titleBox := GetTitleBoxUI()
-	list := GetListUI(app, titleBox)
+	list := GetListUI(app, titleBox, filter, pages)
 
 	flex := tview.NewFlex().SetDirection(tview.FlexRow).
 		AddItem(titleBox, 5, 0, false).
@@ -173,7 +234,10 @@ func run(app *tview.Application, args []string) error {
 				0, 1, false),
 			0, 1, false)
 
-	if err := app.SetRoot(flex, true).SetFocus(list).Run(); err != nil {
+	pages.AddPage("Home", flex, true, true).
+		AddPage("Filter", CreateModalUI(filter, 40, 7), true, false)
+
+	if err := app.SetRoot(pages, true).SetFocus(list).Run(); err != nil {
 		ExitScreenBuffer()
 
 		return err
