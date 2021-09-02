@@ -1,16 +1,19 @@
 package main
-
+// TODO: This file needs to be named main.go instead of ci.go. Also change the build configs for this project.
 import (
+	"bytes"
 	"context"
 	"fmt"
 	"github.com/gdamore/tcell/v2"
 	"github.com/karrick/godirwalk"
 	"github.com/rivo/tview"
+	"io/ioutil"
 	"log"
 	"os"
 	"os/signal"
 	"path/filepath"
 	"strings"
+	"text/tabwriter"
 )
 
 const (
@@ -18,6 +21,10 @@ const (
 	exitCodeInterrupt = 2
 	pathSeparator = string(os.PathSeparator)
 	listUITitle = "Directory List"
+	listUIQuit = "<Quit>"
+	listUIHelp = "<Help>"
+	listUIFilter = "<Filter>"
+	listUIEnterDir = "<Enter directory>"
 )
 
 func HandleError(err error) {
@@ -63,6 +70,16 @@ func GetFilterUI() *tview.InputField {
 	return filter
 }
 
+func GetDetailsUI() *tview.TextView {
+	details := tview.NewTextView()
+
+	details.SetBorder(true).
+		SetTitle("Details").
+		SetBorderPadding(1, 1, 1, 1)
+
+	return details
+}
+
 func CreateModalUI(widget tview.Primitive, width, height int) tview.Primitive {
 	return tview.NewGrid().
 		SetColumns(0, width, 0).
@@ -84,11 +101,20 @@ func GetTitleBoxUI() *tview.TextView {
 	return titleBox
 }
 
-func GetListUI(app *tview.Application, titleBox *tview.TextView, filter *tview.InputField, pages *tview.Pages) *tview.List {
+func GetListUI(
+	app *tview.Application,
+	titleBox *tview.TextView,
+	filter *tview.InputField,
+	pages *tview.Pages,
+	details *tview.TextView,
+	) *tview.List {
+
 	list := tview.NewList().ShowSecondaryText(false)
 	tview.Borders.HorizontalFocus = tview.Borders.Horizontal
 
-	list.SetBorder(true).SetTitle(listUITitle)
+	list.SetBorder(true).
+		SetTitle(listUITitle).
+		SetBorderPadding(1, 1, 0, 1)
 
 	currentDir, err := GetInitialDirectory()
 	HandleError(err)
@@ -96,10 +122,33 @@ func GetListUI(app *tview.Application, titleBox *tview.TextView, filter *tview.I
 	titleBox.Clear()
 	titleBox.SetText(currentDir)
 
+	details.Clear()
+	details.SetText(GetDirectoryInfo(currentDir))
+
 	var filterText string
+
+	menuItems := map[string]string{
+		listUIQuit: listUIQuit,
+		listUIHelp: listUIHelp,
+		listUIFilter: listUIFilter,
+		listUIEnterDir: listUIEnterDir,
+	}
+
+	isMenuItem := func(text string) bool {
+		_, exists := menuItems[text]
+		return exists
+	}
 
 	loadList := func(dir string) {
 		list.Clear()
+
+		list.AddItem(listUIEnterDir, "", 0, func() {
+			app.Stop()
+			ExitScreenBuffer()
+
+			_, err := os.Stdout.WriteString(currentDir)
+			HandleError(err)
+		})
 
 		scanner, err := godirwalk.NewScanner(currentDir)
 		HandleError(err)
@@ -123,24 +172,14 @@ func GetListUI(app *tview.Application, titleBox *tview.TextView, filter *tview.I
 			}
 		}
 
-		if list.GetItemCount() == 0 {
-			list.AddItem("<Enter directory>", "", 0, func() {
-				app.Stop()
-				ExitScreenBuffer()
-
-				_, err := os.Stdout.WriteString(currentDir)
-				HandleError(err)
-			})
-		}
-
-		list.AddItem("<Quit>", "Press to exit", 'q', func() {
+		list.AddItem(listUIQuit, "Press to exit", 'q', func() {
 			app.Stop()
 			ExitScreenBuffer()
 		})
 
-		list.AddItem("<Help>", "Get help with this program", 'h', func(){})
+		list.AddItem(listUIHelp, "Get help with this program", 'h', func(){})
 
-		list.AddItem("<Filter>", "Filter directories by text", 'f', func() {
+		list.AddItem(listUIFilter, "Filter directories by text", 'f', func() {
 			pages.ShowPage("Filter")
 			app.SetFocus(filter)
 		})
@@ -164,28 +203,102 @@ func GetListUI(app *tview.Application, titleBox *tview.TextView, filter *tview.I
 	})
 
 	list.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
+		selectedItem, _ := list.GetItemText(list.GetCurrentItem())
+
 		switch event.Key() {
 		case tcell.KeyLeft:
 			if strings.Count(currentDir, pathSeparator) > 1 {
 				filterText = ""
+				list.SetTitle(listUITitle)
 				paths := strings.Split(currentDir, pathSeparator)
 				paths = paths[:len(paths)-2]
 				currentDir = strings.Join(paths, pathSeparator) + pathSeparator
 				loadList(currentDir)
+
+				details.Clear()
+				details.SetText(GetDirectoryInfo(currentDir))
 			}
 			return nil
 		case tcell.KeyRight:
-			filterText = ""
-			selectedDir, _ := list.GetItemText(list.GetCurrentItem())
-			currentDir = currentDir +selectedDir
-			loadList(currentDir)
+			if !isMenuItem(selectedItem) {
+				filterText = ""
+				list.SetTitle(listUITitle)
+				nextDir := currentDir + selectedItem
+				if DirectoryIsAccessible(nextDir) {
+					currentDir = nextDir
+					loadList(currentDir)
+				} else {
+					details.Clear()
+					details.SetText("Directory inaccessible, unable to navigate. You may have insufficient privileges.")
+				}
+			}
 			return nil
+		case tcell.KeyUp:
+			details.Clear()
+			itemCount := list.GetItemCount()
+			nextItemIndex := list.GetCurrentItem() - 1
+			// Note: Euclidean modulo operation, https://stackoverflow.com/questions/43018206/modulo-of-negative-integers-in-go
+			nextItemIndex = ((nextItemIndex % itemCount) + itemCount) % itemCount
+			nextItem, _ := list.GetItemText(nextItemIndex)
+			if !isMenuItem(nextItem) {
+				details.SetText(GetDirectoryInfo(currentDir + nextItem))
+			} else if nextItem == listUIEnterDir {
+				details.SetText(GetDirectoryInfo(currentDir))
+			}
+			return event
+		case tcell.KeyDown:
+			// TODO: This code is somewhat duplicated from the KeyUp case. Use Euclidean modulus operation here as well.
+			details.Clear()
+			nextItem, _ := list.GetItemText((list.GetCurrentItem() + 1) % list.GetItemCount())
+			if !isMenuItem(nextItem) {
+				details.SetText(GetDirectoryInfo(currentDir + nextItem))
+			} else if nextItem == listUIEnterDir {
+				details.SetText(GetDirectoryInfo(currentDir))
+			}
+			return event
 		}
 
 		return event
 	})
 
 	return list
+}
+
+func DirectoryIsAccessible(dir string) bool {
+	_, err := ioutil.ReadDir(dir)
+
+	return err == nil
+}
+
+func GetDirectoryInfo(dir string) string {
+	var out bytes.Buffer
+
+	// TODO: Return an empty string or an error message for directories that have elevated permissions.
+	//  Just don't quit the program when this occurs since it is poor UX.
+	files, err := ioutil.ReadDir(dir)
+	if err != nil {
+		return "Unable to read directory details. You may have insufficient privileges."
+	}
+
+	writer := tabwriter.NewWriter(&out, 1, 2, 2, ' ', 0)
+
+	// TODO: Create a function for printing each row of the tab output to reduce duplication.
+	_, err = fmt.Fprintf(writer, "%v\t%v\t%v\t%v\n", "Mode", "Name", "ModTime", "Bytes")
+	HandleError(err)
+
+	_, err = fmt.Fprintf(writer, "%v\t%v\t%v\t%v\n", "----", "----", "-------", "-----")
+	HandleError(err)
+
+	for _, f := range files {
+		dateFormat := "2006-01-02 3:04 PM"
+		modTime := f.ModTime().Format(dateFormat)
+		_, err := fmt.Fprintf(writer, "%v\t%v\t%v\t%v\n", f.Mode(), f.Name(), modTime, f.Size())
+		HandleError(err)
+	}
+
+	HandleError(writer.Flush())
+
+	return out.String()
 }
 
 func SetBoxBorderStyle() {
@@ -221,17 +334,15 @@ func run(app *tview.Application, args []string) error {
 	pages := tview.NewPages()
 
 	filter := GetFilterUI()
+	details := GetDetailsUI()
 	titleBox := GetTitleBoxUI()
-	list := GetListUI(app, titleBox, filter, pages)
+	list := GetListUI(app, titleBox, filter, pages, details)
 
 	flex := tview.NewFlex().SetDirection(tview.FlexRow).
 		AddItem(titleBox, 5, 0, false).
 		AddItem(tview.NewFlex().
 			AddItem(list, 0, 1, true).
-			AddItem(tview.NewBox().
-				SetBorder(true).
-				SetTitle("Details"),
-				0, 1, false),
+			AddItem(details, 0, 2, false),
 			0, 1, false)
 
 	pages.AddPage("Home", flex, true, true).
