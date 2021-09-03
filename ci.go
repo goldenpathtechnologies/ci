@@ -71,7 +71,8 @@ func GetFilterUI() *tview.InputField {
 }
 
 func GetDetailsUI() *tview.TextView {
-	details := tview.NewTextView()
+	details := tview.NewTextView().
+		SetDynamicColors(true)
 
 	details.SetBorder(true).
 		SetTitle("Details").
@@ -110,11 +111,11 @@ func GetListUI(
 	) *tview.List {
 
 	list := tview.NewList().ShowSecondaryText(false)
-	tview.Borders.HorizontalFocus = tview.Borders.Horizontal
 
 	list.SetBorder(true).
 		SetTitle(listUITitle).
-		SetBorderPadding(1, 1, 0, 1)
+		SetBorderPadding(1, 1, 0, 1).
+		SetBorderColor(tcell.ColorYellow)
 
 	currentDir, err := GetInitialDirectory()
 	HandleError(err)
@@ -122,8 +123,27 @@ func GetListUI(
 	titleBox.Clear()
 	titleBox.SetText(currentDir)
 
-	details.Clear()
-	details.SetText(GetDirectoryInfo(currentDir))
+	details.Clear().
+		SetText(GetDirectoryInfo(currentDir)).
+		ScrollToBeginning().
+		SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
+			switch event.Key() {
+			case tcell.KeyEscape:
+				fallthrough
+			case tcell.KeyEnter:
+				fallthrough
+			case tcell.KeyTab:
+				app.SetFocus(list)
+				details.SetBorderColor(tcell.ColorWhite)
+				list.SetBorderColor(tcell.ColorYellow)
+				return nil
+			case 'q':
+				app.Stop()
+				ExitScreenBuffer()
+			}
+
+			return event
+		})
 
 	var filterText string
 
@@ -142,7 +162,7 @@ func GetListUI(
 	loadList := func(dir string) {
 		list.Clear()
 
-		list.AddItem(listUIEnterDir, "", 0, func() {
+		list.AddItem(listUIEnterDir, "", 'e', func() {
 			app.Stop()
 			ExitScreenBuffer()
 
@@ -216,7 +236,8 @@ func GetListUI(
 				loadList(currentDir)
 
 				details.Clear()
-				details.SetText(GetDirectoryInfo(currentDir))
+				details.SetText(GetDirectoryInfo(currentDir)).
+					ScrollToBeginning()
 			}
 			return nil
 		case tcell.KeyRight:
@@ -228,8 +249,9 @@ func GetListUI(
 					currentDir = nextDir
 					loadList(currentDir)
 				} else {
-					details.Clear()
-					details.SetText("Directory inaccessible, unable to navigate. You may have insufficient privileges.")
+					details.Clear().
+						SetText("[red]Directory inaccessible, unable to navigate. You may have insufficient privileges.[white]").
+						ScrollToBeginning()
 				}
 			}
 			return nil
@@ -245,6 +267,7 @@ func GetListUI(
 			} else if nextItem == listUIEnterDir {
 				details.SetText(GetDirectoryInfo(currentDir))
 			}
+			details.ScrollToBeginning()
 			return event
 		case tcell.KeyDown:
 			// TODO: This code is somewhat duplicated from the KeyUp case. Use Euclidean modulus operation here as well.
@@ -255,7 +278,13 @@ func GetListUI(
 			} else if nextItem == listUIEnterDir {
 				details.SetText(GetDirectoryInfo(currentDir))
 			}
+			details.ScrollToBeginning()
 			return event
+		case tcell.KeyTab:
+			app.SetFocus(details)
+			details.SetBorderColor(tcell.ColorYellow)
+			list.SetBorderColor(tcell.ColorWhite)
+			return nil
 		}
 
 		return event
@@ -277,7 +306,7 @@ func GetDirectoryInfo(dir string) string {
 	//  Just don't quit the program when this occurs since it is poor UX.
 	files, err := ioutil.ReadDir(dir)
 	if err != nil {
-		return "Unable to read directory details. You may have insufficient privileges."
+		return "[red]Unable to read directory details. You may have insufficient privileges.[white]"
 	}
 
 	writer := tabwriter.NewWriter(&out, 1, 2, 2, ' ', 0)
