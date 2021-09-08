@@ -70,11 +70,12 @@ func GetFilterUI() *tview.InputField {
 	return filter
 }
 
-func GetDetailsUI() *tview.TextView {
-	details := tview.NewTextView().
-		SetDynamicColors(true)
+func GetDetailsUI() *ScrollView {
+	details := NewScrollView()
 
-	details.SetBorder(true).
+	details.SetDynamicColors(true).
+		SetWrap(false).
+		SetBorder(true).
 		SetTitle("Details").
 		SetBorderPadding(1, 1, 1, 1)
 
@@ -102,13 +103,7 @@ func GetTitleBoxUI() *tview.TextView {
 	return titleBox
 }
 
-func GetListUI(
-	app *tview.Application,
-	titleBox *tview.TextView,
-	filter *tview.InputField,
-	pages *tview.Pages,
-	details *tview.TextView,
-	) *tview.List {
+func GetListUI(app *tview.Application, titleBox *tview.TextView, filter *tview.InputField, pages *tview.Pages, details *ScrollView, ) *tview.List {
 
 	list := tview.NewList().ShowSecondaryText(false)
 
@@ -330,13 +325,15 @@ func GetDirectoryInfo(dir string) string {
 	return out.String()
 }
 
-func SetBoxBorderStyle() {
+func SetApplicationStyles() {
 	tview.Borders.HorizontalFocus = tview.Borders.Horizontal
 	tview.Borders.VerticalFocus = tview.Borders.Vertical
 	tview.Borders.TopLeftFocus = tview.Borders.TopLeft
 	tview.Borders.TopRightFocus = tview.Borders.TopRight
 	tview.Borders.BottomLeftFocus = tview.Borders.BottomLeft
 	tview.Borders.BottomRightFocus = tview.Borders.BottomRight
+
+	//tview.Styles.PrimitiveBackgroundColor = tcell.ColorDefault
 }
 
 // InitFileLogging Initializes logging to a file and returns the function that closes that file
@@ -358,7 +355,7 @@ func InitFileLogging() func() {
 }
 
 func run(app *tview.Application, args []string) error {
-	SetBoxBorderStyle()
+	SetApplicationStyles()
 
 	pages := tview.NewPages()
 
@@ -382,6 +379,22 @@ func run(app *tview.Application, args []string) error {
 
 		return err
 	}
+
+	// TODO: Remove this test code
+	//var scrollViewText string
+	//for i := 0; i < 100; i++ {
+	//	scrollViewText += fmt.Sprintf("%v. This is some text.\n", i)
+	//}
+	//scrollViewText += "This is some really long text that I'm intending to force the scroll view to scroll horizontally. This is so I can determine if the left and right buttons can scroll the text in that direction. I'm hoping that I will be able to scroll horizontally so I can then implement the horizontal scroll functionality."
+	//scrollView := NewScrollView()
+	//scrollView.SetText(scrollViewText).SetWrap(false).
+	//	SetBorder(true)
+	//if err := app.SetRoot(scrollView, true).SetFocus(scrollView).Run(); err != nil {
+	//	ExitScreenBuffer()
+	//
+	//	return err
+	//}
+	// End test code
 
 	return nil
 }
