@@ -1,5 +1,5 @@
 package main
-// TODO: This file needs to be named main.go instead of ci.go. Also change the build configs for this project.
+
 import (
 	"bytes"
 	"context"
@@ -73,9 +73,10 @@ func GetFilterUI() *tview.InputField {
 func GetDetailsUI() *ScrollView {
 	details := NewScrollView()
 
-	details.SetDynamicColors(true).
-		SetWrap(false).
+	details.
 		SetBorder(true).
+		SetDynamicColors(true).
+		SetWrap(false).
 		SetTitle("Details").
 		SetBorderPadding(1, 1, 1, 1)
 
@@ -109,8 +110,7 @@ func GetListUI(app *tview.Application, titleBox *tview.TextView, filter *tview.I
 
 	list.SetBorder(true).
 		SetTitle(listUITitle).
-		SetBorderPadding(1, 1, 0, 1).
-		SetBorderColor(tcell.ColorYellow)
+		SetBorderPadding(1, 1, 0, 1)
 
 	currentDir, err := GetInitialDirectory()
 	HandleError(err)
@@ -129,8 +129,6 @@ func GetListUI(app *tview.Application, titleBox *tview.TextView, filter *tview.I
 				fallthrough
 			case tcell.KeyTab:
 				app.SetFocus(list)
-				details.SetBorderColor(tcell.ColorWhite)
-				list.SetBorderColor(tcell.ColorYellow)
 				return nil
 			case 'q':
 				app.Stop()
@@ -204,6 +202,7 @@ func GetListUI(app *tview.Application, titleBox *tview.TextView, filter *tview.I
 	}
 	loadList(currentDir)
 
+	// TODO: Ensure Esc does not apply any existing filter
 	filter.SetDoneFunc(func(key tcell.Key) {
 		filterText = filter.GetText()
 		if len(filterText) > 0 {
@@ -277,8 +276,6 @@ func GetListUI(app *tview.Application, titleBox *tview.TextView, filter *tview.I
 			return event
 		case tcell.KeyTab:
 			app.SetFocus(details)
-			details.SetBorderColor(tcell.ColorYellow)
-			list.SetBorderColor(tcell.ColorWhite)
 			return nil
 		}
 
@@ -326,14 +323,19 @@ func GetDirectoryInfo(dir string) string {
 }
 
 func SetApplicationStyles() {
-	tview.Borders.HorizontalFocus = tview.Borders.Horizontal
-	tview.Borders.VerticalFocus = tview.Borders.Vertical
-	tview.Borders.TopLeftFocus = tview.Borders.TopLeft
-	tview.Borders.TopRightFocus = tview.Borders.TopRight
-	tview.Borders.BottomLeftFocus = tview.Borders.BottomLeft
-	tview.Borders.BottomRightFocus = tview.Borders.BottomRight
+	//tview.Borders.HorizontalFocus = tview.Borders.Horizontal
+	//tview.Borders.VerticalFocus = tview.Borders.Vertical
+	//tview.Borders.TopLeftFocus = tview.Borders.TopLeft
+	//tview.Borders.TopRightFocus = tview.Borders.TopRight
+	//tview.Borders.BottomLeftFocus = tview.Borders.BottomLeft
+	//tview.Borders.BottomRightFocus = tview.Borders.BottomRight
 
+	// TODO: Setting this interferes with the styles of other components such
+	//  as the List. Find a way to target styles to specific components.
+	//  Additionally, runes display horribly in PowerShell if not using
+	//  Windows Terminal. Find a way to fix this.
 	//tview.Styles.PrimitiveBackgroundColor = tcell.ColorDefault
+
 }
 
 // InitFileLogging Initializes logging to a file and returns the function that closes that file
@@ -379,22 +381,6 @@ func run(app *tview.Application, args []string) error {
 
 		return err
 	}
-
-	// TODO: Remove this test code
-	//var scrollViewText string
-	//for i := 0; i < 100; i++ {
-	//	scrollViewText += fmt.Sprintf("%v. This is some text.\n", i)
-	//}
-	//scrollViewText += "This is some really long text that I'm intending to force the scroll view to scroll horizontally. This is so I can determine if the left and right buttons can scroll the text in that direction. I'm hoping that I will be able to scroll horizontally so I can then implement the horizontal scroll functionality."
-	//scrollView := NewScrollView()
-	//scrollView.SetText(scrollViewText).SetWrap(false).
-	//	SetBorder(true)
-	//if err := app.SetRoot(scrollView, true).SetFocus(scrollView).Run(); err != nil {
-	//	ExitScreenBuffer()
-	//
-	//	return err
-	//}
-	// End test code
 
 	return nil
 }
