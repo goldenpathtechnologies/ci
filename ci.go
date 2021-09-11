@@ -70,17 +70,37 @@ func GetFilterUI() *tview.InputField {
 	return filter
 }
 
-func GetDetailsUI() *ScrollView {
-	details := NewScrollView()
+func GetDetailsUI() (*tview.TextView, *ScrollView) {
+	details := tview.NewTextView()
 
 	details.
-		SetBorder(true).
 		SetDynamicColors(true).
 		SetWrap(false).
 		SetTitle("Details").
+		SetBorder(true).
 		SetBorderPadding(1, 1, 1, 1)
 
-	return details
+	scroll := NewScrollView(details).SetScrollOffsetHandler(func() (vScroll, hScroll int) {
+		return details.GetScrollOffset()
+	}).SetContentSizeHandler(func() (width, height int) {
+		text := details.GetText(true)
+		// TODO: This breaks when word wrap is enabled in the TextView as wrapped
+		//  lines are not delimited by a new line externally. Ideally, I'd just
+		//  access the s.longestLine and s.pageSize fields, but those are
+		//  not exported from tview.TextView and therefore inaccessible.
+		lines := strings.Split(text, "\n")
+		longestLine := ""
+
+		for _, v := range lines {
+			if len(v) > len(longestLine) {
+				longestLine = v
+			}
+		}
+
+		return len(longestLine), len(lines)
+	}).SetBorder(true) // TODO: SetBorder() should only be called from the Scrollable primitive once.
+
+	return details, scroll
 }
 
 func CreateModalUI(widget tview.Primitive, width, height int) tview.Primitive {
@@ -104,7 +124,13 @@ func GetTitleBoxUI() *tview.TextView {
 	return titleBox
 }
 
-func GetListUI(app *tview.Application, titleBox *tview.TextView, filter *tview.InputField, pages *tview.Pages, details *ScrollView, ) *tview.List {
+func GetListUI(
+	app *tview.Application,
+	titleBox *tview.TextView,
+	filter *tview.InputField,
+	pages *tview.Pages,
+	details *tview.TextView,
+	) *tview.List {
 
 	list := tview.NewList().ShowSecondaryText(false)
 
@@ -362,7 +388,7 @@ func run(app *tview.Application, args []string) error {
 	pages := tview.NewPages()
 
 	filter := GetFilterUI()
-	details := GetDetailsUI()
+	details, detailsScroll := GetDetailsUI()
 	titleBox := GetTitleBoxUI()
 	list := GetListUI(app, titleBox, filter, pages, details)
 
@@ -370,7 +396,7 @@ func run(app *tview.Application, args []string) error {
 		AddItem(titleBox, 5, 0, false).
 		AddItem(tview.NewFlex().
 			AddItem(list, 0, 1, true).
-			AddItem(details, 0, 2, false),
+			AddItem(detailsScroll, 0, 2, false),
 			0, 1, false)
 
 	pages.AddPage("Home", flex, true, true).

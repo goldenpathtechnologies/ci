@@ -3,25 +3,50 @@ package main
 import (
 	"github.com/gdamore/tcell/v2"
 	"github.com/rivo/tview"
-	"strings"
 	"sync"
 )
 
+type Scrollable interface {
+	tview.Primitive
+	SetBorder(show bool) *tview.Box
+	//GetRect() (int, int, int, int)
+	GetInnerRect() (int, int, int, int)
+	//Draw(screen tcell.Screen)
+	//HasFocus() bool
+}
+
+// TODO: Implement as many Primitive functions in this type as reasonable.
+//  Draw(screen tcell.Screen)
+//  GetRect() (int, int, int, int)
+//  SetRect(x, y, width, height int)
+//  InputHandler() func(event *tcell.EventKey, setFocus func(p Primitive))
+//  Focus(delegate func(p Primitive))
+//  HasFocus() bool
+//  Blur() Note: Blur() isn't implemented by TextView but is by Box.
+//  Note: Some of the above functions may not need implementing.
 type ScrollView struct {
 	sync.Mutex
-	*tview.TextView // TODO: Consider whether or not ScrollView should support more primitives.
+	//*tview.TextView // TODO: Consider whether or not ScrollView should support more primitives.
+	//*tview.Box
+	Scrollable
 
 	textColor tcell.Color
 	backgroundColor tcell.Color
 	hasBorder bool
+	contentSize func() (width, height int)
+	scrollOffset func() (vScroll, hScroll int)
 }
 
 // TODO: If ScrollViews support more primitives, this function should have a *Box parameter.
-func NewScrollView() *ScrollView {
+func NewScrollView(s Scrollable) *ScrollView {
 	return &ScrollView{
-		TextView: tview.NewTextView(),
+		//TextView: tview.NewTextView(),
+		Scrollable: s,
 		textColor: tview.Styles.PrimaryTextColor,
 		hasBorder: false,
+		scrollOffset: func() (vScroll, hScroll int) {
+			return 0, 0
+		},
 	}
 }
 
@@ -30,19 +55,24 @@ func NewScrollView() *ScrollView {
 func (s *ScrollView) SetBorder(show bool) *ScrollView {
 	s.hasBorder = show
 	// TODO: Use s.Box if ScrollView will support more primitives
-	s.TextView.SetBorder(show)
+	//s.TextView.SetBorder(show)
+	s.Scrollable.SetBorder(show)
 	return s
 }
 
+// TODO: Remove this function and let it be called by the underlying primitive
 // SetTextColor sets the color of the ScrollView text.
 func (s *ScrollView) SetTextColor(color tcell.Color) *ScrollView {
 	s.textColor = color
+	// TODO: Determine if the underlying Box needs to have its textColor changed as well
 	return s
 }
 
+// TODO: Remove this function and let it be called by the underlying primitive
 // SetBackgroundColor sets the color of the ScrollView background.
 func (s *ScrollView) SetBackgroundColor(color tcell.Color) *ScrollView {
 	s.backgroundColor = color
+	// TODO: Determine if the underlying Box needs to have its backgroundColor changed as well
 	return s
 }
 
@@ -52,27 +82,29 @@ func (s *ScrollView) SetBackgroundColor(color tcell.Color) *ScrollView {
 // TODO: The content size function should be a callback that is implemented
 //  differently depending on what primitive is using the ScrollView.
 func (s *ScrollView) GetContentSize() (width, height int) {
-	text := s.GetText(true)
-	// TODO: This breaks when word wrap is enabled in the TextView as wrapped
-	//  lines are not delimited by a new line externally. Ideally, I'd just
-	//  access the s.longestLine and s.pageSize fields, but those are
-	//  not exported from tview.TextView and therefore inaccessible.
-	lines := strings.Split(text, "\n")
-	longestLine := ""
+	return s.contentSize()
+}
 
-	for _, v := range lines {
-		if len(v) > len(longestLine) {
-			longestLine = v
-		}
-	}
+// TODO: The sizeFunction may be more appropriate as a parameter to NewScrollView.
+func (s *ScrollView) SetContentSizeHandler(sizeFunction func() (width, height int)) *ScrollView {
+	s.contentSize = sizeFunction
+	return s
+}
 
-	return len(longestLine), len(lines)
+func (s *ScrollView) SetScrollOffsetHandler(handler func() (vScroll, hScroll int)) *ScrollView {
+	s.scrollOffset = handler
+	return s
+}
+
+func (s *ScrollView) GetScrollOffset() (vScroll, hScroll int) {
+	return s.scrollOffset()
 }
 
 // Draw draws this primitive onto the screen.
 func (s *ScrollView) Draw(screen tcell.Screen) {
 	// TODO: Use s.Box if ScrollView will support more primitives
-	s.TextView.Draw(screen)
+	//s.TextView.Draw(screen)
+	s.Scrollable.Draw(screen)
 	s.Lock()
 	defer s.Unlock()
 
@@ -80,11 +112,13 @@ func (s *ScrollView) Draw(screen tcell.Screen) {
 	_, _, rectWidth, rectHeight := s.GetInnerRect()
 	contentWidth, contentHeight := s.GetContentSize()
 
-	vScroll, hScroll := s.TextView.GetScrollOffset()
+	//vScroll, hScroll := s.TextView.GetScrollOffset()
+	vScroll, hScroll := s.GetScrollOffset()
 
 	maxVScroll := contentHeight - rectHeight
 	maxHScroll := contentWidth - rectWidth
 
+	// TODO: Find another way to determine whether the Scrollable has a border or not.
 	// For now, tview only supports border widths of 0 (no border) or 1
 	var borderWidth int
 	if s.hasBorder {
