@@ -70,7 +70,7 @@ func GetFilterUI() *tview.InputField {
 	return filter
 }
 
-func GetDetailsUI() (*tview.TextView, *ScrollView) {
+func GetDetailsUI() *tview.TextView {
 	details := tview.NewTextView()
 
 	details.
@@ -78,29 +78,31 @@ func GetDetailsUI() (*tview.TextView, *ScrollView) {
 		SetWrap(false).
 		SetTitle("Details").
 		SetBorder(true).
-		SetBorderPadding(1, 1, 1, 1)
+		SetBorderPadding(1, 1, 1, 1).
+		SetDrawFunc(GetScrollBarDrawFunc(
+			details,
+			func() (width, height int) {
+				text := details.GetText(true)
+				// TODO: This breaks when word wrap is enabled in the TextView as wrapped
+				//  lines are not delimited by a new line externally. Ideally, I'd just
+				//  access the s.longestLine and s.pageSize fields, but those are
+				//  not exported from tview.TextView and therefore inaccessible.
+				lines := strings.Split(text, "\n")
+				longestLine := ""
 
-	scroll := NewScrollView(details).SetScrollOffsetHandler(func() (vScroll, hScroll int) {
-		return details.GetScrollOffset()
-	}).SetContentSizeHandler(func() (width, height int) {
-		text := details.GetText(true)
-		// TODO: This breaks when word wrap is enabled in the TextView as wrapped
-		//  lines are not delimited by a new line externally. Ideally, I'd just
-		//  access the s.longestLine and s.pageSize fields, but those are
-		//  not exported from tview.TextView and therefore inaccessible.
-		lines := strings.Split(text, "\n")
-		longestLine := ""
+				for _, v := range lines {
+					if len(v) > len(longestLine) {
+						longestLine = v
+					}
+				}
 
-		for _, v := range lines {
-			if len(v) > len(longestLine) {
-				longestLine = v
-			}
-		}
+				return len(longestLine), len(lines)
+			},
+			func() (vScroll, hScroll int) {
+				return details.GetScrollOffset()
+			}))
 
-		return len(longestLine), len(lines)
-	}).SetBorder(true) // TODO: SetBorder() should only be called from the Scrollable primitive once.
-
-	return details, scroll
+	return details
 }
 
 func CreateModalUI(widget tview.Primitive, width, height int) tview.Primitive {
@@ -388,7 +390,7 @@ func run(app *tview.Application, args []string) error {
 	pages := tview.NewPages()
 
 	filter := GetFilterUI()
-	details, detailsScroll := GetDetailsUI()
+	details := GetDetailsUI()
 	titleBox := GetTitleBoxUI()
 	list := GetListUI(app, titleBox, filter, pages, details)
 
@@ -396,7 +398,7 @@ func run(app *tview.Application, args []string) error {
 		AddItem(titleBox, 5, 0, false).
 		AddItem(tview.NewFlex().
 			AddItem(list, 0, 1, true).
-			AddItem(detailsScroll, 0, 2, false),
+			AddItem(details, 0, 2, false),
 			0, 1, false)
 
 	pages.AddPage("Home", flex, true, true).
