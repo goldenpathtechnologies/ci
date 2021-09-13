@@ -274,6 +274,31 @@ func GetListUI(
 	list.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
 		selectedItem, _ := list.GetItemText(list.GetCurrentItem())
 
+		getNextItemIndex := func(isIncrementing bool) int {
+			var increment int
+			if isIncrementing {
+				increment = 1
+			} else {
+				increment = -1
+			}
+			itemCount := list.GetItemCount()
+			nextItemIndex := list.GetCurrentItem() + increment
+			// Note: Euclidean modulo operation, https://stackoverflow.com/questions/43018206/modulo-of-negative-integers-in-go
+			return ((nextItemIndex % itemCount) + itemCount) % itemCount
+		}
+
+		displayDirectoryDetails := func(isNavigatingDown bool) {
+			details.Clear()
+			nextItemIndex := getNextItemIndex(isNavigatingDown)
+			nextItem, _ := list.GetItemText(nextItemIndex)
+			if !isMenuItem(nextItem) {
+				details.SetText(GetDirectoryInfo(currentDir + nextItem))
+			} else if nextItem == listUIEnterDir {
+				details.SetText(GetDirectoryInfo(currentDir))
+			}
+			details.ScrollToBeginning()
+		}
+
 		switch event.Key() {
 		case tcell.KeyLeft:
 			if strings.Count(currentDir, pathSeparator) > 1 {
@@ -305,29 +330,10 @@ func GetListUI(
 			}
 			return nil
 		case tcell.KeyUp:
-			details.Clear()
-			itemCount := list.GetItemCount()
-			nextItemIndex := list.GetCurrentItem() - 1
-			// Note: Euclidean modulo operation, https://stackoverflow.com/questions/43018206/modulo-of-negative-integers-in-go
-			nextItemIndex = ((nextItemIndex % itemCount) + itemCount) % itemCount
-			nextItem, _ := list.GetItemText(nextItemIndex)
-			if !isMenuItem(nextItem) {
-				details.SetText(GetDirectoryInfo(currentDir + nextItem))
-			} else if nextItem == listUIEnterDir {
-				details.SetText(GetDirectoryInfo(currentDir))
-			}
-			details.ScrollToBeginning()
+			displayDirectoryDetails(false)
 			return event
 		case tcell.KeyDown:
-			// TODO: This code is somewhat duplicated from the KeyUp case. Use Euclidean modulus operation here as well.
-			details.Clear()
-			nextItem, _ := list.GetItemText((list.GetCurrentItem() + 1) % list.GetItemCount())
-			if !isMenuItem(nextItem) {
-				details.SetText(GetDirectoryInfo(currentDir + nextItem))
-			} else if nextItem == listUIEnterDir {
-				details.SetText(GetDirectoryInfo(currentDir))
-			}
-			details.ScrollToBeginning()
+			displayDirectoryDetails(true)
 			return event
 		case tcell.KeyTab:
 			app.SetFocus(details)
