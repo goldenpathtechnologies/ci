@@ -138,7 +138,32 @@ func GetListUI(
 
 	list.SetBorder(true).
 		SetTitle(listUITitle).
-		SetBorderPadding(1, 1, 0, 1)
+		SetBorderPadding(1, 1, 0, 1).
+		SetDrawFunc(GetScrollBarDrawFunc(
+			list,
+			func() (width, height int) {
+				_, _, listWidth, _ := list.GetInnerRect()
+				listHeight := list.GetItemCount()
+
+				return listWidth, listHeight
+			},
+			func() (vScroll, hScroll int) {
+				selectedItem := list.GetCurrentItem()
+				itemCount := list.GetItemCount()
+				_, _, _, pageHeight := list.GetInnerRect()
+
+				v, h := list.GetOffset()
+
+				if selectedItem == 0 {
+					v = 0
+				}
+
+				if selectedItem == itemCount-1 {
+					v = itemCount - pageHeight
+				}
+
+				return v, h
+			}))
 
 	currentDir, err := GetInitialDirectory()
 	HandleError(err)
