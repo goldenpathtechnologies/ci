@@ -134,7 +134,9 @@ func GetListUI(
 	details *tview.TextView,
 	) *tview.List {
 
-	list := tview.NewList().ShowSecondaryText(false)
+	list := tview.NewList().
+		ShowSecondaryText(false).
+		SetSelectedTextColor(tcell.ColorBlack)
 
 	list.SetBorder(true).
 		SetTitle(listUITitle).
@@ -347,8 +349,6 @@ func DirectoryIsAccessible(dir string) bool {
 func GetDirectoryInfo(dir string) string {
 	var out bytes.Buffer
 
-	// TODO: Return an empty string or an error message for directories that have elevated permissions.
-	//  Just don't quit the program when this occurs since it is poor UX.
 	files, err := ioutil.ReadDir(dir)
 	if err != nil {
 		return "[red]Unable to read directory details. You may have insufficient privileges.[white]"
@@ -376,19 +376,11 @@ func GetDirectoryInfo(dir string) string {
 }
 
 func SetApplicationStyles() {
-	//tview.Borders.HorizontalFocus = tview.Borders.Horizontal
-	//tview.Borders.VerticalFocus = tview.Borders.Vertical
-	//tview.Borders.TopLeftFocus = tview.Borders.TopLeft
-	//tview.Borders.TopRightFocus = tview.Borders.TopRight
-	//tview.Borders.BottomLeftFocus = tview.Borders.BottomLeft
-	//tview.Borders.BottomRightFocus = tview.Borders.BottomRight
-
 	// TODO: Setting this interferes with the styles of other components such
 	//  as the List. Find a way to target styles to specific components.
 	//  Additionally, runes display horribly in PowerShell if not using
 	//  Windows Terminal. Find a way to fix this.
-	//tview.Styles.PrimitiveBackgroundColor = tcell.ColorDefault
-
+	tview.Styles.PrimitiveBackgroundColor = tcell.ColorDefault
 }
 
 // InitFileLogging Initializes logging to a file and returns the function that closes that file
