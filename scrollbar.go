@@ -12,14 +12,15 @@ type Scrollable interface {
 
 func GetScrollBarDrawFunc(
 	s Scrollable,
-	contentHandler func() (width, height int),
-	scrollHandler func() (vScroll, hScroll int),
+	getScrollArea func() (width, height int),
+	getScrollPosition func() (vScroll, hScroll int),
 	) func(screen tcell.Screen, x, y, width, height int) (int, int, int, int) {
 
 	return func(screen tcell.Screen, x, y, width, height int) (int, int, int, int) {
 
+		// Note: Currently, the code is unable to distinguish between a Scrollable that has
+		//  a border and one that doesn't have a border but instead has padding.
 		xI, yI, rectWidth, rectHeight := s.GetInnerRect()
-
 		hasBorder := func() bool {
 			return x != xI || y != yI || height-rectHeight >= 2 || width-rectWidth >= 2
 		}
@@ -32,10 +33,11 @@ func GetScrollBarDrawFunc(
 			borderWidth = 0
 		}
 
-		contentWidth, contentHeight := contentHandler()
+		contentWidth, contentHeight := getScrollArea()
 
-		vScroll, hScroll := scrollHandler()
+		vScroll, hScroll := getScrollPosition()
 
+		// Maximum scrollable distance
 		maxVScroll := contentHeight - rectHeight
 		maxHScroll := contentWidth - rectWidth
 
@@ -45,9 +47,11 @@ func GetScrollBarDrawFunc(
 		vThumbSize := int(float32(rectHeight) / float32(contentHeight) * float32(vScrollBarSize))
 		hThumbSize := int(float32(rectWidth) / float32(contentWidth) * float32(hScrollBarSize))
 
+		// Maximum scrollable distance for the scrollbar thumb
 		maxVThumbScroll := vScrollBarSize - vThumbSize
 		maxHThumbScroll := hScrollBarSize - hThumbSize
 
+		// Position of scrollbar thumb
 		vThumbScroll := int(float32(maxVThumbScroll) * float32(vScroll) / float32(maxVScroll))
 		hThumbScroll := int(float32(maxHThumbScroll) * float32(hScroll) / float32(maxHScroll))
 
@@ -71,6 +75,7 @@ func GetScrollBarDrawFunc(
 			vThumbRune, hThumbRune = tview.Borders.Vertical, tview.Borders.Horizontal
 		}
 
+		// Draw the vertical scrollbar
 		if contentHeight > rectHeight {
 			scrollY := y+borderWidth
 			for i := scrollY; i < scrollY+vScrollBarSize; i++ {
@@ -82,6 +87,7 @@ func GetScrollBarDrawFunc(
 			}
 		}
 
+		// Draw the horizontal scrollbar
 		if contentWidth > rectWidth {
 			scrollX := x+borderWidth
 			for j := scrollX; j < scrollX+hScrollBarSize; j++ {
