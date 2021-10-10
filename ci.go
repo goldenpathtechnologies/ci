@@ -16,6 +16,12 @@ import (
 	"text/tabwriter"
 )
 
+var (
+	BuildVersion string = ""
+	BuildDate string = ""
+	options *FlagOptions
+)
+
 const (
 	exitCodeErr       = 1
 	exitCodeInterrupt = 2
@@ -28,6 +34,12 @@ const (
 )
 
 func HandleError(err error) {
+	if err != nil {
+		log.Fatal(err)
+	}
+}
+
+func HandleUIError(err error) {
 	if err != nil {
 		ExitScreenBuffer()
 		log.Fatal(err)
@@ -168,7 +180,7 @@ func GetListUI(
 			}))
 
 	currentDir, err := GetInitialDirectory()
-	HandleError(err)
+	HandleUIError(err)
 
 	titleBox.Clear()
 	titleBox.SetText(currentDir)
@@ -215,15 +227,15 @@ func GetListUI(
 			ExitScreenBuffer()
 
 			_, err := os.Stdout.WriteString(currentDir)
-			HandleError(err)
+			HandleUIError(err)
 		})
 
 		scanner, err := godirwalk.NewScanner(currentDir)
-		HandleError(err)
+		HandleUIError(err)
 
 		for scanner.Scan() {
 			d, err := scanner.Dirent()
-			HandleError(err)
+			HandleUIError(err)
 
 			if d.IsDir() {
 				if isMatch, _ := filepath.Match(filterText, d.Name()); len(filterText) == 0 || isMatch {
@@ -234,7 +246,7 @@ func GetListUI(
 						ExitScreenBuffer()
 
 						_, err := os.Stdout.WriteString(path)
-						HandleError(err)
+						HandleUIError(err)
 					})
 				}
 			}
@@ -364,19 +376,19 @@ func GetDirectoryInfo(dir string) string {
 
 	// TODO: Create a function for printing each row of the tab output to reduce duplication.
 	_, err = fmt.Fprintf(writer, "%v\t%v\t%v\t%v\n", "Mode", "Name", "ModTime", "Bytes")
-	HandleError(err)
+	HandleUIError(err)
 
 	_, err = fmt.Fprintf(writer, "%v\t%v\t%v\t%v\n", "----", "----", "-------", "-----")
-	HandleError(err)
+	HandleUIError(err)
 
 	for _, f := range files {
 		dateFormat := "2006-01-02 3:04 PM"
 		modTime := f.ModTime().Format(dateFormat)
 		_, err := fmt.Fprintf(writer, "%v\t%v\t%v\t%v\n", f.Mode(), f.Name(), modTime, f.Size())
-		HandleError(err)
+		HandleUIError(err)
 	}
 
-	HandleError(writer.Flush())
+	HandleUIError(writer.Flush())
 
 	return out.String()
 }
@@ -402,7 +414,7 @@ func InitFileLogging() func() {
 	return func() {
 		if err := file.Close(); err != nil {
 			log.SetOutput(os.Stdout)
-			HandleError(err)
+			HandleUIError(err)
 		}
 	}
 }
@@ -437,6 +449,19 @@ func run(app *tview.Application, args []string) error {
 }
 
 func main() {
+	var err error
+
+	options, err = GetAppFlags()
+
+	HandleError(err)
+
+	//if options.Help {
+	//	helpText, err := GetHelpText()
+	//	HandleError(err)
+	//	os.Stdout.WriteString(helpText)
+	//	os.Exit(0)
+	//}
+
 	closeLogFile := InitFileLogging()
 	defer closeLogFile()
 
@@ -466,7 +491,8 @@ func main() {
 		<-signalChan // second signal, hard exit
 		os.Exit(exitCodeInterrupt)
 	}()
-	if err := run(app, os.Args); err != nil {
-		HandleError(err)
+
+	if err = run(app, os.Args); err != nil {
+		HandleUIError(err)
 	}
 }
