@@ -18,8 +18,9 @@ import (
 
 var (
 	BuildVersion string = ""
-	BuildDate string = ""
-	options *FlagOptions
+	BuildDate   string = ""
+	testOptions *TestOptions
+	versionOptions *VersionOptions
 )
 
 const (
@@ -36,7 +37,8 @@ const (
 func HandleError(err error) {
 	if err != nil {
 		// TODO: Reconsider logging errors as other libraries may also print their errors causing duplication.
-		log.Fatal(err)
+		//log.Fatal(err)
+		os.Exit(1) // TODO: This is temporary, need to specifically respond to the help option so exit code can be 0.
 	}
 }
 
@@ -44,7 +46,8 @@ func HandleUIError(err error) {
 	if err != nil {
 		ExitScreenBuffer()
 		// TODO: Reconsider logging errors as other libraries may also print their errors causing duplication.
-		log.Fatal(err)
+		//log.Fatal(err)
+		os.Exit(1) // TODO: This is temporary, need to specifically respond to the help option so exit code can be 0.
 	}
 }
 
@@ -453,13 +456,15 @@ func run(app *tview.Application, args []string) error {
 func InitFlags() {
 	var err error
 
-	options, err = GetAppFlags()
+	testOptions, versionOptions, err = GetAppFlags()
 
 	HandleError(err)
 
-	if options.Help {
-		PrintHelpTextAndExit()
-	} else if options.Version {
+	//if testOptions.Help {
+	//	//PrintHelpTextAndExit()
+	//} else
+
+	if versionOptions.Version {
 		_, err = os.Stdout.WriteString("ci version 0.0.0")
 		HandleError(err)
 		os.Exit(0)
