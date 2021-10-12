@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"github.com/jessevdk/go-flags"
 	"github.com/mitchellh/go-wordwrap"
+	"log"
+	"os"
 	"reflect"
 	"strings"
 	"text/tabwriter"
@@ -12,15 +14,41 @@ import (
 
 type FlagOptions struct {
 	Version bool `short:"v" long:"version" description:"Print version information"`
-	//Help bool `short:"h" long:"help" description:"Print command line options"`
+	Help bool `short:"h" long:"help" description:"Print command line options"`
+	Test1 bool `short:"a" long:"test1" description:"Test 1"`
+	Test2 string `short:"b" long:"test2" description:"Test 2"`
+	Test3 string `short:"c" long:"test3" description:"Test 3" value-name:"TEST"`
+	Test4 bool `short:"d" long:"test4"`
 }
 
 func GetAppFlags() (*FlagOptions, error) {
 	options := &FlagOptions{}
 
-	_, err := flags.Parse(options)
+	// TODO: Reconsider enabling error printing as I may want to handle them myself.
+	parser := flags.NewParser(options, flags.PrintErrors | flags.PassDoubleDash)
 
-	return options, err
+	if _, err := parser.Parse(); err != nil {
+		switch flagsErr := err.(type) {
+		case flags.ErrorType:
+			if flagsErr == flags.ErrUnknownFlag {
+				PrintHelpTextAndExit()
+			}
+		default:
+			return nil, err
+		}
+	}
+
+	return options, nil
+}
+
+func PrintHelpTextAndExit() {
+	if helpText, err := GetHelpText(); err != nil {
+		log.Fatal(err)
+	} else if _, err = os.Stdout.WriteString(helpText); err != nil {
+		log.Fatal(err)
+	} else {
+		os.Exit(0)
+	}
 }
 
 func GetHelpText() (string, error) {
@@ -30,7 +58,8 @@ func GetHelpText() (string, error) {
 
 	t := reflect.TypeOf(FlagOptions{})
 
-	for _, fieldName := range []string{"Version", "Help"} {
+	// TODO: Use the poorly documented 'flags' library functions to iterate on options instead of using reflect.
+	for _, fieldName := range []string{"Version", "Help", "Test1", "Test2", "Test3", "Test4"} {
 		field, found := t.FieldByName(fieldName)
 
 		if !found {
@@ -44,12 +73,15 @@ func GetHelpText() (string, error) {
 
 		if field.Type.Kind() != reflect.Bool {
 			if len(valueName) > 0 {
-				shortName = fmt.Sprintf("-%v=%v", shortName, valueName)
-				longName = fmt.Sprintf("-%v=%v", longName, valueName)
+				shortName = fmt.Sprintf("-%v %v", shortName, valueName)
+				longName = fmt.Sprintf("--%v=%v", longName, valueName)
 			} else {
-				shortName = fmt.Sprintf("-%v=...", shortName)
-				longName = fmt.Sprintf("-%v=...", longName)
+				shortName = fmt.Sprintf("-%v", shortName)
+				longName = fmt.Sprintf("--%v=...", longName)
 			}
+		} else {
+			shortName = fmt.Sprintf("-%v", shortName)
+			longName = fmt.Sprintf("--%v", longName)
 		}
 
 		maxOptionColWidth := 40
@@ -63,12 +95,13 @@ func GetHelpText() (string, error) {
 		descriptionLines := strings.Split(description, "\n")
 
 		if len(optionLines) > 0 && len(descriptionLines) > 0 {
-			_, err := fmt.Fprintf(writer, "%v\t%v", optionLines[0], descriptionLines[0])
+			_, err := fmt.Fprintf(writer, "  %v\t%v\n", optionLines[0], descriptionLines[0])
 
 			if err != nil {
 				return "", err
 			}
 
+			// TODO: Need to iterate on the number of additional lines max(optionLines, descriptionLines) times.
 			if len(optionLines) > 1 || len(descriptionLines) > 1 {
 				var o, d string
 
@@ -84,7 +117,7 @@ func GetHelpText() (string, error) {
 					d = ""
 				}
 
-				_, err := fmt.Fprintf(writer, "%v\t%v", o, d)
+				_, err := fmt.Fprintf(writer, "  %v\t%v\n", o, d)
 
 				if err != nil {
 					return "", err
@@ -99,6 +132,7 @@ func GetHelpText() (string, error) {
 		return "", err
 	}
 
+	// TODO: Make this application agnostic by removing references to specific programs.
 	helpTextHeader := `Usage: ci [options]
 
 Options:

@@ -35,6 +35,7 @@ const (
 
 func HandleError(err error) {
 	if err != nil {
+		// TODO: Reconsider logging errors as other libraries may also print their errors causing duplication.
 		log.Fatal(err)
 	}
 }
@@ -42,6 +43,7 @@ func HandleError(err error) {
 func HandleUIError(err error) {
 	if err != nil {
 		ExitScreenBuffer()
+		// TODO: Reconsider logging errors as other libraries may also print their errors causing duplication.
 		log.Fatal(err)
 	}
 }
@@ -448,19 +450,24 @@ func run(app *tview.Application, args []string) error {
 	return nil
 }
 
-func main() {
+func InitFlags() {
 	var err error
 
 	options, err = GetAppFlags()
 
 	HandleError(err)
 
-	//if options.Help {
-	//	helpText, err := GetHelpText()
-	//	HandleError(err)
-	//	os.Stdout.WriteString(helpText)
-	//	os.Exit(0)
-	//}
+	if options.Help {
+		PrintHelpTextAndExit()
+	} else if options.Version {
+		_, err = os.Stdout.WriteString("ci version 0.0.0")
+		HandleError(err)
+		os.Exit(0)
+	}
+}
+
+func main() {
+	InitFlags()
 
 	closeLogFile := InitFileLogging()
 	defer closeLogFile()
@@ -492,7 +499,7 @@ func main() {
 		os.Exit(exitCodeInterrupt)
 	}()
 
-	if err = run(app, os.Args); err != nil {
+	if err := run(app, os.Args); err != nil {
 		HandleUIError(err)
 	}
 }
