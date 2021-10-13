@@ -19,8 +19,7 @@ import (
 var (
 	BuildVersion string = ""
 	BuildDate   string = ""
-	testOptions *TestOptions
-	versionOptions *VersionOptions
+	appOptions *AppOptions
 )
 
 const (
@@ -32,6 +31,7 @@ const (
 	listUIHelp = "<Help>"
 	listUIFilter = "<Filter>"
 	listUIEnterDir = "<Enter directory>"
+	appName = "ci"
 )
 
 func HandleError(err error) {
@@ -456,16 +456,12 @@ func run(app *tview.Application, args []string) error {
 func InitFlags() {
 	var err error
 
-	testOptions, versionOptions, err = GetAppFlags()
-
+	appOptions, err = GetAppFlags(appName)
 	HandleError(err)
 
-	//if testOptions.Help {
-	//	//PrintHelpTextAndExit()
-	//} else
-
-	if versionOptions.Version {
-		_, err = os.Stdout.WriteString("ci version 0.0.0")
+	if appOptions.VersionInformation.Version {
+		versionString := fmt.Sprintf("%v version %v, build date %v", appName, "0.0.0", "January 1, 1999, 12:00 am UTC")
+		_, err = os.Stdout.WriteString(versionString)
 		HandleError(err)
 		os.Exit(0)
 	}
