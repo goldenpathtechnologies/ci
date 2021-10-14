@@ -14,11 +14,13 @@ import (
 	"path/filepath"
 	"strings"
 	"text/tabwriter"
+	"time"
 )
 
 var (
 	BuildVersion string = ""
-	BuildDate   string = ""
+	BuildDate string = ""
+	BuildOwner string = ""
 	appOptions *AppOptions
 )
 
@@ -461,7 +463,23 @@ func InitFlags() {
 	HandleError(err, false)
 
 	if appOptions.VersionInformation.Version {
-		versionString := fmt.Sprintf("%v version %v, build date %v", appName, "0.0.0", "January 1, 1999, 12:00 am UTC")
+		buildDate, err := time.Parse(time.RFC3339, BuildDate)
+		HandleError(err, true)
+
+		versionFormat := `%v
+Copyright © %v
+%v
+
+Version: %v
+Build date: %v
+`
+		versionString := fmt.Sprintf(
+			versionFormat,
+			appName,
+			buildDate.Year(),
+			BuildOwner,
+			BuildVersion,
+			buildDate.Format(time.RFC3339))
 		_, err = os.Stdout.WriteString(versionString)
 		HandleError(err, true)
 		os.Exit(0)
