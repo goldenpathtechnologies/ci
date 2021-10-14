@@ -34,31 +34,34 @@ const (
 	appName = "ci"
 )
 
-func HandleError(err error) {
+func HandleError(err error, logError bool) {
 	if err != nil {
-		// TODO: Reconsider logging errors as other libraries may also print their errors causing duplication.
-		//log.Fatal(err)
-		os.Exit(1) // TODO: This is temporary, need to specifically respond to the help option so exit code can be 0.
+		if logError {
+			log.Fatal(err)
+		}
+		os.Exit(1)
 	}
 }
 
 func HandleUIError(err error) {
 	if err != nil {
+		// TODO: Use a variable/flag to determine if the screen buffer has been entered or not. Remove
+		//  HandleUIError when this happens and implement screen buffer code in HandleError.
 		ExitScreenBuffer()
-		// TODO: Reconsider logging errors as other libraries may also print their errors causing duplication.
-		//log.Fatal(err)
-		os.Exit(1) // TODO: This is temporary, need to specifically respond to the help option so exit code can be 0.
+		log.Fatal(err)
 	}
 }
 
 // EnterScreenBuffer Switches terminal to alternate screen buffer to retain command history
 //  of host process
 func EnterScreenBuffer() {
+	// TODO: Set a flag that tracks if the screen buffer had been entered.
 	print("\033[?1049h")
 }
 
 // ExitScreenBuffer Exits the alternate screen buffer and returns to that of host process
 func ExitScreenBuffer() {
+	// TODO: Unset a flag that tracks if the screen buffer had been entered.
 	print("\033[?1049l")
 }
 
@@ -410,9 +413,7 @@ func SetApplicationStyles() {
 func InitFileLogging() func() {
 	file, err := os.OpenFile("./.log", os.O_CREATE | os.O_APPEND | os.O_WRONLY, 0644)
 
-	if err != nil {
-		log.Fatal(err)
-	}
+	HandleUIError(err)
 
 	log.SetOutput(file)
 
@@ -457,12 +458,12 @@ func InitFlags() {
 	var err error
 
 	appOptions, err = GetAppFlags(appName)
-	HandleError(err)
+	HandleError(err, false)
 
 	if appOptions.VersionInformation.Version {
 		versionString := fmt.Sprintf("%v version %v, build date %v", appName, "0.0.0", "January 1, 1999, 12:00 am UTC")
 		_, err = os.Stdout.WriteString(versionString)
-		HandleError(err)
+		HandleError(err, true)
 		os.Exit(0)
 	}
 }
@@ -475,7 +476,7 @@ func main() {
 
 	EnterScreenBuffer()
 
-	// Note: code taken from https://pace.dev/blog/2020/02/17/repond-to-ctrl-c-interrupt-signals-gracefully-with-context-in-golang-by-mat-ryer.html
+	// Note: code taken and modified from https://pace.dev/blog/2020/02/17/repond-to-ctrl-c-interrupt-signals-gracefully-with-context-in-golang-by-mat-ryer.html
 	ctx := context.Background()
 	ctx, cancel := context.WithCancel(ctx)
 	signalChan := make(chan os.Signal, 1)
