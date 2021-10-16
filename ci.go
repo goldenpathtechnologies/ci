@@ -210,6 +210,7 @@ func GetListUI(
 			case 'q':
 				app.Stop()
 				ExitScreenBuffer()
+				PrintAndExit(".")
 			}
 
 			return event
@@ -235,9 +236,7 @@ func GetListUI(
 		list.AddItem(listUIEnterDir, "", 'e', func() {
 			app.Stop()
 			ExitScreenBuffer()
-
-			_, err := os.Stdout.WriteString(currentDir)
-			HandleUIError(err)
+			PrintAndExit(currentDir)
 		})
 
 		scanner, err := godirwalk.NewScanner(currentDir)
@@ -254,9 +253,7 @@ func GetListUI(
 
 						app.Stop()
 						ExitScreenBuffer()
-
-						_, err := os.Stdout.WriteString(path)
-						HandleUIError(err)
+						PrintAndExit(path)
 					})
 				}
 			}
@@ -265,6 +262,7 @@ func GetListUI(
 		list.AddItem(listUIQuit, "Press to exit", 'q', func() {
 			app.Stop()
 			ExitScreenBuffer()
+			PrintAndExit(".")
 		})
 
 		list.AddItem(listUIHelp, "Get help with this program", 'h', func(){})
@@ -366,6 +364,12 @@ func GetListUI(
 	})
 
 	return list
+}
+
+func PrintAndExit(data string) {
+	_, err := os.Stdout.WriteString(data)
+	HandleUIError(err)
+	os.Exit(0)
 }
 
 func DirectoryIsAccessible(dir string) bool {
