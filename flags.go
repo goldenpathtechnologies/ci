@@ -27,7 +27,7 @@ func GetAppFlags(appName string) (*AppOptions, error) {
 
 		err := flags.Error{
 			Type:    flags.ErrUnknownFlag,
-			Message: fmt.Sprintf("\nError: unknown flag '%v'", option),
+			Message: fmt.Sprintf("Error: unknown flag '%v'\n", option),
 		}
 
 		return nil, errors.New(err.Error())
