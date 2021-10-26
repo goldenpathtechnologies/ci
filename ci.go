@@ -466,6 +466,11 @@ func InitFlags() {
 	appOptions, err = GetAppFlags(appName)
 	HandleError(err, false)
 
+	if appOptions.HelpInformation.Help {
+		appOptions.WriteHelp(os.Stdout)
+		os.Exit(0)
+	}
+
 	if appOptions.VersionInformation.Version {
 		buildDate, err := time.Parse(time.RFC3339, BuildDate)
 		HandleError(err, true)
