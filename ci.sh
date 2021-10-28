@@ -1,5 +1,9 @@
-export CI_CMD="./bin/go_build_ci_linux"
+export CI_CMD=~/.ci/go_build_ci_linux
 
+# TODO: Note that there is an existing 'ci' command:
+#  http://manpages.ubuntu.com/manpages/precise/man1/rcsintro.1.html
+#  Ensure there is a way to customize the name, or create a tool
+#  that will update the bashrc with an alternate function name.
 ci() {
   exitArgs=("-v" "--version" "-h" "--help")
   containsExitArgs=false
