@@ -1,4 +1,4 @@
-#!/bin/bash
+export CI_CMD="./bin/go_build_ci_linux"
 
 ci() {
   exitArgs=("-v" "--version" "-h" "--help")
@@ -17,10 +17,10 @@ ci() {
 
   if [ "$containsExitArgs" = true ]
   then
-    ./bin/go_build_ci_linux "$@"
+    $CI_CMD "$@"
     return 0
   else
-    output=$(./bin/go_build_ci_linux "$@")
+    output=$($CI_CMD "$@")
 
     if [ -d "$output" ]
     then
