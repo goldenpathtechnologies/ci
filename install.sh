@@ -1,5 +1,9 @@
 #!/bin/bash
 # TODO: Make this script idempotent
+# TODO: Make version checks to ensure old versions do not overwrite new ones.
+#  Old versions of the software can only be installed when the new version is
+#  uninstalled.
+
 # Step 1: Download files to /usr/local/ci
 # - Create /usr/local/ci directory
 # - Download release into /usr/local/ci/bin

@@ -3,6 +3,10 @@
 #  This file will be used to install the module.
 #  I may also consider publishing to the PSGallery in the future, see below:
 #  https://docs.microsoft.com/en-us/powershell/module/powershellget/publish-module?view=powershell-7.1
+# TODO: Make version checks to ensure old versions do not overwrite new ones.
+#  Old versions of the software can only be installed when the new version is
+#  uninstalled.
+# TODO: Make this script idempotent
 
 # Step 1: Create the module directory
 # - mkdir $home\Documents\WindowsPowerShell\Modules\ci
