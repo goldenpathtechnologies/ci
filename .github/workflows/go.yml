@@ -34,7 +34,7 @@ jobs:
           go build -gcflags="all=-N -l" -ldflags \
           "-X 'main.BuildVersion=${{env.BUILD_VERSION}}' -X 'main.BuildDate=${{env.BUILD_DATE}}' -X 'main.BuildOwner=${{env.BUILD_OWNER}}'" \
           -tags forceposix \
-          -o ./bin/${{APP_NAME}}
+          -o ./bin/${{env.APP_NAME}}
 
       - name: Upload binary
         uses: actions/upload-artifact@v2
