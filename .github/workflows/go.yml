@@ -43,7 +43,7 @@ jobs:
         run: cp ./{${{env.APP_NAME}}.sh,install.sh,uninstall.sh} ./build/${{env.APP_NAME}}/
 
       - name: Create release package tarball
-        run: tar -czvf ./build/${{env.APP_NAME}} ./build/${{env.APP_NAME}}-v${{env.BUILD_VERSION}}.tar.gz
+        run: tar -czvf ./build/${{env.APP_NAME}}-v${{env.BUILD_VERSION}}.tar.gz ./build/${{env.APP_NAME}}
 
       - name: Upload release package
         uses: actions/upload-artifact@v2
