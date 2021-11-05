@@ -67,9 +67,9 @@ jobs:
 
       - name: Build
         run: |
-          go build -gcflags="all=-N -l" -ldflags \
-          "-X 'main.BuildVersion=${{env.BUILD_VERSION}}' -X 'main.BuildDate=${{env.BUILD_DATE}}' -X 'main.BuildOwner=${{env.BUILD_OWNER}}'" \
-          -tags forceposix \
+          go build -gcflags="all=-N -l" -ldflags `
+          "-X 'main.BuildVersion=${{env.BUILD_VERSION}}' -X 'main.BuildDate=${{env.BUILD_DATE}}' -X 'main.BuildOwner=${{env.BUILD_OWNER}}'" `
+          -tags forceposix `
           -o ./build/${{env.APP_NAME}}/bin/${{env.APP_NAME}}.exe
 
       - name: Verify built executable
