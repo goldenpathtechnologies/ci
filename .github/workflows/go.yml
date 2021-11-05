@@ -10,6 +10,7 @@ on:
 env:
   BUILD_OWNER: "Golden Path Technologies Inc."
   APP_NAME: ci
+  GO_VERSION: 1.17
 
 jobs:
 
@@ -21,7 +22,7 @@ jobs:
       - name: Set up Go
         uses: actions/setup-go@v2
         with:
-          go-version: 1.17
+          go-version: ${{env.GO_VERSION}}
 
       - name: Get build date (RFC3339 format)
         run: echo "BUILD_DATE=$(date -u +"%Y-%m-%dT%H:%M:%SZ")" >> $GITHUB_ENV
@@ -43,29 +44,48 @@ jobs:
         run: cp ./{${{env.APP_NAME}}.sh,install.sh,uninstall.sh} ./build/${{env.APP_NAME}}/
 
       - name: Create release package tarball
-        run: tar -czvf ./build/${{env.APP_NAME}}-v${{env.BUILD_VERSION}}.tar.gz ./build/${{env.APP_NAME}}
+        run: tar -czvf ./build/${{env.APP_NAME}}_linux-v${{env.BUILD_VERSION}}.tar.gz ./build/${{env.APP_NAME}}
 
       - name: Upload release package
         uses: actions/upload-artifact@v2
         with:
           name: release
-          path: ./build/${{env.APP_NAME}}-v${{env.BUILD_VERSION}}.tar.gz
+          path: ./build/${{env.APP_NAME}}_linux-v${{env.BUILD_VERSION}}.tar.gz
 
 #      - name: Test
 #        run: go test -v ./...
 
-#  build-windows:
-#    runs-on: windows-latest
-#    steps:
-#      - uses: actions/checkout@v2
-#
-#      - name: Set up Go
-#        uses: actions/setup-go@v2
-#        with:
-#          go-version: 1.17
-#
-#      - name: Build
-#        run: go build -v ./...
+  build-windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Set up Go
+        uses: actions/setup-go@v2
+        with:
+          go-version: ${{env.GO_VERSION}}
+
+      - name: Build
+        run: |
+          go build -gcflags="all=-N -l" -ldflags \
+          "-X 'main.BuildVersion=${{env.BUILD_VERSION}}' -X 'main.BuildDate=${{env.BUILD_DATE}}' -X 'main.BuildOwner=${{env.BUILD_OWNER}}'" \
+          -tags forceposix \
+          -o ./build/${{env.APP_NAME}}/bin/${{env.APP_NAME}}.exe
+
+      - name: Verify built executable
+        run: ./build/${{env.APP_NAME}}/bin/${{env.APP_NAME}}.exe -v
+
+      - name: Copy files to release package
+        run: Copy-Item ./${{env.APP_NAME}}.sh,./install.sh,./uninstall.sh -Destination ./build/${{env.APP_NAME}}/
+
+      - name: Create relase package zip file
+        run: Get-ChildItem -Path ./build/${{env.APP_NAME}}/ | Compress-Archive -DestinationPath ./build/${{env.APP_NAME}}_windows-v${{env.BUILD_VERSION}}.zip
+
+      - name: Upload release package
+        uses: actions/upload-artifact@v2
+        with:
+          name: release
+          path: ./build/${{env.APP_NAME}}_windows-v${{env.BUILD_VERSION}}.zip
 
 #      - name: Test
 #        run: go test -v ./...
