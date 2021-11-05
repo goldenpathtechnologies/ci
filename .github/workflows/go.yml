@@ -66,7 +66,7 @@ jobs:
           go-version: ${{env.GO_VERSION}}
 
       - name: Get build date (RFC3339 format)
-        run: Write-Output "BUILD_DATE$(Get-Date).ToUniversalTime().ToString('yyyy-MM-ddTHH:mm:ssZ')" >> $env:GITHUB_ENV
+        run: Write-Output "BUILD_DATE=$(Get-Date).ToUniversalTime().ToString('yyyy-MM-ddTHH:mm:ssZ')" >> $env:GITHUB_ENV
 
       - name: Get build version
         run: Write-Output "BUILD_VERSION=$(Get-Content .version)" >> $env:GITHUB_ENV
