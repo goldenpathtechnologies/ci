@@ -23,7 +23,7 @@ jobs:
         with:
           go-version: 1.17
 
-      - name: Get build date
+      - name: Get build date (RFC3339 format)
         run: echo "BUILD_DATE=$(date -u +"%Y-%m-%dT%H:%M:%SZ")" >> $GITHUB_ENV
 
       - name: Get build version
@@ -34,13 +34,22 @@ jobs:
           go build -gcflags="all=-N -l" -ldflags \
           "-X 'main.BuildVersion=${{env.BUILD_VERSION}}' -X 'main.BuildDate=${{env.BUILD_DATE}}' -X 'main.BuildOwner=${{env.BUILD_OWNER}}'" \
           -tags forceposix \
-          -o ./bin/${{env.APP_NAME}}
+          -o ./build/${{env.APP_NAME}}/bin/${{env.APP_NAME}}
 
-      - name: Upload binary
+      - name: Verify built executable
+        run: ./build/${{env.APP_NAME}}/bin/${{env.APP_NAME}} -v
+
+      - name: Copy files to release package
+        run: cp ./{${{env.APP_NAME}}.sh,install.sh,uninstall.sh} ./build/${{env.APP_NAME}}/
+
+      - name: Create release package tarball
+        run: tar -czvf ./build/${{env.APP_NAME}} ./build/${{env.APP_NAME}}-v${{env.BUILD_VERSION}}.tar.gz
+
+      - name: Upload release package
         uses: actions/upload-artifact@v2
         with:
-          name: ci-app
-          path: ./bin/ci
+          name: release
+          path: ./build/${{env.APP_NAME}}-v${{env.BUILD_VERSION}}.tar.gz
 
 #      - name: Test
 #        run: go test -v ./...
