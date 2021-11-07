@@ -1,12 +1,26 @@
-# TODO: Install CI as a PowerShell module. Use the following as a guide:
-#  https://docs.microsoft.com/en-us/powershell/scripting/developer/module/how-to-write-a-powershell-script-module?view=powershell-7.1
-#  This file will be used to install the module.
-#  I may also consider publishing to the PSGallery in the future, see below:
+# TODO: Consider publishing to the PSGallery in the future, see below:
 #  https://docs.microsoft.com/en-us/powershell/module/powershellget/publish-module?view=powershell-7.1
-# TODO: Make version checks to ensure old versions do not overwrite new ones.
-#  Old versions of the software can only be installed when the new version is
-#  uninstalled.
-# TODO: Make this script idempotent
+# TODO: Create a manifest file for this module. See below comments for more information.
+
+$relModulePath = "$home\Documents\WindowsPowerShell\Modules\ci"
+$ciExe = "$relModulePath\ci.exe"
+
+if (Test-Path $relModulePath) {
+    $currentVersion = $(& $ciExe -v | Select-String -Pattern "Version: (\d+\.\d+\.\d+).*").Matches.groups[1].value
+    $newVersion = $(.\bin\ci.exe -v | Select-String -Pattern "Version: (\d+\.\d+\.\d+).*").Matches.groups[1].value
+
+    function Get-IntVersion {
+        $data = $(Write-Output $@).Split(".")
+        return "{0:d}{1:d3}{2:d3}" -f $data[0],$data[1],$data[2]
+    }
+
+    if ($(Get-IntVersion $currentVersion) -ge $(Get-IntVersion $newVersion)) {
+        Write-Host "ci v$currentVersion is already up to date"
+        exit 0
+    } else {
+        .\uninstall.ps1
+    }
+}
 
 # Step 1: Create the module directory
 # - mkdir $home\Documents\WindowsPowerShell\Modules\ci

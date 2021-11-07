@@ -1,2 +1,7 @@
-# TODO: Make this script idempotent
-Remove-Item -Path $home\Documents\WindowsPowerShell\Modules\ci -Recurse -Force
+$relModulePath = "$home\Documents\WindowsPowerShell\Modules\ci"
+
+if (Test-Path $relModulePath) {
+    Remove-Item -Path $relModulePath -Recurse -Force
+} else {
+    Write-Host "ci is not installed"
+}

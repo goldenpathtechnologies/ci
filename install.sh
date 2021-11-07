@@ -18,10 +18,10 @@ then
   then
     echo "ci v$CI_CURRENT_VERSION is already up to date"
     exit 0
+  else
+    ./uninstall.sh
   fi
 fi
-
-./uninstall.sh
 
 mkdir $CI_INSTALL_DIR
 
