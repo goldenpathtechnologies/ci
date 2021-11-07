@@ -493,6 +493,11 @@ Build date: %v
 		HandleError(err, true)
 		os.Exit(0)
 	}
+
+	// TODO: Create a quick link feature where the user enters the command and can then tab through the most recent
+	//  directories or their favourites. One can tab throw a directory list right from the command and the other will
+	//  require its own option to do the same. Keep in mind that the program executes when doing this. This may need a
+	//  persistence feature where the directory data is stored in a separate file.
 }
 
 func main() {

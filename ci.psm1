@@ -1,6 +1,6 @@
 function Invoke-Ci {
     $exitArgs = @("-v", "--version", "-h", "--help")
-    $ciExe = "$home\Documents\WindowsPowerShell\Modules\ci\go_build_ci.exe"
+    $ciExe = "$home\Documents\WindowsPowerShell\Modules\ci\ci.exe"
 
     if ($args | Where-Object { $exitArgs -contains $_ }) {
         # TODO: Do not use relative paths for the script.
@@ -14,13 +14,13 @@ function Invoke-Ci {
                 Set-Location -Path $output.ToString()
             } else {
                 Write-Host $output + " is not a directory."
-                # TODO: Throw an exception instead of exiting
-                exit 1
+
+                throw
             }
         } else {
             $output
-            # TODO: Throw an exception instead of exiting
-            exit 1
+
+            throw
         }
     }
 }
