@@ -1,4 +1,4 @@
-export CI_CMD=~/.ci/go_build_ci_linux
+export CI_CMD=~/.ci/bin/ci
 
 # TODO: Note that there is an existing 'ci' command:
 #  http://manpages.ubuntu.com/manpages/precise/man1/rcsintro.1.html

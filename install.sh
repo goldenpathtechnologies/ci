@@ -1,24 +1,34 @@
 #!/bin/bash
-# TODO: Make this script idempotent
-# TODO: Make version checks to ensure old versions do not overwrite new ones.
-#  Old versions of the software can only be installed when the new version is
-#  uninstalled.
 
-# Step 1: Download files to /usr/local/ci
-# - Create /usr/local/ci directory
-# - Download release into /usr/local/ci/bin
-# - Optional: Download source to /usr/local/ci/src
-mkdir ~/.ci
+CI_INSTALL_DIR=~/.ci
+CI_CMD=$CI_INSTALL_DIR/bin/ci
 
-# TODO: Use wget or curl to download release from GitHub
-cp ./bin/go_build_ci_linux ~/.ci
+if [ -d "$CI_INSTALL_DIR" ]
+then
+  # Note: Version number extraction approach taken from https://stackoverflow.com/a/16817748/3141986
+  CI_CURRENT_VERSION=$($CI_CMD -v | grep -Po '(?<=Version: )[\d\.]+')
+  CI_NEW_VERSION=$(./bin/ci -v | grep -Po '(?<=Version: )[\d\.]+')
 
-# Step 2: Update ~/.bashrc with ci function
-# - export envvar with path to ci executable
-# - add function
-# - run `source ~/.bashrc`
+  # Note: version function taken from https://stackoverflow.com/a/37939589/3141986
+  version() {
+    echo "$@" | awk -F. '{ printf("%d%03d%03d%03d\n", $1,$2,$3,$4) }'
+  }
 
-# TODO: Use ci.sh file from tagged release on remote
+  if [ "$(version "$CI_CURRENT_VERSION")" -ge "$(version "$CI_NEW_VERSION")" ]
+  then
+    echo "ci v$CI_CURRENT_VERSION is already up to date"
+    exit 0
+  fi
+fi
+
+./uninstall.sh
+
+mkdir $CI_INSTALL_DIR
+
+cp -r ./* $CI_INSTALL_DIR
+
+rm -f "$CI_INSTALL_DIR/install.sh"
+
 { echo "### BEGIN CI COMMAND";
 cat ./ci.sh;
 echo "### END CI COMMAND";
