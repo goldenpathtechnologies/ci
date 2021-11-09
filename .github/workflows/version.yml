@@ -27,7 +27,7 @@ jobs:
               "main",
               {
                 "name": "sdlc",
-                "prerelease": "true"
+                "prerelease": true
               }
             ],
             "plugins": [
