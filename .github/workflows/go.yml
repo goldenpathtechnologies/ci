@@ -1,8 +1,8 @@
-name: Go
+name: Build
 
 on:
   push:
-    branches: [ sdlc ]
+    branches: [ sdlc, sdlc_semantic_release ]
 #    branches: [ main ]
 #  pull_request:
 #    branches: [ main ]
@@ -40,16 +40,16 @@ jobs:
       - name: Verify built executable
         run: ./build/${{env.APP_NAME}}/bin/${{env.APP_NAME}} -v
 
-      - name: Copy files to release package
+      - name: Copy files to build artifact package
         run: cp ./{${{env.APP_NAME}}.sh,install.sh,uninstall.sh} ./build/${{env.APP_NAME}}/
 
-      - name: Create release package tarball
+      - name: Create build artifact package tarball
         run: tar -czvf ./build/${{env.APP_NAME}}_linux-v${{env.BUILD_VERSION}}.tar.gz ./build/${{env.APP_NAME}}
 
-      - name: Upload release package
+      - name: Upload build artifact package
         uses: actions/upload-artifact@v2
         with:
-          name: release
+          name: artifact
           path: ./build/${{env.APP_NAME}}_linux-v${{env.BUILD_VERSION}}.tar.gz
 
 #      - name: Test
@@ -95,3 +95,23 @@ jobs:
 
 #      - name: Test
 #        run: go test -v ./...
+
+
+  version:
+    runs-on: ubuntu-latest
+    needs:
+      - build-linux
+      - build-windows
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+      - name: Setup Node.js
+        uses: actions/setup-node@v2
+        with:
+          node-version: 'lts/*'
+      - name: Version
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: npx semantic-release
