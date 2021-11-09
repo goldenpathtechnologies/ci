@@ -4,6 +4,9 @@ bin/
 # Build folder
 build/
 
+# semantic-release configuration
+.releaserc
+
 # Binaries for programs and plugins
 *.exe
 *.exe~
