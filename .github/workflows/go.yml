@@ -114,4 +114,4 @@ jobs:
       - name: Version
         env:
           GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
-        run: npx semantic-release
+        run: npx semantic-release --branches sdlc_semantic_release --dry-run
