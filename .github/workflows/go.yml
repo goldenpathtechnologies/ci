@@ -3,10 +3,8 @@ name: Build
 #  (tagged versions, etc.) are the only ones triggered in this workflow.
 on:
   push:
-    branches: [ main ]
-#    branches: [ main ]
-#  pull_request:
-#    branches: [ main ]
+    tags:
+      - "v*.*.*"
 
 env:
   BUILD_OWNER: "Golden Path Technologies Inc."

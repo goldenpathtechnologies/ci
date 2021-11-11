@@ -2,9 +2,11 @@ name: Version
 
 on:
   push:
+    # TODO: Remove sdlc branch here and in semantic-release config when release management is complete.
     branches:
       - main
       - sdlc
+      - dev
 
 jobs:
 
@@ -28,13 +30,25 @@ jobs:
               {
                 "name": "sdlc",
                 "prerelease": true
+              },
+              {
+                "name": "dev",
+                "prerelease": true
               }
             ],
             "plugins": [
               "@semantic-release/commit-analyzer",
               "@semantic-release/release-notes-generator",
+              "@semantic-release/changelog",
               "@semantic-release/git"
-            ]
+            ],
+            "preset": "conventionalcommits",
+            "parserOpts": {
+              "noteKeywords": ["BREAKING CHANGE", "BREAKING CHANGES", "BREAKING"]
+            },
+            "writerOpts": {
+              "commitsSort": ["subject", "scope"]
+            }
           }
           EOF
       - name: Run semantic-release
@@ -45,4 +59,6 @@ jobs:
           -p @semantic-release/git \
           -p @semantic-release/commit-analyzer \
           -p @semantic-release/release-notes-generator \
+          -p @semantic-release/changelog \
+          -p conventional-changelog-conventionalcommits \
           semantic-release
