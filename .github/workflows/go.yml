@@ -9,6 +9,7 @@ env:
   BUILD_OWNER: "Golden Path Technologies Inc."
   APP_NAME: ci
   GO_VERSION: 1.17
+  RELEASE_ARTIFACT_NAME: artifact
 
 jobs:
 
@@ -47,7 +48,7 @@ jobs:
       - name: Upload build artifact package
         uses: actions/upload-artifact@v2
         with:
-          name: artifact
+          name: ${{env.RELEASE_ARTIFACT_NAME}}
           path: ./build/${{env.APP_NAME}}_linux-v${{env.BUILD_VERSION}}.tar.gz
 
 #      - name: Test
@@ -88,7 +89,7 @@ jobs:
       - name: Upload release package
         uses: actions/upload-artifact@v2
         with:
-          name: release
+          name: ${{env.RELEASE_ARTIFACT_NAME}}
           path: ./build/${{env.APP_NAME}}_windows-v${{env.BUILD_VERSION}}.zip
 
 #      - name: Test
