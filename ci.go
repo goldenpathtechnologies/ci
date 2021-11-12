@@ -14,6 +14,14 @@ import (
 	"path/filepath"
 	"strings"
 	"text/tabwriter"
+	"time"
+)
+
+var (
+	BuildVersion string = ""
+	BuildDate string = ""
+	BuildOwner string = ""
+	appOptions *AppOptions
 )
 
 const (
@@ -25,10 +33,22 @@ const (
 	listUIHelp = "<Help>"
 	listUIFilter = "<Filter>"
 	listUIEnterDir = "<Enter directory>"
+	appName = "ci"
 )
 
-func HandleError(err error) {
+func HandleError(err error, logError bool) {
 	if err != nil {
+		if logError {
+			log.Fatal(err)
+		}
+		os.Exit(1)
+	}
+}
+
+func HandleUIError(err error) {
+	if err != nil {
+		// TODO: Use a variable/flag to determine if the screen buffer has been entered or not. Remove
+		//  HandleUIError when this happens and implement screen buffer code in HandleError.
 		ExitScreenBuffer()
 		log.Fatal(err)
 	}
@@ -37,11 +57,13 @@ func HandleError(err error) {
 // EnterScreenBuffer Switches terminal to alternate screen buffer to retain command history
 //  of host process
 func EnterScreenBuffer() {
+	// TODO: Set a flag that tracks if the screen buffer had been entered.
 	print("\033[?1049h")
 }
 
 // ExitScreenBuffer Exits the alternate screen buffer and returns to that of host process
 func ExitScreenBuffer() {
+	// TODO: Unset a flag that tracks if the screen buffer had been entered.
 	print("\033[?1049l")
 }
 
@@ -168,7 +190,7 @@ func GetListUI(
 			}))
 
 	currentDir, err := GetInitialDirectory()
-	HandleError(err)
+	HandleUIError(err)
 
 	titleBox.Clear()
 	titleBox.SetText(currentDir)
@@ -188,6 +210,7 @@ func GetListUI(
 			case 'q':
 				app.Stop()
 				ExitScreenBuffer()
+				PrintAndExit(".")
 			}
 
 			return event
@@ -213,17 +236,15 @@ func GetListUI(
 		list.AddItem(listUIEnterDir, "", 'e', func() {
 			app.Stop()
 			ExitScreenBuffer()
-
-			_, err := os.Stdout.WriteString(currentDir)
-			HandleError(err)
+			PrintAndExit(currentDir)
 		})
 
 		scanner, err := godirwalk.NewScanner(currentDir)
-		HandleError(err)
+		HandleUIError(err)
 
 		for scanner.Scan() {
 			d, err := scanner.Dirent()
-			HandleError(err)
+			HandleUIError(err)
 
 			if d.IsDir() {
 				if isMatch, _ := filepath.Match(filterText, d.Name()); len(filterText) == 0 || isMatch {
@@ -232,9 +253,7 @@ func GetListUI(
 
 						app.Stop()
 						ExitScreenBuffer()
-
-						_, err := os.Stdout.WriteString(path)
-						HandleError(err)
+						PrintAndExit(path)
 					})
 				}
 			}
@@ -243,6 +262,7 @@ func GetListUI(
 		list.AddItem(listUIQuit, "Press to exit", 'q', func() {
 			app.Stop()
 			ExitScreenBuffer()
+			PrintAndExit(".")
 		})
 
 		list.AddItem(listUIHelp, "Get help with this program", 'h', func(){})
@@ -346,6 +366,12 @@ func GetListUI(
 	return list
 }
 
+func PrintAndExit(data string) {
+	_, err := os.Stdout.WriteString(data)
+	HandleUIError(err)
+	os.Exit(0)
+}
+
 func DirectoryIsAccessible(dir string) bool {
 	_, err := ioutil.ReadDir(dir)
 
@@ -364,19 +390,19 @@ func GetDirectoryInfo(dir string) string {
 
 	// TODO: Create a function for printing each row of the tab output to reduce duplication.
 	_, err = fmt.Fprintf(writer, "%v\t%v\t%v\t%v\n", "Mode", "Name", "ModTime", "Bytes")
-	HandleError(err)
+	HandleUIError(err)
 
 	_, err = fmt.Fprintf(writer, "%v\t%v\t%v\t%v\n", "----", "----", "-------", "-----")
-	HandleError(err)
+	HandleUIError(err)
 
 	for _, f := range files {
 		dateFormat := "2006-01-02 3:04 PM"
 		modTime := f.ModTime().Format(dateFormat)
 		_, err := fmt.Fprintf(writer, "%v\t%v\t%v\t%v\n", f.Mode(), f.Name(), modTime, f.Size())
-		HandleError(err)
+		HandleUIError(err)
 	}
 
-	HandleError(writer.Flush())
+	HandleUIError(writer.Flush())
 
 	return out.String()
 }
@@ -393,16 +419,14 @@ func SetApplicationStyles() {
 func InitFileLogging() func() {
 	file, err := os.OpenFile("./.log", os.O_CREATE | os.O_APPEND | os.O_WRONLY, 0644)
 
-	if err != nil {
-		log.Fatal(err)
-	}
+	HandleUIError(err)
 
 	log.SetOutput(file)
 
 	return func() {
 		if err := file.Close(); err != nil {
 			log.SetOutput(os.Stdout)
-			HandleError(err)
+			HandleUIError(err)
 		}
 	}
 }
@@ -436,13 +460,55 @@ func run(app *tview.Application, args []string) error {
 	return nil
 }
 
+func InitFlags() {
+	var err error
+
+	appOptions, err = GetAppFlags(appName)
+	HandleError(err, false)
+
+	if appOptions.HelpInformation.Help {
+		appOptions.WriteHelp(os.Stdout)
+		os.Exit(0)
+	}
+
+	if appOptions.VersionInformation.Version {
+		buildDate, err := time.Parse(time.RFC3339, BuildDate)
+		HandleError(err, true)
+
+		versionFormat := `%v
+Copyright © %v
+%v
+
+Version: %v
+Build date: %v
+`
+		versionString := fmt.Sprintf(
+			versionFormat,
+			appName,
+			buildDate.Year(),
+			BuildOwner,
+			BuildVersion,
+			buildDate.Format(time.RFC3339))
+		_, err = os.Stdout.WriteString(versionString)
+		HandleError(err, true)
+		os.Exit(0)
+	}
+
+	// TODO: Create a quick link feature where the user enters the command and can then tab through the most recent
+	//  directories or their favourites. One can tab throw a directory list right from the command and the other will
+	//  require its own option to do the same. Keep in mind that the program executes when doing this. This may need a
+	//  persistence feature where the directory data is stored in a separate file.
+}
+
 func main() {
+	InitFlags()
+
 	closeLogFile := InitFileLogging()
 	defer closeLogFile()
 
 	EnterScreenBuffer()
 
-	// Note: code taken from https://pace.dev/blog/2020/02/17/repond-to-ctrl-c-interrupt-signals-gracefully-with-context-in-golang-by-mat-ryer.html
+	// Note: code taken and modified from https://pace.dev/blog/2020/02/17/repond-to-ctrl-c-interrupt-signals-gracefully-with-context-in-golang-by-mat-ryer.html
 	ctx := context.Background()
 	ctx, cancel := context.WithCancel(ctx)
 	signalChan := make(chan os.Signal, 1)
@@ -466,7 +532,8 @@ func main() {
 		<-signalChan // second signal, hard exit
 		os.Exit(exitCodeInterrupt)
 	}()
+
 	if err := run(app, os.Args); err != nil {
-		HandleError(err)
+		HandleUIError(err)
 	}
 }

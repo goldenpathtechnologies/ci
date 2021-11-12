@@ -1,3 +1,12 @@
+# Binary output folder
+bin/
+
+# Build folder
+build/
+
+# semantic-release configuration
+.releaserc
+
 # Binaries for programs and plugins
 *.exe
 *.exe~
@@ -33,6 +42,8 @@
 .idea/**/usage.statistics.xml
 .idea/**/dictionaries
 .idea/**/shelf
+# TODO: Verify if this file should be included or not. Contains local machine paths so excluding for now.
+.idea/**/remote-targets.xml
 
 # Generated files
 .idea/**/contentModel.xml
