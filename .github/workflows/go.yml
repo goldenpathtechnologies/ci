@@ -1,6 +1,5 @@
 name: Build
-# TODO: semantic-release needs to be run first before the build. Make sure that the branches it creates
-#  (tagged versions, etc.) are the only ones triggered in this workflow.
+
 on:
   push:
     tags:
