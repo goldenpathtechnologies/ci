@@ -2,12 +2,9 @@ name: Version
 
 on:
   push:
-    # TODO: Remove sdlc branch here and in semantic-release config when release management is complete.
     branches:
       - main
       - dev
-      - sdlc
-      - sdlc_release
   pull_request:
     branches:
       - main
@@ -33,14 +30,6 @@ jobs:
           {
             "branches": [
               "main",
-              {
-                "name": "sdlc",
-                "prerelease": true
-              },
-              {
-                "name": "sdlc_release",
-                "prerelease": "sdlcrelease"
-              },
               {
                 "name": "dev",
                 "prerelease": true
