@@ -2,10 +2,8 @@ name: Version
 
 on:
   push:
-    # TODO: Remove sdlc branch here and in semantic-release config when release management is complete.
     branches:
       - main
-      - sdlc
       - dev
   pull_request:
     branches:
@@ -21,7 +19,7 @@ jobs:
         uses: actions/checkout@v2
         with:
           fetch-depth: 0
-          token: ${{ secrets.GH_TOKEN }}
+          token: ${{secrets.GH_TOKEN}}
       - name: Setup Node.js
         uses: actions/setup-node@v2
         with:
@@ -32,10 +30,6 @@ jobs:
           {
             "branches": [
               "main",
-              {
-                "name": "sdlc",
-                "prerelease": true
-              },
               {
                 "name": "dev",
                 "prerelease": true
@@ -59,7 +53,7 @@ jobs:
           EOF
       - name: Run semantic-release
         env:
-          GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
+          GITHUB_TOKEN: ${{secrets.GH_TOKEN}}
         run: |
           npx \
           -p @semantic-release/git \
