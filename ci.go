@@ -417,9 +417,13 @@ func SetApplicationStyles() {
 
 // InitFileLogging Initializes logging to a file and returns the function that closes that file
 func InitFileLogging() func() {
-	file, err := os.OpenFile("./.log", os.O_CREATE | os.O_APPEND | os.O_WRONLY, 0644)
+	exe, err := os.Executable()
+	HandleError(err, false)
 
-	HandleUIError(err)
+	exeDir := filepath.Dir(exe)
+	logFile := fmt.Sprintf("%v/.log", exeDir)
+	file, err := os.OpenFile(logFile, os.O_CREATE | os.O_APPEND | os.O_WRONLY, 0644)
+	HandleError(err, false)
 
 	log.SetOutput(file)
 
