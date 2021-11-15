@@ -1,3 +1,10 @@
+## [1.0.0-dev.2](https://github.com/GoldenPathTechnologies/ci/compare/v1.0.0-dev.1...v1.0.0-dev.2) (2021-11-15)
+
+
+### Bug Fixes
+
+* **logging:** changed the location of the log file to that of the executable directory ([9e3b533](https://github.com/GoldenPathTechnologies/ci/commit/9e3b53332b515a0aa38933f61aa05a7ec688a25e))
+
 ## 1.0.0-dev.1 (2021-11-12)
 
 
