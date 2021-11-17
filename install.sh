@@ -16,23 +16,18 @@ then
 
   if [ "$(version "$CI_CURRENT_VERSION")" -ge "$(version "$CI_NEW_VERSION")" ]
   then
-    echo "ci v$CI_CURRENT_VERSION is already up to date"
+    echo "ci v$CI_CURRENT_VERSION is up to date"
     exit 0
   else
     ./uninstall.sh
   fi
 fi
 
-mkdir $CI_INSTALL_DIR
+mkdir -p $CI_INSTALL_DIR/bin
 
-cp -r ./* $CI_INSTALL_DIR
-
-rm -f "$CI_INSTALL_DIR/install.sh"
+cp ./bin/ci $CI_INSTALL_DIR/bin/ci
+cp ./{LICENSE,CHANGELOG.md} $CI_INSTALL_DIR
 
 { echo "### BEGIN CI COMMAND";
 cat ./ci.sh;
-echo "### END CI COMMAND";
-echo ""; } >> ~/.bashrc
-
-# shellcheck source=/dev/null
-source ~/.bashrc
+echo "### END CI COMMAND";} >> ~/.bashrc

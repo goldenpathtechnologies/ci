@@ -3,8 +3,6 @@ function Invoke-Ci {
     $ciExe = "$home\Documents\WindowsPowerShell\Modules\ci\ci.exe"
 
     if ($args | Where-Object { $exitArgs -contains $_ }) {
-        # TODO: Do not use relative paths for the script.
-        # TODO: Use an environment variable for the executable name or ensure the name is consistent across dev and prod.
         & $ciExe $args
     } else {
         $output = & $ciExe $args

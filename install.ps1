@@ -15,7 +15,7 @@ if (Test-Path $relModulePath) {
     }
 
     if ($(Get-IntVersion $currentVersion) -ge $(Get-IntVersion $newVersion)) {
-        Write-Host "ci v$currentVersion is already up to date"
+        Write-Host "ci v$currentVersion is up to date"
         exit 0
     } else {
         .\uninstall.ps1
@@ -37,3 +37,5 @@ $modulePath = $(New-Item -Path $home\Documents\WindowsPowerShell\Modules\ci -Ite
 #   files that persist information crucial to program operation.
 Copy-Item -Path .\bin\ci.exe -Destination $modulePath
 Copy-Item -Path .\ci.psm1 -Destination $modulePath
+Copy-Item -Path .\LICENSE -Destination $modulePath
+Copy-Item -Path .\CHANGELOG.md -Destination $modulePath

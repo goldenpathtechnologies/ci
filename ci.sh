@@ -4,6 +4,8 @@ export CI_CMD=~/.ci/bin/ci
 #  http://manpages.ubuntu.com/manpages/precise/man1/rcsintro.1.html
 #  Ensure there is a way to customize the name, or create a tool
 #  that will update the bashrc with an alternate function name.
+#  RCS is obscure/old enough that it isn't worth it to implement
+#  this improvement until enough people complain about it.
 ci() {
   exitArgs=("-v" "--version" "-h" "--help")
   containsExitArgs=false
@@ -22,20 +24,19 @@ ci() {
   if [ "$containsExitArgs" = true ]
   then
     $CI_CMD "$@"
-    # TODO: Note that 'return' returns the exit status of the last executed command: https://stackoverflow.com/a/43840545/3141986
-    #  Remove the value from the return command.
-    return 0
+    return
   else
     output=$($CI_CMD "$@")
+    lastCode=$?
 
     if [ -d "$output" ]
     then
-      # TODO: A 'return' command with no parameters after the 'cd' command will suffice, remove the '|| return'.
-      cd "$output" || return
-      return 0
+      # shellcheck disable=SC2164
+      cd "$output"
+      return
     else
       echo "$output"
-      return 1
+      return "$lastCode"
     fi
   fi
 }
