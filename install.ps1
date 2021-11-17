@@ -14,8 +14,12 @@ if (Test-Path $relModulePath) {
         return "{0:d}{1:d3}{2:d3}" -f $data[0],$data[1],$data[2]
     }
 
-    if ($(Get-IntVersion $currentVersion) -ge $(Get-IntVersion $newVersion)) {
-        Write-Host "ci v$currentVersion is up to date"
+    if ($(Get-IntVersion $currentVersion) -gt $(Get-IntVersion $newVersion)) {
+        Write-Host "A newer version of ci (v$currentVersion) is already installed."
+        Write-Host "Please first uninstall v$currentVersion if you would like to install v$newVersion."
+        exit 0
+    } elseif ($(Get-IntVersion $currentVersion) -eq $(Get-IntVersion $newVersion)) {
+        Write-Host "The installed version of ci ($currentVersion) is up to date."
         exit 0
     } else {
         .\uninstall.ps1

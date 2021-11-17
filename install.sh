@@ -14,9 +14,14 @@ then
     echo "$@" | awk -F. '{ printf("%d%03d%03d%03d\n", $1,$2,$3,$4) }'
   }
 
-  if [ "$(version "$CI_CURRENT_VERSION")" -ge "$(version "$CI_NEW_VERSION")" ]
+  if [ "$(version "$CI_CURRENT_VERSION")" -gt "$(version "$CI_NEW_VERSION")" ]
   then
-    echo "ci v$CI_CURRENT_VERSION is up to date"
+    echo "A newer version of ci (v$CI_CURRENT_VERSION) is already installed."
+    echo "Please first uninstall v$CI_CURRENT_VERSION if you would like to install v$CI_NEW_VERSION."
+    exit 0
+  elif [ "$(version "$CI_CURRENT_VERSION")" -eq "$(version "$CI_NEW_VERSION")" ]
+  then
+    echo "The installed version of ci ($CI_CURRENT_VERSION) is up to date."
     exit 0
   else
     ./uninstall.sh
