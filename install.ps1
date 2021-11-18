@@ -6,16 +6,30 @@ $relModulePath = "$home\Documents\WindowsPowerShell\Modules\ci"
 $ciExe = "$relModulePath\ci.exe"
 
 if (Test-Path $relModulePath) {
-    $currentVersion = $(& $ciExe -v | Select-String -Pattern "Version: (\d+\.\d+\.\d+).*").Matches.groups[1].value
-    $newVersion = $(.\bin\ci.exe -v | Select-String -Pattern "Version: (\d+\.\d+\.\d+).*").Matches.groups[1].value
-
-    function Get-IntVersion {
-        $data = $(Write-Output $@).Split(".")
-        return "{0:d}{1:d3}{2:d3}" -f $data[0],$data[1],$data[2]
+    function Get-OrdinalVersion {
+        $pattern = "Version: (?:(\d+)\.(\d+)\.(\d+))(?:(?:-[a-zA-Z]+\.)(\d+)){0,1}"
+        $data = $(Write-Output $args[0] | Select-String -Pattern $pattern).Matches.groups
+        return "{0:d}{1:d3}{2:d3}{3:d3}" -f [int]$data[1].value,[int]$data[2].value,[int]$data[3].value,[int]$data[4].value
     }
 
-    if ($(Get-IntVersion $currentVersion) -ge $(Get-IntVersion $newVersion)) {
-        Write-Host "ci v$currentVersion is already up to date"
+    function Get-StringVersion {
+        $pattern = "Version: (\d+\.\d+\.\d+(-[a-zA-Z]+\.\d+){0,1})"
+        return $(Write-Output $args[0] | Select-String -Pattern $pattern).Matches.groups[1].value
+    }
+
+    $currentVersionData = $(& $ciExe -v)
+    $newVersionData = $(.\bin\ci.exe -v)
+    $currentVersionText = $(Get-StringVersion $currentVersionData)
+    $newVersionText = $(Get-StringVersion $newVersionData)
+    $currentVersion = $(Get-OrdinalVersion $currentVersionData)
+    $newVersion = $(Get-OrdinalVersion $newVersionData)
+
+    if ($currentVersion -gt $newVersion) {
+        Write-Host "ci is already installed at v$currentVersionText."
+        Write-Host "Please uninstall the current version before installing v$newVersionText."
+        exit 0
+    } elseif ($currentVersion -eq $newVersion) {
+        Write-Host "The installed version of ci ($currentVersionText) is up to date."
         exit 0
     } else {
         .\uninstall.ps1
@@ -37,3 +51,5 @@ $modulePath = $(New-Item -Path $home\Documents\WindowsPowerShell\Modules\ci -Ite
 #   files that persist information crucial to program operation.
 Copy-Item -Path .\bin\ci.exe -Destination $modulePath
 Copy-Item -Path .\ci.psm1 -Destination $modulePath
+Copy-Item -Path .\LICENSE -Destination $modulePath
+Copy-Item -Path .\CHANGELOG.md -Destination $modulePath
