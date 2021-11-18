@@ -1,3 +1,10 @@
+## [1.0.0-dev.3](https://github.com/GoldenPathTechnologies/ci/compare/v1.0.0-dev.2...v1.0.0-dev.3) (2021-11-18)
+
+
+### Bug Fixes
+
+* **installation:** corrected handling of version numbers and their comparison ([e5ee2ef](https://github.com/GoldenPathTechnologies/ci/commit/e5ee2ef1e1b136d1aa626bbc8f39959ab711be1e))
+
 ## [1.0.0-dev.2](https://github.com/GoldenPathTechnologies/ci/compare/v1.0.0-dev.1...v1.0.0-dev.2) (2021-11-15)
 
 
