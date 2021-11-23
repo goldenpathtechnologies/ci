@@ -1,3 +1,15 @@
+## [1.0.0-dev.4](https://github.com/GoldenPathTechnologies/ci/compare/v1.0.0-dev.3...v1.0.0-dev.4) (2021-11-23)
+
+
+### Features
+
+* **installation:** added PowerShell module manifest file ([03125a0](https://github.com/GoldenPathTechnologies/ci/commit/03125a0d8edfeb4fc7f9ed4889c5d7ba5a24b2ba))
+
+
+### Bug Fixes
+
+* **release:** copied correct files to Windows release package during build ([0d32392](https://github.com/GoldenPathTechnologies/ci/commit/0d32392e0738a212522b9f9375acf783429115c3))
+
 ## [1.0.0-dev.3](https://github.com/GoldenPathTechnologies/ci/compare/v1.0.0-dev.2...v1.0.0-dev.3) (2021-11-18)
 
 
