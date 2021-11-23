@@ -92,8 +92,11 @@ jobs:
       - name: Verify built executable
         run: ./build/${{env.APP_NAME}}/bin/${{env.APP_NAME}}.exe -v
 
+      - name: Update version in PowerShell module manifest file
+        run: (Get-Content ./${{env.APP_NAME}}.psd1) -replace 'ModuleVersion = ''0.0.0''','ModuleVersion = ''${{env.BUILD_VERSION}}''' | Set-Content ./${{env.APP_NAME}}.psd1
+
       - name: Copy files to release package
-        run: Copy-Item ./${{env.APP_NAME}}.sh,./install.sh,./uninstall.sh -Destination ./build/${{env.APP_NAME}}/
+        run: Copy-Item ./${{env.APP_NAME}}.psm1,./${{env.APP_NAME}}.psd1,./install.ps1,./uninstall.ps1 -Destination ./build/${{env.APP_NAME}}/
 
       - name: Create relase package zip file
         run: Get-ChildItem -Path ./build/${{env.APP_NAME}}/ | Compress-Archive -DestinationPath ./build/${{env.APP_NAME}}_windows-v${{env.BUILD_VERSION}}.zip

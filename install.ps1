@@ -49,7 +49,4 @@ $modulePath = $(New-Item -Path $home\Documents\WindowsPowerShell\Modules\ci -Ite
 # - Above files are the basics, there may be more that need to be downloaded
 #   but there may be ones that will be created such as log files and other
 #   files that persist information crucial to program operation.
-Copy-Item -Path .\bin\ci.exe -Destination $modulePath
-Copy-Item -Path .\ci.psm1 -Destination $modulePath
-Copy-Item -Path .\LICENSE -Destination $modulePath
-Copy-Item -Path .\CHANGELOG.md -Destination $modulePath
+Copy-Item .\bin\ci.exe,.\ci.psm1,.\ci.psd1,.\LICENSE,.\CHANGELOG.md -Destination $modulePath
