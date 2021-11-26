@@ -95,6 +95,25 @@ jobs:
       - name: Update version in PowerShell module manifest file
         run: (Get-Content ./${{env.APP_NAME}}.psd1) -replace 'ModuleVersion = ''0.0.0''','ModuleVersion = ''${{env.BUILD_VERSION}}''' | Set-Content ./${{env.APP_NAME}}.psd1
 
+      - name: Import code signing certificate
+        run: |
+          $pfxCertFilePath = Join-Path -Path $PSScriptRoot -ChildPath "CodeSigningCertificate.pfx"
+          Set-Content -Value $([System.Convert]::FromBase64String($env:BASE64_PFX)) -Path $pfxCertFilePath -Encoding Byte
+          Import-PfxCertificate -FilePath $pfxCertFilePath -Password $($env:PFX_PASSWORD | ConvertTo-SecureString -AsPlainText -Force) -CertStoreLocation Cert:/CurrentUser/My
+        env:
+          BASE64_PFX: ${{secrets.BASE64_PFX}}
+          PFX_PASSWORD: ${{secrets.PFX_PASSWORD}}
+
+      - name: Digitally sign PowerShell scripts and module files
+        run: |
+          $codeSigningCert = Get-ChildItem Cert:/CurrentUser/My -CodeSigningCert | Select-Object -First 1
+          $psFiles = Get-ChildItem -Path . -Exclude .git,.github,.idea,bin,build -Filter "*.ps*" -Recurse -ErrorAction Stop
+          $psFiles | ForEach-Object {
+            $script = Get-Content -Path $_.FullName
+            Write-Output "Signing '$($_.Name)' with certificate '$($codeSigningCert.Thumbprint)'"
+            $null = Set-AuthenticodeSignature -Certificate $codeSigningCert -FilePath $script.FullName -TimestampServer "http://timestamp.digicert.com/"
+          }
+
       - name: Copy files to release package
         run: Copy-Item ./${{env.APP_NAME}}.psm1,./${{env.APP_NAME}}.psd1,./install.ps1,./uninstall.ps1 -Destination ./build/${{env.APP_NAME}}/
 
