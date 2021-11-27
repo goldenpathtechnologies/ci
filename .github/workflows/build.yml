@@ -139,15 +139,23 @@ jobs:
         with:
           fetch-depth: 0
           token: ${{secrets.GH_TOKEN}}
+
       - name: Determine release type
         run: echo "IS_PRERELEASE=$(if [ "$(echo $GITHUB_REF | sed -r 's/refs\/[a-zA-Z]+\/v[0-9]+\.[0-9]+\.[0-9]+//')" ]; then echo true; else echo false; fi)" >> $GITHUB_ENV
+
+      - name: Get release version
+        run: echo "RELEASE_VERSION=${GITHUB_REF#refs/*/v}" >> $GITHUB_ENV
+
       - name: Download release package
         uses: actions/download-artifact@v2
         with:
           name: ${{env.RELEASE_ARTIFACT_NAME}}
           path: ./bin
+
       - name: Generate SHA-256 hashes of release package files
-        run: sha256sum ./bin/* > ./bin/${{env.APP_NAME}}-v${{env.BUILD_VERSION}}-sha256checksums.txt
+        working-directory: ./bin
+        run: sha256sum * > ${{env.APP_NAME}}-v${{env.RELEASE_VERSION}}-sha256checksums.txt
+
       - name: Create release
         uses: softprops/action-gh-release@v1
         with:
