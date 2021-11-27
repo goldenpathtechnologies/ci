@@ -146,6 +146,8 @@ jobs:
         with:
           name: ${{env.RELEASE_ARTIFACT_NAME}}
           path: ./bin
+      - name: Generate SHA-256 hashes of release package files
+        run: sha256sum ./bin/* > ./bin/${{env.APP_NAME}}-v${{env.BUILD_VERSION}}-sha256checksums.txt
       - name: Create release
         uses: softprops/action-gh-release@v1
         with:
