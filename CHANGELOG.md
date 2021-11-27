@@ -1,3 +1,10 @@
+## [1.0.0-dev.5](https://github.com/GoldenPathTechnologies/ci/compare/v1.0.0-dev.4...v1.0.0-dev.5) (2021-11-27)
+
+
+### Features
+
+* **release:** digitally signing all PowerShell scripts during release ([bcfff6f](https://github.com/GoldenPathTechnologies/ci/commit/bcfff6f1a9a2c5ee8d41449a2f0dbb35fe8e0226))
+
 ## [1.0.0-dev.4](https://github.com/GoldenPathTechnologies/ci/compare/v1.0.0-dev.3...v1.0.0-dev.4) (2021-11-23)
 
 
