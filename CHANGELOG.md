@@ -1,3 +1,10 @@
+## [1.0.0-dev.6](https://github.com/GoldenPathTechnologies/ci/compare/v1.0.0-dev.5...v1.0.0-dev.6) (2021-11-27)
+
+
+### Features
+
+* **release:** generated SHA-256 checksums of release package files ([906adc2](https://github.com/GoldenPathTechnologies/ci/commit/906adc203aa4160bbe8d13c5d1a0d7a899ba04aa))
+
 ## [1.0.0-dev.5](https://github.com/GoldenPathTechnologies/ci/compare/v1.0.0-dev.4...v1.0.0-dev.5) (2021-11-27)
 
 
