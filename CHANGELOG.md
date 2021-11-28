@@ -1,3 +1,10 @@
+## [1.0.0-dev.9](https://github.com/GoldenPathTechnologies/ci/compare/v1.0.0-dev.8...v1.0.0-dev.9) (2021-11-28)
+
+
+### Features
+
+* **release:** ensured each release contains changelog text for the current version only ([c2a595d](https://github.com/GoldenPathTechnologies/ci/commit/c2a595defcad9f640a05dd1434033e94d85ceccb))
+
 ## [1.0.0-dev.8](https://github.com/GoldenPathTechnologies/ci/compare/v1.0.0-dev.7...v1.0.0-dev.8) (2021-11-28)
 
 
