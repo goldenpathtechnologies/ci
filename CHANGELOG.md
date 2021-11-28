@@ -1,3 +1,10 @@
+## [1.0.0-dev.8](https://github.com/GoldenPathTechnologies/ci/compare/v1.0.0-dev.7...v1.0.0-dev.8) (2021-11-28)
+
+
+### Features
+
+* **release:** skipped Version workflow for branches when tagging releases ([8bdef97](https://github.com/GoldenPathTechnologies/ci/commit/8bdef977e50611d5a1d9fbc919f333d52adaa900))
+
 ## [1.0.0-dev.7](https://github.com/GoldenPathTechnologies/ci/compare/v1.0.0-dev.6...v1.0.0-dev.7) (2021-11-28)
 
 
