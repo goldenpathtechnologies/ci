@@ -1,3 +1,10 @@
+## [1.0.0-dev.7](https://github.com/GoldenPathTechnologies/ci/compare/v1.0.0-dev.6...v1.0.0-dev.7) (2021-11-28)
+
+
+### Bug Fixes
+
+* **release:** ensured that the checksum file is named and formatted correctly ([0ce7a07](https://github.com/GoldenPathTechnologies/ci/commit/0ce7a07b4e7597405e961eea5052fac5121745fa))
+
 ## [1.0.0-dev.6](https://github.com/GoldenPathTechnologies/ci/compare/v1.0.0-dev.5...v1.0.0-dev.6) (2021-11-27)
 
 
