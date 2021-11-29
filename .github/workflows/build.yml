@@ -156,8 +156,10 @@ jobs:
         working-directory: ./release
         run: sha256sum * > ${{env.APP_NAME}}-v${{env.RELEASE_VERSION}}-sha256checksums.txt
 
-      - name: Get release notes
-        run: git log -1 --pretty=format:"%b" > ./tmp/release_notes
+      - name: Generate release notes
+        run: |
+          mkdir ./tmp
+          git log -1 --pretty=format:"%b" > ./tmp/release_notes
 
       - name: Create release
         uses: softprops/action-gh-release@v1
