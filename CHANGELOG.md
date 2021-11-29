@@ -1,3 +1,10 @@
+## [1.0.0-dev.10](https://github.com/GoldenPathTechnologies/ci/compare/v1.0.0-dev.9...v1.0.0-dev.10) (2021-11-29)
+
+
+### Bug Fixes
+
+* **release:** output changelog text to file due to envvar issues with markdown format ([39deadd](https://github.com/GoldenPathTechnologies/ci/commit/39deadde553beafd5c4b64d108bce7bf5a6ec90c))
+
 ## [1.0.0-dev.9](https://github.com/GoldenPathTechnologies/ci/compare/v1.0.0-dev.8...v1.0.0-dev.9) (2021-11-28)
 
 
