@@ -1,3 +1,10 @@
+## [1.0.0-dev.11](https://github.com/GoldenPathTechnologies/ci/compare/v1.0.0-dev.10...v1.0.0-dev.11) (2021-11-29)
+
+
+### Bug Fixes
+
+* **release:** ensured changelog text is generated to an existent directory ([dd33ba1](https://github.com/GoldenPathTechnologies/ci/commit/dd33ba1478836261fc90daec50effff052fab900))
+
 ## [1.0.0-dev.10](https://github.com/GoldenPathTechnologies/ci/compare/v1.0.0-dev.9...v1.0.0-dev.10) (2021-11-29)
 
 
