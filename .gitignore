@@ -4,6 +4,12 @@ bin/
 # Build folder
 build/
 
+# Release folder
+release/
+
+# Temp folder
+tmp/
+
 # semantic-release configuration
 .releaserc
 
