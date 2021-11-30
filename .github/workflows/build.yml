@@ -12,6 +12,7 @@ env:
   APP_NAME: ci
   GO_VERSION: 1.17
   RELEASE_ARTIFACT_NAME: artifact
+  DEV_PRERELEASE_NAME: dev
 
 jobs:
   # TODO: Consider adding a security and license scanning job to the build. Explore several options, but start here:
@@ -94,10 +95,14 @@ jobs:
 
       - name: Update version in PowerShell module manifest file
         run: |
-          $pattern = "(?:(\d+)\.(\d+)\.(\d+))(?:(?:-[a-zA-Z]+\.)(\d+)){0,1}"
-          $data = $(Write-Output "${{env.BUILD_VERSION}}" | Select-String -Pattern $pattern).Matches.groups
-          Write-Output "MODULE_VERSION=$("{0:d}.{1:d}.{2:d}.{3:d}" -f [int]$data[1].value,[int]$data[2].value,[int]$data[3].value,[int]$data[4].value)" >> $env:GITHUB_ENV
-          (Get-Content ./${{env.APP_NAME}}.psd1) -replace 'ModuleVersion = ''0.0.0''','ModuleVersion = ''${{env.MODULE_VERSION}}''' | Set-Content ./${{env.APP_NAME}}.psd1
+          if (("${{env.BUILD_VERSION}}" -replace "\d+\.\d+\.\d+", "" -replace "-${{env.DEV_PRERELEASE_NAME}}\.\d+", "").Length -eq 0) {
+            $pattern = "(?:(\d+)\.(\d+)\.(\d+))(?:(?:-[a-zA-Z]+\.)(\d+)){0,1}"
+            $data = $(Write-Output "${{env.BUILD_VERSION}}" | Select-String -Pattern $pattern).Matches.groups
+            $moduleVersion = "{0:d}.{1:d}.{2:d}.{3:d}" -f [int]$data[1].value,[int]$data[2].value,[int]$data[3].value,[int]$data[4].value
+            (Get-Content ./${{env.APP_NAME}}.psd1) -replace "ModuleVersion = '0.0.0'","ModuleVersion = '$moduleVersion'" | Set-Content ./${{env.APP_NAME}}.psd1
+          } else {
+            Write-Output "Module manifest not updated. This build is not for a production release nor development prerelease."
+          }
 
       - name: Import code signing certificate
         run: |
