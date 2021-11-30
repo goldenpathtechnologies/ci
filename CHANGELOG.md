@@ -1,3 +1,10 @@
+## [1.0.0-dev.12](https://github.com/GoldenPathTechnologies/ci/compare/v1.0.0-dev.11...v1.0.0-dev.12) (2021-11-30)
+
+
+### Bug Fixes
+
+* **release:** ensured module version in PowerShell manifest file is in correct format ([34c49cc](https://github.com/GoldenPathTechnologies/ci/commit/34c49ccdc769d2ad06f8dc9705f6f3915fb9e401))
+
 ## [1.0.0-dev.11](https://github.com/GoldenPathTechnologies/ci/compare/v1.0.0-dev.10...v1.0.0-dev.11) (2021-11-29)
 
 
