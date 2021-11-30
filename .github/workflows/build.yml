@@ -93,7 +93,11 @@ jobs:
         run: ./build/${{env.APP_NAME}}/bin/${{env.APP_NAME}}.exe -v
 
       - name: Update version in PowerShell module manifest file
-        run: (Get-Content ./${{env.APP_NAME}}.psd1) -replace 'ModuleVersion = ''0.0.0''','ModuleVersion = ''${{env.BUILD_VERSION}}''' | Set-Content ./${{env.APP_NAME}}.psd1
+        run: |
+          $pattern = "(?:(\d+)\.(\d+)\.(\d+))(?:(?:-[a-zA-Z]+\.)(\d+)){0,1}"
+          $data = $(Write-Output "${{env.BUILD_VERSION}}" | Select-String -Pattern $pattern).Matches.groups
+          Write-Output "MODULE_VERSION=$("{0:d}.{1:d}.{2:d}.{3:d}" -f [int]$data[1].value,[int]$data[2].value,[int]$data[3].value,[int]$data[4].value)" >> $env:GITHUB_ENV
+          (Get-Content ./${{env.APP_NAME}}.psd1) -replace 'ModuleVersion = ''0.0.0''','ModuleVersion = ''${{env.MODULE_VERSION}}''' | Set-Content ./${{env.APP_NAME}}.psd1
 
       - name: Import code signing certificate
         run: |
