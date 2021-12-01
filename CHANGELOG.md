@@ -1,3 +1,10 @@
+## [1.0.0-dev.14](https://github.com/GoldenPathTechnologies/ci/compare/v1.0.0-dev.13...v1.0.0-dev.14) (2021-12-01)
+
+
+### Features
+
+* **release:** digitally signed the Windows executable ([93d525b](https://github.com/GoldenPathTechnologies/ci/commit/93d525bbdfa98e7a014772db876c3a0af0749d43)), closes [#1](https://github.com/GoldenPathTechnologies/ci/issues/1)
+
 ## [1.0.0-dev.13](https://github.com/GoldenPathTechnologies/ci/compare/v1.0.0-dev.12...v1.0.0-dev.13) (2021-12-01)
 
 
