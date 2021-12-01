@@ -12,6 +12,8 @@ env:
   GO_VERSION: 1.17
   RELEASE_ARTIFACT_NAME: artifact
   DEV_PRERELEASE_NAME: dev
+  WINDOWS10_SDK_BUILD: 18362
+  TIMESTAMP_SERVER: http://timestamp.digicert.com/
 
 jobs:
   # TODO: Consider adding a security and license scanning job to the build. Explore several options, but start here:
@@ -76,6 +78,9 @@ jobs:
         with:
           go-version: ${{env.GO_VERSION}}
 
+      - name: Set up Windows 10 SDK
+        uses: GuillaumeFalourd/setup-windows10-sdk-action@v1
+
       - name: Get build date (RFC3339 format)
         run: Write-Output "BUILD_DATE=$($(Get-Date).ToUniversalTime().ToString('yyyy-MM-ddTHH:mm:ssZ'))" >> $env:GITHUB_ENV
 
@@ -112,13 +117,18 @@ jobs:
           BASE64_PFX: ${{secrets.BASE64_PFX}}
           PFX_PASSWORD: ${{secrets.PFX_PASSWORD}}
 
+      - name: Digitally sign app executable
+        run: |
+          New-Alias "signtool" "C:\Program Files (x86)\Windows Kits\10\bin\10.0.${{env.WINDOWS10_SDK_BUILD}}.0\x64\signtool.exe"
+          signtool sign /a /t ${{env.TIMESTAMP_SERVER}} ./build/${{env.APP_NAME}}/bin/${{env.APP_NAME}}.exe
+
       - name: Digitally sign PowerShell scripts and module files
         run: |
           $codeSigningCert = Get-ChildItem Cert:/CurrentUser/My -CodeSigningCert | Select-Object -First 1
           $psFiles = Get-ChildItem -Path . -Exclude .git,.github,.idea,bin,build -Filter "*.ps*" -Recurse -ErrorAction Stop
           $psFiles | ForEach-Object {
             Write-Output "Signing '$($_.Name)' with certificate '$($codeSigningCert.Thumbprint)'"
-            $null = Set-AuthenticodeSignature -Certificate $codeSigningCert -FilePath $_.FullName -TimestampServer "http://timestamp.digicert.com/"
+            $null = Set-AuthenticodeSignature -Certificate $codeSigningCert -FilePath $_.FullName -TimestampServer ${{env.TIMESTAMP_SERVER}}
           }
 
       - name: Copy files to release package
