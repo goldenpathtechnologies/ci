@@ -1,3 +1,10 @@
+## [1.0.0-dev.13](https://github.com/GoldenPathTechnologies/ci/compare/v1.0.0-dev.12...v1.0.0-dev.13) (2021-12-01)
+
+
+### Bug Fixes
+
+* **release:** added LICENSE and CHANGELOG.md files to the release package ([b5c59d9](https://github.com/GoldenPathTechnologies/ci/commit/b5c59d9261783c5a1e1edcc75da0d0a277c6b4ae)), closes [#5](https://github.com/GoldenPathTechnologies/ci/issues/5)
+
 ## [1.0.0-dev.12](https://github.com/GoldenPathTechnologies/ci/compare/v1.0.0-dev.11...v1.0.0-dev.12) (2021-11-30)
 
 
