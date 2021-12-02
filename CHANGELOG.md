@@ -1,3 +1,10 @@
+## [1.0.0-dev.15](https://github.com/GoldenPathTechnologies/ci/compare/v1.0.0-dev.14...v1.0.0-dev.15) (2021-12-02)
+
+
+### Features
+
+* **documentation:** added a README to the project ([6ae455d](https://github.com/GoldenPathTechnologies/ci/commit/6ae455d1293abd10ad7f2fa207249dd50d9aa70c)), closes [#6](https://github.com/GoldenPathTechnologies/ci/issues/6)
+
 ## [1.0.0-dev.14](https://github.com/GoldenPathTechnologies/ci/compare/v1.0.0-dev.13...v1.0.0-dev.14) (2021-12-01)
 
 
