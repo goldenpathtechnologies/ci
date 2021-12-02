@@ -141,7 +141,7 @@ func GetTitleBoxUI() *tview.TextView {
 		SetScrollable(false)
 
 	titleBox.SetBorder(true).
-		SetTitle(`CI - "CD Improved"`).
+		SetTitle(`ci - Interactive cd`).
 		SetBorderPadding(1,1,1,1).
 		SetTitleColor(tcell.ColorGreen)
 
