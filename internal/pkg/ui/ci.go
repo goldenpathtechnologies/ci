@@ -1,7 +1,9 @@
-package main
+package ui
 
 import (
 	"bytes"
+	"ci/internal/pkg/flags"
+	"ci/pkg/ui"
 	"context"
 	"fmt"
 	"github.com/gdamore/tcell/v2"
@@ -21,7 +23,7 @@ var (
 	BuildVersion string = ""
 	BuildDate string = ""
 	BuildOwner string = ""
-	appOptions *AppOptions
+	appOptions *flags.AppOptions
 )
 
 const (
@@ -101,7 +103,7 @@ func GetDetailsUI() *tview.TextView {
 		SetTitle("Details").
 		SetBorder(true).
 		SetBorderPadding(1, 1, 1, 1).
-		SetDrawFunc(GetScrollBarDrawFunc(
+		SetDrawFunc(ui.GetScrollBarDrawFunc(
 			details,
 			func() (width, height int) {
 				text := details.GetText(true)
@@ -163,7 +165,7 @@ func GetListUI(
 	list.SetBorder(true).
 		SetTitle(listUITitle).
 		SetBorderPadding(1, 1, 0, 1).
-		SetDrawFunc(GetScrollBarDrawFunc(
+		SetDrawFunc(ui.GetScrollBarDrawFunc(
 			list,
 			func() (width, height int) {
 				_, _, listWidth, _ := list.GetInnerRect()
@@ -219,9 +221,9 @@ func GetListUI(
 	var filterText string
 
 	menuItems := map[string]string{
-		listUIQuit: listUIQuit,
-		listUIHelp: listUIHelp,
-		listUIFilter: listUIFilter,
+		listUIQuit:     listUIQuit,
+		listUIHelp:     listUIHelp,
+		listUIFilter:   listUIFilter,
 		listUIEnterDir: listUIEnterDir,
 	}
 
@@ -248,7 +250,7 @@ func GetListUI(
 
 			if d.IsDir() {
 				if isMatch, _ := filepath.Match(filterText, d.Name()); len(filterText) == 0 || isMatch {
-					list.AddItem(d.Name() + pathSeparator, "", 0, func() {
+					list.AddItem(d.Name() +pathSeparator, "", 0, func() {
 						path := currentDir + d.Name() + pathSeparator
 
 						app.Stop()
@@ -467,7 +469,7 @@ func run(app *tview.Application, args []string) error {
 func InitFlags() {
 	var err error
 
-	appOptions, err = GetAppFlags(appName)
+	appOptions, err = flags.GetAppFlags(appName)
 	HandleError(err, false)
 
 	if appOptions.HelpInformation.Help {
