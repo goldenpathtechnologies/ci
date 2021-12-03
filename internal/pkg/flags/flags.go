@@ -1,11 +1,13 @@
 package flags
 
 import (
+	"ci/internal/pkg/utils"
 	"errors"
 	"fmt"
 	"github.com/jessevdk/go-flags"
 	"io"
 	"os"
+	"time"
 )
 
 type VersionOptions struct {
@@ -22,6 +24,31 @@ type AppOptions struct {
 	VersionInformation *VersionOptions
 	HelpInformation *HelpOptions
 	WriteHelp func(writer io.Writer)
+}
+
+var (
+	BuildVersion string = ""
+	BuildDate string = ""
+	BuildOwner string = ""
+)
+
+func InitFlags(appName string) (*AppOptions, error) {
+	var (
+		appOptions *AppOptions
+		err error
+	)
+
+	if appOptions, err = GetAppFlags(appName); err != nil {
+		return nil, err
+	}
+
+	HandleHelpInformation(appOptions)
+
+	if err = HandleVersionInformation(appOptions, appName); err != nil {
+		return nil, err
+	}
+
+	return appOptions, nil
 }
 
 func GetAppFlags(appName string) (*AppOptions, error) {
@@ -66,4 +93,44 @@ func GetAppFlags(appName string) (*AppOptions, error) {
 	}
 
 	return appOptions, nil
+}
+
+func HandleHelpInformation(appOptions *AppOptions) {
+	if appOptions.HelpInformation.Help {
+		appOptions.WriteHelp(os.Stdout)
+		os.Exit(0)
+	}
+}
+
+func HandleVersionInformation(appOptions *AppOptions, appName string) error {
+	var (
+		buildDate time.Time
+		err error
+	)
+
+	if appOptions.VersionInformation.Version {
+		if buildDate, err = time.Parse(time.RFC3339, BuildDate); err != nil {
+			return err
+		}
+
+		versionFormat := `%v
+Copyright © %v
+%v
+
+Version: %v
+Build date: %v
+`
+		versionString := fmt.Sprintf(
+			versionFormat,
+			appName,
+			buildDate.Year(),
+			BuildOwner,
+			BuildVersion,
+			buildDate.Format(time.RFC3339))
+		_, err = os.Stdout.WriteString(versionString)
+		utils.HandleError(err, true)
+		os.Exit(0)
+	}
+
+	return nil
 }
