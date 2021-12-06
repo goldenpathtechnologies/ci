@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"github.com/jessevdk/go-flags"
-	"io"
 	"os"
 	"time"
 )
@@ -18,46 +17,48 @@ type HelpOptions struct {
 	Help bool `short:"h" long:"help" description:"Show this help message"`
 }
 
-// TODO: Change the name of the AppOptions struct if using the function reference.
-//  Options should be data only and not also behaviour.
 type AppOptions struct {
 	VersionInformation *VersionOptions
-	HelpInformation *HelpOptions
-	WriteHelp func(writer io.Writer)
+	HelpInformation    *HelpOptions
+	AppName            string
+	BuildVersion       string
+	BuildDate          string
+	BuildOwner         string
 }
 
-var (
-	BuildVersion string = ""
-	BuildDate string = ""
-	BuildOwner string = ""
+const (
+	FlagErrorUnexpected = iota
+	FlagErrorNormalExit
 )
 
-func InitFlags(appName string) (*AppOptions, error) {
-	var (
-		appOptions *AppOptions
-		err error
-	)
-
-	if appOptions, err = GetAppFlags(appName); err != nil {
-		return nil, err
-	}
-
-	HandleHelpInformation(appOptions)
-
-	if err = HandleVersionInformation(appOptions, appName); err != nil {
-		return nil, err
-	}
-
-	return appOptions, nil
+type FlagError struct {
+	Err error
+	ErrorCode int
 }
 
-func GetAppFlags(appName string) (*AppOptions, error) {
-	appOptions := &AppOptions{
-		VersionInformation: &VersionOptions{},
-		HelpInformation: &HelpOptions{},
+func (f *FlagError) Error() string {
+	if f.ErrorCode == FlagErrorUnexpected {
+		return f.Err.Error()
 	}
 
-	parser := flags.NewNamedParser(appName, flags.PrintErrors | flags.PassDoubleDash)
+	return ""
+}
+
+func InitFlags(options *AppOptions) (*AppOptions, error) {
+	var err error
+
+	if options, err = getAppFlags(options); err != nil {
+		return nil, err
+	}
+
+	return options, nil
+}
+
+func getAppFlags(options *AppOptions) (*AppOptions, error) {
+	options.VersionInformation = &VersionOptions{}
+	options.HelpInformation = &HelpOptions{}
+
+	parser := flags.NewNamedParser(options.AppName, flags.PrintErrors | flags.PassDoubleDash)
 
 	parser.UnknownOptionHandler = func(option string, arg flags.SplitArgument, args []string) ([]string, error) {
 		parser.WriteHelp(os.Stdout)
@@ -73,14 +74,14 @@ func GetAppFlags(appName string) (*AppOptions, error) {
 	if _, err := parser.AddGroup(
 		"Version Information",
 		"Version Information",
-		appOptions.VersionInformation); err != nil {
+		options.VersionInformation); err != nil {
 		return nil, err
 	}
 
 	if _, err := parser.AddGroup(
 		"Help Options",
 		"Help Options",
-		appOptions.HelpInformation); err != nil {
+		options.HelpInformation); err != nil {
 		return nil, err
 	}
 
@@ -88,28 +89,34 @@ func GetAppFlags(appName string) (*AppOptions, error) {
 		return nil, err
 	}
 
-	appOptions.WriteHelp = func(writer io.Writer) {
-		parser.WriteHelp(writer)
+	if err := handleHelpInformation(options, parser); err != nil {
+		return nil, err
 	}
 
-	return appOptions, nil
-}
-
-func HandleHelpInformation(appOptions *AppOptions) {
-	if appOptions.HelpInformation.Help {
-		appOptions.WriteHelp(os.Stdout)
-		os.Exit(0)
+	if err := handleVersionInformation(options); err != nil {
+		return nil, err
 	}
+
+	return options, nil
 }
 
-func HandleVersionInformation(appOptions *AppOptions, appName string) error {
+func handleHelpInformation(options *AppOptions, parser *flags.Parser) error {
+	if options.HelpInformation.Help {
+		parser.WriteHelp(os.Stdout)
+		return &FlagError{ErrorCode: FlagErrorNormalExit}
+	}
+
+	return nil
+}
+
+func handleVersionInformation(options *AppOptions) error {
 	var (
 		buildDate time.Time
 		err error
 	)
 
-	if appOptions.VersionInformation.Version {
-		if buildDate, err = time.Parse(time.RFC3339, BuildDate); err != nil {
+	if options.VersionInformation.Version {
+		if buildDate, err = time.Parse(time.RFC3339, options.BuildDate); err != nil {
 			return err
 		}
 
@@ -122,14 +129,14 @@ Build date: %v
 `
 		versionString := fmt.Sprintf(
 			versionFormat,
-			appName,
+			options.AppName,
 			buildDate.Year(),
-			BuildOwner,
-			BuildVersion,
+			options.BuildOwner,
+			options.BuildVersion,
 			buildDate.Format(time.RFC3339))
 		_, err = os.Stdout.WriteString(versionString)
 		utils.HandleError(err, true)
-		os.Exit(0)
+		return &FlagError{ErrorCode: FlagErrorNormalExit}
 	}
 
 	return nil

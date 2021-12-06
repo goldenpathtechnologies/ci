@@ -1,6 +1,7 @@
 package main
 
 import (
+	"ci/internal/pkg/flags"
 	"ci/internal/pkg/utils"
 	"context"
 	"github.com/rivo/tview"
@@ -13,11 +14,39 @@ const (
 	exitCodeInterrupt = 2
 )
 
-func main() {
-	InitFlags()
+var (
+	AppName      = "ci"
+	BuildVersion string
+	BuildDate    string
+	BuildOwner   string
+)
 
+func main() {
 	closeLogFile := utils.InitFileLogging()
 	defer closeLogFile()
+
+	var (
+		options = &flags.AppOptions{
+			AppName:      AppName,
+			BuildVersion: BuildVersion,
+			BuildDate:    BuildDate,
+			BuildOwner:   BuildOwner,
+		}
+		err error
+	)
+
+	if options, err = flags.InitFlags(options); err != nil {
+		fErr, isFlagError := err.(*flags.FlagError)
+		if isFlagError {
+			if fErr.ErrorCode == flags.FlagErrorNormalExit {
+				os.Exit(0)
+			} else {
+				utils.HandleError(fErr, true)
+			}
+		} else {
+			utils.HandleError(err, true)
+		}
+	}
 
 	utils.EnterScreenBuffer()
 
@@ -46,7 +75,7 @@ func main() {
 		os.Exit(exitCodeInterrupt)
 	}()
 
-	if err := run(app, os.Args); err != nil {
+	if err = run(app, os.Args); err != nil {
 		utils.HandleError(err, true)
 	}
 }
