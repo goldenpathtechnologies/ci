@@ -1,12 +1,13 @@
 package ui
 
 import (
+	"ci/internal/pkg/flags"
 	"ci/internal/pkg/utils"
 	"github.com/gdamore/tcell/v2"
 	"github.com/rivo/tview"
 )
 
-func SetApplicationStyles() {
+func setApplicationStyles() {
 	// TODO: Setting this interferes with the styles of other components such
 	//  as the List. Find a way to target styles to specific components.
 	//  Additionally, runes display horribly in PowerShell if not using
@@ -14,8 +15,8 @@ func SetApplicationStyles() {
 	tview.Styles.PrimitiveBackgroundColor = tcell.ColorDefault
 }
 
-func run(app *tview.Application, args []string) error {
-	SetApplicationStyles()
+func Run(app *tview.Application, options *flags.AppOptions) error {
+	setApplicationStyles()
 
 	pages := tview.NewPages()
 

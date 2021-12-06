@@ -2,6 +2,7 @@ package main
 
 import (
 	"ci/internal/pkg/flags"
+	"ci/internal/pkg/ui"
 	"ci/internal/pkg/utils"
 	"context"
 	"github.com/rivo/tview"
@@ -10,7 +11,6 @@ import (
 )
 
 const (
-	exitCodeErr       = 1
 	exitCodeInterrupt = 2
 )
 
@@ -75,7 +75,7 @@ func main() {
 		os.Exit(exitCodeInterrupt)
 	}()
 
-	if err = run(app, os.Args); err != nil {
+	if err = ui.Run(app, options); err != nil {
 		utils.HandleError(err, true)
 	}
 }
