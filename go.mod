@@ -1,4 +1,4 @@
-module ci
+module github.com/goldenpathtechnologies/ci
 
 go 1.12
 
