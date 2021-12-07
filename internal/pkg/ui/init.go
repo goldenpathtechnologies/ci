@@ -19,10 +19,10 @@ func Run(app *App, options *flags.AppOptions) error {
 
 	pages := tview.NewPages()
 
-	filter := GetFilterUI()
-	details := GetDetailsUI()
-	titleBox := GetTitleBoxUI()
-	list := GetListUI(app, titleBox, filter, pages, details)
+	filter := CreateFilterPane()
+	details := CreateDetailsPane()
+	titleBox := CreateTitleBox()
+	list := CreateDirectoryList(app, titleBox, filter, pages, details)
 
 	flex := tview.NewFlex().SetDirection(tview.FlexRow).
 		AddItem(titleBox, 5, 0, false).
@@ -32,7 +32,7 @@ func Run(app *App, options *flags.AppOptions) error {
 			0, 1, false)
 
 	pages.AddPage("Home", flex, true, true).
-		AddPage("Filter", CreateModalUI(filter, 40, 7), true, false)
+		AddPage("Filter", CreateModal(filter, 40, 7), true, false)
 
 	if err := app.SetRoot(pages, true).SetFocus(list).Run(); err != nil {
 		app.Stop()

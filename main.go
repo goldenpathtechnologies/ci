@@ -51,7 +51,6 @@ func main() {
 	app := ui.NewApplication()
 	app.Start()
 
-
 	// Note: code taken and modified from https://pace.dev/blog/2020/02/17/repond-to-ctrl-c-interrupt-signals-gracefully-with-context-in-golang-by-mat-ryer.html
 	ctx := context.Background()
 	ctx, cancel := context.WithCancel(ctx)

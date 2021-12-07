@@ -5,7 +5,7 @@ import (
 	"strings"
 )
 
-func GetDetailsUI() *tview.TextView {
+func CreateDetailsPane() *tview.TextView {
 	details := tview.NewTextView()
 
 	details.

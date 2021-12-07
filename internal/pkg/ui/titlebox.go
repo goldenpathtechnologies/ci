@@ -5,7 +5,7 @@ import (
 	"github.com/rivo/tview"
 )
 
-func GetTitleBoxUI() *tview.TextView {
+func CreateTitleBox() *tview.TextView {
 	titleBox := tview.NewTextView().
 		SetText("No directory has been selected yet!").
 		SetTextAlign(tview.AlignCenter).

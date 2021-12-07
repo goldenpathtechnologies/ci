@@ -2,7 +2,7 @@ package ui
 
 import "github.com/rivo/tview"
 
-func GetFilterUI() *tview.InputField {
+func CreateFilterPane() *tview.InputField {
 	// TODO: Put the field width and max length in a constant
 	filter := tview.NewInputField().
 		SetLabel("Enter filter text: ").
