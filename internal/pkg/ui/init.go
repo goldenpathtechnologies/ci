@@ -2,7 +2,6 @@ package ui
 
 import (
 	"ci/internal/pkg/flags"
-	"ci/internal/pkg/utils"
 	"github.com/gdamore/tcell/v2"
 	"github.com/rivo/tview"
 )
@@ -15,7 +14,7 @@ func setApplicationStyles() {
 	tview.Styles.PrimitiveBackgroundColor = tcell.ColorDefault
 }
 
-func Run(app *tview.Application, options *flags.AppOptions) error {
+func Run(app *App, options *flags.AppOptions) error {
 	setApplicationStyles()
 
 	pages := tview.NewPages()
@@ -36,8 +35,7 @@ func Run(app *tview.Application, options *flags.AppOptions) error {
 		AddPage("Filter", CreateModalUI(filter, 40, 7), true, false)
 
 	if err := app.SetRoot(pages, true).SetFocus(list).Run(); err != nil {
-		utils.ExitScreenBuffer()
-
+		app.Stop()
 		return err
 	}
 

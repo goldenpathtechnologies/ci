@@ -5,7 +5,7 @@ import (
 	"ci/internal/pkg/ui"
 	"ci/internal/pkg/utils"
 	"context"
-	"github.com/rivo/tview"
+	"log"
 	"os"
 	"os/signal"
 )
@@ -41,14 +41,16 @@ func main() {
 			if fErr.ErrorCode == flags.FlagErrorNormalExit {
 				os.Exit(0)
 			} else {
-				utils.HandleError(fErr, true)
+				log.Fatal(fErr)
 			}
 		} else {
-			utils.HandleError(err, true)
+			log.Fatal(err)
 		}
 	}
 
-	utils.EnterScreenBuffer()
+	app := ui.NewApplication()
+	app.Start()
+
 
 	// Note: code taken and modified from https://pace.dev/blog/2020/02/17/repond-to-ctrl-c-interrupt-signals-gracefully-with-context-in-golang-by-mat-ryer.html
 	ctx := context.Background()
@@ -56,13 +58,10 @@ func main() {
 	signalChan := make(chan os.Signal, 1)
 	signal.Notify(signalChan, os.Interrupt)
 
-	app := tview.NewApplication()
-
 	defer func() {
 		signal.Stop(signalChan)
 		cancel()
 		app.Stop()
-		utils.ExitScreenBuffer()
 	}()
 
 	go func() {
@@ -76,6 +75,6 @@ func main() {
 	}()
 
 	if err = ui.Run(app, options); err != nil {
-		utils.HandleError(err, true)
+		app.HandleError(err, true)
 	}
 }

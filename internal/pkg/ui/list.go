@@ -19,7 +19,7 @@ const (
 )
 
 func GetListUI(
-	app *tview.Application,
+	app *App,
 	titleBox *tview.TextView,
 	filter *tview.InputField,
 	pages *tview.Pages,
@@ -60,7 +60,7 @@ func GetListUI(
 			}))
 
 	currentDir, err := utils.GetInitialDirectory()
-	utils.HandleError(err, true)
+	app.HandleError(err, true)
 
 	titleBox.Clear()
 	titleBox.SetText(currentDir)
@@ -78,9 +78,7 @@ func GetListUI(
 				app.SetFocus(list)
 				return nil
 			case 'q':
-				app.Stop()
-				utils.ExitScreenBuffer()
-				utils.PrintAndExit(".")
+				app.PrintAndExit(".")
 			}
 
 			return event
@@ -104,35 +102,28 @@ func GetListUI(
 		list.Clear()
 
 		list.AddItem(listUIEnterDir, "", 'e', func() {
-			app.Stop()
-			utils.ExitScreenBuffer()
-			utils.PrintAndExit(currentDir)
+			app.PrintAndExit(currentDir)
 		})
 
 		scanner, err := godirwalk.NewScanner(currentDir)
-		utils.HandleError(err, true)
+		app.HandleError(err, true)
 
 		for scanner.Scan() {
 			d, err := scanner.Dirent()
-			utils.HandleError(err, true)
+			app.HandleError(err, true)
 
 			if d.IsDir() {
 				if isMatch, _ := filepath.Match(filterText, d.Name()); len(filterText) == 0 || isMatch {
 					list.AddItem(d.Name() + utils.OsPathSeparator, "", 0, func() {
 						path := currentDir + d.Name() + utils.OsPathSeparator
-
-						app.Stop()
-						utils.ExitScreenBuffer()
-						utils.PrintAndExit(path)
+						app.PrintAndExit(path)
 					})
 				}
 			}
 		}
 
 		list.AddItem(listUIQuit, "Press to exit", 'q', func() {
-			app.Stop()
-			utils.ExitScreenBuffer()
-			utils.PrintAndExit(".")
+			app.PrintAndExit(".")
 		})
 
 		list.AddItem(listUIHelp, "Get help with this program", 'h', func(){})
