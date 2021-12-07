@@ -66,7 +66,7 @@ func GetListUI(
 	titleBox.SetText(currentDir)
 
 	details.Clear().
-		SetText(utils.GetDirectoryInfo(currentDir)).
+		SetText(getDetailsText(app, currentDir)).
 		ScrollToBeginning().
 		SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
 			switch event.Key() {
@@ -173,9 +173,9 @@ func GetListUI(
 			nextItemIndex := getNextItemIndex(isNavigatingDown)
 			nextItem, _ := list.GetItemText(nextItemIndex)
 			if !isMenuItem(nextItem) {
-				details.SetText(utils.GetDirectoryInfo(currentDir + nextItem))
+				details.SetText(getDetailsText(app, currentDir + nextItem))
 			} else if nextItem == listUIEnterDir {
-				details.SetText(utils.GetDirectoryInfo(currentDir))
+				details.SetText(getDetailsText(app, currentDir))
 			}
 			details.ScrollToBeginning()
 		}
@@ -191,7 +191,7 @@ func GetListUI(
 				loadList(currentDir)
 
 				details.Clear()
-				details.SetText(utils.GetDirectoryInfo(currentDir)).
+				details.SetText(getDetailsText(app, currentDir)).
 					ScrollToBeginning()
 			}
 			return nil
@@ -225,4 +225,22 @@ func GetListUI(
 	})
 
 	return list
+}
+
+func getDetailsText(app *App, directory string) string {
+	var (
+		detailsText string
+		err         error
+	)
+
+	if detailsText, err = utils.GetDirectoryInfo(directory); err != nil {
+		dErr, isDirError := err.(*utils.DirectoryError)
+		if isDirError && dErr.ErrorCode == utils.DirUnprivilegedError {
+			detailsText = "[red]Unable to read directory details. You may have insufficient privileges.[white]"
+		} else {
+			app.HandleError(err, true)
+		}
+	}
+
+	return detailsText
 }

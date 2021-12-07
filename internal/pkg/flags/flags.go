@@ -1,10 +1,10 @@
 package flags
 
 import (
-	"ci/internal/pkg/utils"
 	"errors"
 	"fmt"
 	"github.com/jessevdk/go-flags"
+	"log"
 	"os"
 	"time"
 )
@@ -27,8 +27,8 @@ type AppOptions struct {
 }
 
 const (
-	FlagErrorUnexpected = iota
-	FlagErrorNormalExit
+	FlagErrorNormalExit = iota
+	FlagErrorUnexpected
 )
 
 type FlagError struct {
@@ -134,8 +134,11 @@ Build date: %v
 			options.BuildOwner,
 			options.BuildVersion,
 			buildDate.Format(time.RFC3339))
-		_, err = os.Stdout.WriteString(versionString)
-		utils.HandleError(err, true)
+
+		if _, err = os.Stdout.WriteString(versionString); err != nil {
+			log.Fatal(err)
+		}
+
 		return &FlagError{ErrorCode: FlagErrorNormalExit}
 	}
 

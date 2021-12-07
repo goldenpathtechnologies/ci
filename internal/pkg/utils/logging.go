@@ -9,20 +9,29 @@ import (
 
 // InitFileLogging Initializes logging to a file and returns the function that closes that file
 func InitFileLogging() func() {
-	exe, err := os.Executable()
-	HandleError(err, false)
+	var (
+		exe  string
+		err  error
+		file *os.File
+	)
+
+	if exe, err = os.Executable(); err != nil {
+		log.Fatal(err)
+	}
+
 
 	exeDir := filepath.Dir(exe)
 	logFile := fmt.Sprintf("%v/.log", exeDir)
-	file, err := os.OpenFile(logFile, os.O_CREATE | os.O_APPEND | os.O_WRONLY, 0644)
-	HandleError(err, false)
+	if file, err = os.OpenFile(logFile, os.O_CREATE | os.O_APPEND | os.O_WRONLY, 0644); err != nil {
+		log.Fatal(err)
+	}
 
 	log.SetOutput(file)
 
 	return func() {
 		if err := file.Close(); err != nil {
 			log.SetOutput(os.Stdout)
-			HandleError(err, true)
+			log.Fatal(err)
 		}
 	}
 }
