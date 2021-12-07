@@ -1,10 +1,10 @@
 package main
 
 import (
-	"ci/internal/pkg/flags"
-	"ci/internal/pkg/ui"
-	"ci/internal/pkg/utils"
 	"context"
+	"github.com/goldenpathtechnologies/ci/internal/pkg/flags"
+	"github.com/goldenpathtechnologies/ci/internal/pkg/ui"
+	"github.com/goldenpathtechnologies/ci/internal/pkg/utils"
 	"log"
 	"os"
 	"os/signal"

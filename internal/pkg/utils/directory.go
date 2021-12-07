@@ -50,7 +50,6 @@ func GetDirectoryInfo(dir string) (string, error) {
 
 	writer := tabwriter.NewWriter(&out, 1, 2, 2, ' ', 0)
 
-	// TODO: Create a function for printing each row of the tab output to reduce duplication.
 	_, err = fmt.Fprintf(writer, "%v\t%v\t%v\t%v\n", "Mode", "Name", "ModTime", "Bytes")
 	if err != nil {
 		return "", &DirectoryError{

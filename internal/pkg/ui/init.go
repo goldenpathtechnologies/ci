@@ -1,8 +1,8 @@
 package ui
 
 import (
-	"ci/internal/pkg/flags"
 	"github.com/gdamore/tcell/v2"
+	"github.com/goldenpathtechnologies/ci/internal/pkg/flags"
 	"github.com/rivo/tview"
 )
 

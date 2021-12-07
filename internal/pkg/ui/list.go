@@ -1,9 +1,9 @@
 package ui
 
 import (
-	"ci/internal/pkg/utils"
 	"fmt"
 	"github.com/gdamore/tcell/v2"
+	"github.com/goldenpathtechnologies/ci/internal/pkg/utils"
 	"github.com/karrick/godirwalk"
 	"github.com/rivo/tview"
 	"path/filepath"
