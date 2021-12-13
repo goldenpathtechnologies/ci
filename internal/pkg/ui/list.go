@@ -142,7 +142,7 @@ func (d *DirectoryList) load() {
 
 func (d *DirectoryList) configureInputEvents(
 	app *App,
-	details *tview.TextView,
+	details *DetailsView,
 ) {
 	d.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
 		selectedItem, _ := d.GetItemText(d.GetCurrentItem())
@@ -240,7 +240,7 @@ func CreateDirectoryList(
 	titleBox *tview.TextView,
 	filter *tview.InputField,
 	pages *tview.Pages,
-	details *tview.TextView,
+	details *DetailsView,
 ) *DirectoryList {
 
 	list, err := newDirectoryList(app, titleBox, filter, pages)
