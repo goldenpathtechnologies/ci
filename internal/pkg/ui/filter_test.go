@@ -2,7 +2,7 @@ package ui
 
 import "testing"
 
-func TestHandleFilterAcceptanceLastChar(t *testing.T) {
+func Test_FilterPane_handleFilterAcceptance_LastChar(t *testing.T) {
 	lastChars := []rune{ '/', '\\' }
 
 	for _, lastChar := range lastChars {
@@ -12,7 +12,7 @@ func TestHandleFilterAcceptanceLastChar(t *testing.T) {
 	}
 }
 
-func TestHandleFilterAcceptanceTextLength(t *testing.T) {
+func Test_FilterPane_handleFilterAcceptance_TextLength(t *testing.T) {
 	validText := "this-text-is-exactly32characters"
 
 	if !handleFilterAcceptance(validText, ' ') {

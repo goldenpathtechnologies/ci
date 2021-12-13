@@ -21,12 +21,12 @@ deserunt mollit anim id est laborum.`
 	numWordWrappedLines = 11
 )
 
-func TestGetScrollAreaHandler(t *testing.T) {
+func Test_DetailsView_GetScrollAreaHandler(t *testing.T) {
 	view := newDetailsView().SetText(testText)
 	runScrollAreaTest(t, view, longestLine, numLines)
 }
 
-func TestGetScrollAreaHandlerWithWrap(t *testing.T) {
+func Test_DetailsView_GetScrollAreaHandler_WithWrap(t *testing.T) {
 	view := newDetailsView().SetText(testText).SetWrap(true)
 	view.SetRect(0, 0, longestWrappedLine, numLines)
 
@@ -52,7 +52,7 @@ func runScrollAreaTest(
 	}
 }
 
-func TestGetScrollPositionHandler(t *testing.T) {
+func Test_DetailsView_GetScrollPositionHandler(t *testing.T) {
 	view := newDetailsView().SetText(testText)
 	view.SetRect(0, 0, 10, 10)
 
@@ -79,7 +79,7 @@ func TestGetScrollPositionHandler(t *testing.T) {
 	}
 }
 
-func TestCreateDetailsPane(t *testing.T) {
+func Test_DetailsView_CreateDetailsPane(t *testing.T) {
 	var d interface{} = CreateDetailsPane()
 
 	_, isDetailsView := d.(*DetailsView)
@@ -89,7 +89,7 @@ func TestCreateDetailsPane(t *testing.T) {
 	}
 }
 
-func TestGetText(t *testing.T) {
+func Test_DetailsView_GetText(t *testing.T) {
 	testData := []string{
 		testText,
 		`This is some test text
@@ -111,14 +111,14 @@ also one at the end
 	}
 }
 
-func TestSetText(t *testing.T) {
+func Test_DetailsView_SetText(t *testing.T) {
 	view := newDetailsView().SetText(testText)
 	result := view.GetText(false)
 
 	runTextAccessTest(t, result, testText)
 }
 
-func TestSetTextReturnsDetailsView(t *testing.T) {
+func Test_DetailsView_SetText_ReturnsDetailsView(t *testing.T) {
 	view := newDetailsView()
 	viewAfterSet := view.SetText(testText)
 
@@ -140,7 +140,7 @@ func runTextAccessTest(t *testing.T, result, expected string) {
 	}
 }
 
-func TestSetTextLongestLine(t *testing.T) {
+func Test_DetailsView_SetText_LongestLine(t *testing.T) {
 	view := newDetailsView()
 	view.SetText(testText)
 
@@ -157,14 +157,14 @@ func runLineStatsTest(t *testing.T, name string, result, expected int) {
 	}
 }
 
-func TestSetTextLineCount(t *testing.T) {
+func Test_DetailsView_SetText_LineCount(t *testing.T) {
 	view := newDetailsView()
 	view.SetText(testText)
 
 	runLineStatsTest(t, "LineCount", view.LineCount, numLines)
 }
 
-func TestSetWrap(t *testing.T) {
+func Test_DetailsView_SetWrap(t *testing.T) {
 	view := newDetailsView()
 	if view.HasWrap {
 		t.Errorf("Expected HasWrap to be 'false', got 'true' instead")
@@ -176,14 +176,14 @@ func TestSetWrap(t *testing.T) {
 	}
 }
 
-func TestSetWrapReturnsDetailsView(t *testing.T) {
+func Test_DetailsView_SetWrap_ReturnsDetailsView(t *testing.T) {
 	view := newDetailsView()
 	viewAfterWrap := view.SetWrap(true)
 
 	runReturnsDetailsViewTest(t, viewAfterWrap, view)
 }
 
-func TestSetWrapLongestLine(t *testing.T) {
+func Test_DetailsView_SetWrap_LongestLine(t *testing.T) {
 	view := newDetailsView()
 	view.SetText(testText).SetRect(0, 0, longestWrappedLine, 5)
 	view.SetWrap(true)
@@ -191,7 +191,7 @@ func TestSetWrapLongestLine(t *testing.T) {
 	runLineStatsTest(t, "LongestLine", view.LongestLine, longestWrappedLine)
 }
 
-func TestSetWrapLineCount(t *testing.T) {
+func Test_DetailsView_SetWrap_LineCount(t *testing.T) {
 	view := newDetailsView()
 	view.SetText(testText).SetRect(0, 0, longestWrappedLine, 5)
 	view.SetWrap(true)
@@ -199,7 +199,7 @@ func TestSetWrapLineCount(t *testing.T) {
 	runLineStatsTest(t, "LineCount", view.LineCount, numWrappedLines)
 }
 
-func TestSetWordWrap(t *testing.T) {
+func Test_DetailsView_SetWordWrap(t *testing.T) {
 	view := newDetailsView()
 	if view.HasWordWrap {
 		t.Errorf("Expected HasWordWrap to be 'false', got 'true' instead")
@@ -211,7 +211,7 @@ func TestSetWordWrap(t *testing.T) {
 	}
 }
 
-func TestSetWordWrapLongestLine(t *testing.T) {
+func Test_DetailsView_SetWordWrap_LongestLine(t *testing.T) {
 	view := newDetailsView()
 	view.SetText(testText).SetWrap(true).SetRect(0, 0, longestWrappedLine, 5)
 	view.SetWordWrap(true)
@@ -219,7 +219,7 @@ func TestSetWordWrapLongestLine(t *testing.T) {
 	runLineStatsTest(t, "LongestLine", view.LongestLine, longestWordWrappedLine)
 }
 
-func TestSetWordWrapLineCount(t *testing.T) {
+func Test_DetailsView_SetWordWrap_LineCount(t *testing.T) {
 	view := newDetailsView()
 	view.SetText(testText).SetWrap(true).SetRect(0, 0, longestWrappedLine, 5)
 	view.SetWordWrap(true)
@@ -227,14 +227,14 @@ func TestSetWordWrapLineCount(t *testing.T) {
 	runLineStatsTest(t, "LineCount", view.LineCount, numWordWrappedLines)
 }
 
-func TestSetWordWrapReturnsDetailsView(t *testing.T) {
+func Test_DetailsView_SetWordWrap_ReturnsDetailsView(t *testing.T) {
 	view := newDetailsView()
 	viewAfterWordWrap := view.SetWordWrap(true)
 
 	runReturnsDetailsViewTest(t, viewAfterWordWrap, view)
 }
 
-func TestSetRect(t *testing.T) {
+func Test_DetailsView_SetRect(t *testing.T) {
 	view := newDetailsView()
 	view.SetRect(1, 2, 3, 4)
 
@@ -253,7 +253,7 @@ func TestSetRect(t *testing.T) {
 	}
 }
 
-func TestSetRectLongestLine(t *testing.T) {
+func Test_DetailsView_SetRect_LongestLine(t *testing.T) {
 	view := newDetailsView()
 	view.
 		SetText("aaaaaaaa").
@@ -263,7 +263,7 @@ func TestSetRectLongestLine(t *testing.T) {
 	runLineStatsTest(t, "LongestLine", view.LongestLine, 2)
 }
 
-func TestSetRectLineCount(t *testing.T) {
+func Test_DetailsView_SetRect_LineCount(t *testing.T) {
 	view := newDetailsView()
 	view.
 		SetText("bbbbbbbbbbbbbbbb").
@@ -273,7 +273,7 @@ func TestSetRectLineCount(t *testing.T) {
 	runLineStatsTest(t, "LineCount", view.LineCount, 2)
 }
 
-func TestSetRectTextResize(t *testing.T) {
+func Test_DetailsView_SetRect_TextResize(t *testing.T) {
 	view := newDetailsView().SetText(testText)
 	textBeforeResize := view.GetText(false)
 
@@ -287,7 +287,7 @@ func TestSetRectTextResize(t *testing.T) {
 	}
 }
 
-func TestCalculateLineStats(t *testing.T) {
+func Test_DetailsView_calculateLineStats(t *testing.T) {
 	testData := [][]lineStats{
 		{
 			calculateLineStats(testText, longestLine, false, false),

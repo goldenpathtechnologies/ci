@@ -1,7 +1,6 @@
 package ui
 
 import (
-	"github.com/mitchellh/go-wordwrap"
 	"github.com/rivo/tview"
 	"strings"
 	"unicode/utf8"
@@ -66,11 +65,12 @@ func refreshLineStats(d *DetailsView) *DetailsView {
 }
 
 func calculateLineStats(text string, maxWidth int, wrap, wordWrap bool) lineStats {
+	lines := strings.Split(text, "\n")
+
 	if wrap && wordWrap {
-		text = wordwrap.WrapString(text, uint(maxWidth))
+		lines = tview.WordWrap(text, maxWidth)
 	}
 
-	lines := strings.Split(text, "\n")
 	longestLine := ""
 	longestLineLength := 0
 	wrappedLines := 0
@@ -124,10 +124,8 @@ func getScrollPositionHandler(view *DetailsView) func() (vScroll, hScroll int) {
 }
 
 func (d *DetailsView) SetWordWrap(wrapOnWords bool) *DetailsView {
-	// TODO: Note that tview's word wrap algorithm does not take non-alphanumerics into consideration.
-	//  For example, a sequence like '-----' is hard wrapped when word wrap is enabled. Find a way to
-	//  use mitchellh's word wrap algorithm here instead. We may need to completely bypass
-	//  TextView.SetWrap() and TextView.SetWordWrap().
+	// Note: Characters such as '-' will wrap mid-word due to it being a line break
+	//  boundary pattern, https://github.com/rivo/tview/blob/2a6de950f73bdc70658f7e754d4b5593f15c8408/util.go#L27
 	d.HasWordWrap = wrapOnWords
 	d.TextView.SetWordWrap(wrapOnWords)
 	return refreshLineStats(d)
