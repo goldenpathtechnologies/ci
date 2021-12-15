@@ -27,7 +27,6 @@ func CreateDetailsPane() *DetailsView {
 
 	details.
 		SetWrap(false).
-		SetDynamicColors(true).
 		SetTitle("Details").
 		SetBorder(true).
 		SetBorderPadding(1, 1, 1, 1).
@@ -42,7 +41,7 @@ func CreateDetailsPane() *DetailsView {
 // newDetailsView returns a new DetailsView
 func newDetailsView() *DetailsView {
 	return &DetailsView{
-		TextView:    tview.NewTextView(),
+		TextView:    tview.NewTextView().SetDynamicColors(true),
 		LongestLine: 0,
 		LineCount:   0,
 		HasWrap:     false,
@@ -58,7 +57,7 @@ func (d *DetailsView) SetWrap(wrap bool) *DetailsView {
 
 func refreshLineStats(d *DetailsView) *DetailsView {
 	_, _, viewWidth, _ := d.TextView.GetInnerRect()
-	lineData := calculateLineStats(d.GetText(false), viewWidth, d.HasWrap, d.HasWordWrap)
+	lineData := calculateLineStats(d.GetText(true), viewWidth, d.HasWrap, d.HasWordWrap)
 	d.LongestLine = lineData.longest
 	d.LineCount = lineData.count
 	return d
@@ -102,20 +101,23 @@ func calculateLineStats(text string, maxWidth int, wrap, wordWrap bool) lineStat
 
 func (d *DetailsView) GetText(stripAllTags bool) string {
 	// Note: tview.TextView.GetText appends a newline to the original text. See
-	// https://github.com/rivo/tview/blob/master/textview.go line 333 of
-	// commit 1b3174ee3d379fc32d6d5bbc63fe108a7fa8f834 and also
-	// https://github.com/rivo/tview/issues/648
+	//  https://github.com/rivo/tview/blob/master/textview.go line 333 of
+	//  commit 1b3174ee3d379fc32d6d5bbc63fe108a7fa8f834 and also
+	//  https://github.com/rivo/tview/issues/648
+	//  Additionally, the newline is not appended at the end if stripAllTags is true.
 	text := d.TextView.GetText(stripAllTags)
 
-	// Note: Approach to string handling borrowed from:
-	//  https://stackoverflow.com/questions/31418376/slice-unicode-ascii-strings-in-golang
-	length := utf8.RuneCountInString(text)
-	runes := []rune(text)
-	if length > 0 && runes[length-1] == '\n' {
-		return string(runes[:length-1])
+	if !stripAllTags {
+		// Note: Approach to string handling borrowed from:
+		//  https://stackoverflow.com/questions/31418376/slice-unicode-ascii-strings-in-golang
+		length := utf8.RuneCountInString(text)
+		runes := []rune(text)
+		if length > 0 && runes[length-1] == '\n' {
+			return string(runes[:length-1])
+		}
 	}
 
-	return ""
+	return text
 }
 
 func getScrollAreaHandler(view *DetailsView) func() (width, height int) {

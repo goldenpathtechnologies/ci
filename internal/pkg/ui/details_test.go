@@ -41,7 +41,11 @@ func runScrollAreaTest(
 	}
 
 	if height != expectedHeight {
-		t.Errorf("Expected scroll area height to be %d, got %d instead", expectedHeight, height)
+		t.Errorf(
+			"%s: Expected scroll area height to be %d, got %d instead",
+			description,
+			expectedHeight,
+			height)
 	}
 }
 
@@ -87,6 +91,15 @@ func Test_DetailsView_GetText(t *testing.T) {
 	td.RunTextTestCases(func(data td.TextData, name string) {
 		view := newDetailsView()
 		view.TextView.SetText(data.Text)
+		result := view.GetText(true)
+		runTextAccessTest(t, result, data.StrippedText, name)
+	})
+}
+
+func Test_DetailsView_GetText_NoTagStripping(t *testing.T) {
+	td.RunTextTestCases(func(data td.TextData, name string) {
+		view := newDetailsView()
+		view.TextView.SetText(data.Text)
 		result := view.GetText(false)
 		runTextAccessTest(t, result, data.Text, name)
 	})
@@ -95,9 +108,9 @@ func Test_DetailsView_GetText(t *testing.T) {
 func Test_DetailsView_SetText(t *testing.T) {
 	td.RunTextTestCases(func(data td.TextData, name string) {
 		view := newDetailsView().SetText(data.Text)
-		result := view.GetText(false)
+		result := view.GetText(true)
 
-		runTextAccessTest(t, result, data.Text, name)
+		runTextAccessTest(t, result, data.StrippedText, name)
 	})
 }
 
@@ -306,22 +319,25 @@ func Test_DetailsView_SetRect_TextResize(t *testing.T) {
 }
 
 func Test_DetailsView_calculateLineStats(t *testing.T) {
+	view := newDetailsView()
 	td.RunTextTestCases(func(data td.TextData, name string) {
+		// Stripping tags if present since the function under test assumes verbatim text
+		text := view.SetText(data.Text).GetText(true)
 		testData := [][]lineStats{
 			{
-				calculateLineStats(data.Text, data.ViewWidth, false, false),
+				calculateLineStats(text, data.ViewWidth, false, false),
 				lineStats{data.LongestLine, data.LineCount},
 			},
 			{
-				calculateLineStats(data.Text, data.ViewWidth, true, false),
+				calculateLineStats(text, data.ViewWidth, true, false),
 				lineStats{data.LongestWrappedLine, data.WrappedLineCount},
 			},
 			{
-				calculateLineStats(data.Text, data.ViewWidth, true, true),
+				calculateLineStats(text, data.ViewWidth, true, true),
 				lineStats{data.LongestWordWrappedLine, data.WordWrappedLineCount},
 			},
 			{
-				calculateLineStats(data.Text, data.ViewWidth, false, true),
+				calculateLineStats(text, data.ViewWidth, false, true),
 				lineStats{data.LongestLine, data.LineCount},
 			},
 		}
