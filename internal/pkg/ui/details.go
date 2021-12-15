@@ -65,20 +65,27 @@ func refreshLineStats(d *DetailsView) *DetailsView {
 }
 
 func calculateLineStats(text string, maxWidth int, wrap, wordWrap bool) lineStats {
+	if len(text) == 0 {
+		return lineStats{0, 1}
+	}
+
 	lines := strings.Split(text, "\n")
 
 	if wrap && wordWrap {
 		lines = tview.WordWrap(text, maxWidth)
+
+		// Note: tview.WordWrap() trims trailing newlines.
+		if text[len(text)-1] == '\n' {
+			lines = append(lines, "")
+		}
 	}
 
-	longestLine := ""
-	longestLineLength := 0
+	longestLine := 0
 	wrappedLines := 0
 
 	for _, line := range lines {
-		if len(line) > len(longestLine) {
-			longestLine = line
-			longestLineLength = len(longestLine)
+		if len(line) > longestLine {
+			longestLine = len(line)
 		}
 
 		if wrap && !wordWrap && len(line) > maxWidth {
@@ -86,11 +93,11 @@ func calculateLineStats(text string, maxWidth int, wrap, wordWrap bool) lineStat
 			if len(line) % maxWidth == 0 {
 				wrappedLines--
 			}
-			longestLineLength = maxWidth
+			longestLine = maxWidth
 		}
 	}
 
-	return lineStats{longestLineLength, len(lines)+wrappedLines}
+	return lineStats{longestLine, len(lines)+wrappedLines}
 }
 
 func (d *DetailsView) GetText(stripAllTags bool) string {
