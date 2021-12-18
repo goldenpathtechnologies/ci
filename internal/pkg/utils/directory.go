@@ -12,6 +12,7 @@ import (
 const (
 	DirUnexpectedError = iota + 1
 	DirUnprivilegedError
+	OsPathSeparator = string(os.PathSeparator)
 )
 
 type DirectoryError struct {
@@ -22,8 +23,6 @@ type DirectoryError struct {
 func (d *DirectoryError) Error() string {
 	return d.Err.Error()
 }
-
-var OsPathSeparator = string(os.PathSeparator)
 
 func GetInitialDirectory() (string, error) {
 	dir, err := filepath.Abs(".")

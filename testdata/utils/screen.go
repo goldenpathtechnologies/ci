@@ -59,7 +59,7 @@ func (t *TestApp) Run(p tview.Primitive, autoStop bool, callback func()) {
 	if autoStop {
 		defer t.app.Stop()
 	}
-	
+
 	go func() {
 		if err := t.app.SetRoot(p, false).Run(); err != nil {
 			panic(err)
