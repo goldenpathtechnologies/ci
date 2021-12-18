@@ -85,5 +85,6 @@ func GetDirectoryInfo(dir string) (string, error) {
 		}
 	}
 
+	// TODO: Prune last newline from output.
 	return out.String(), nil
 }

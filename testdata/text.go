@@ -57,13 +57,13 @@ also one at the end
 that has some newlines and
 also one at the end
 `,
-			LongestLine: 26,
-			LineCount: 4,
-			LongestWrappedLine: 26,
+			LongestLine:            26,
+			LineCount:              4,
+			LongestWrappedLine:     26,
 			LongestWordWrappedLine: 26,
-			WrappedLineCount: 4,
-			WordWrappedLineCount: 4,
-			ViewWidth: 50,
+			WrappedLineCount:       4,
+			WordWrappedLineCount:   4,
+			ViewWidth:              50,
 		},
 		"TrailingSpace": {
 			Text:                   "This is some text that just has a space at the end ",
