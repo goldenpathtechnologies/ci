@@ -24,6 +24,7 @@ type DirectoryList struct {
 	pages      *tview.Pages
 	titleBox   *tview.TextView
 	filter     *tview.InputField
+	details    *DetailsView
 	currentDir string
 	filterText string
 	menuItems  map[string]string
@@ -34,6 +35,7 @@ func newDirectoryList(
 	titleBox *tview.TextView,
 	filter *tview.InputField,
 	pages *tview.Pages,
+	details *DetailsView,
 ) (*DirectoryList, error) {
 	var (
 		currentDir string
@@ -59,40 +61,51 @@ func newDirectoryList(
 		pages:      pages,
 		titleBox:   titleBox,
 		filter:     filter,
+		details:    details,
 		currentDir: currentDir,
 		menuItems:  menuItems,
 	}, err
 }
 
-func (d *DirectoryList) configureBorder() {
+func (d *DirectoryList) configureBorder() *DirectoryList {
 	d.SetBorder(true).
 		SetTitle(listUITitle).
 		SetBorderPadding(1, 1, 0, 1).
 		SetDrawFunc(GetScrollBarDrawFunc(
 			d,
-			func() (width, height int) {
-				_, _, listWidth, _ := d.GetInnerRect()
-				listHeight := d.GetItemCount()
+			getListScrollAreaHandler(d),
+			getListScrollPositionHandler(d)))
 
-				return listWidth, listHeight
-			},
-			func() (vScroll, hScroll int) {
-				selectedItem := d.GetCurrentItem()
-				itemCount := d.GetItemCount()
-				_, _, _, pageHeight := d.GetInnerRect()
+	return d
+}
 
-				v, h := d.GetOffset()
+func getListScrollAreaHandler(list *DirectoryList) func() (width, height int) {
+	return func() (width, height int) {
+			_, _, listWidth, _ := list.GetInnerRect()
+			listHeight := list.GetItemCount()
 
-				if selectedItem == 0 {
-					v = 0
-				}
+			return listWidth, listHeight
+	}
+}
 
-				if selectedItem == itemCount-1 {
-					v = itemCount - pageHeight
-				}
+func getListScrollPositionHandler(list *DirectoryList) func() (vScroll, hScroll int) {
+	return func() (vScroll, hScroll int) {
+		selectedItem := list.GetCurrentItem()
+		itemCount := list.GetItemCount()
+		_, _, _, pageHeight := list.GetInnerRect()
 
-				return v, h
-			}))
+		v, h := list.GetOffset()
+
+		if selectedItem == 0 {
+			v = 0
+		}
+
+		if selectedItem == itemCount-1 {
+			v = itemCount - pageHeight
+		}
+
+		return v, h
+	}
 }
 
 func (d *DirectoryList) isMenuItem(text string) bool {
@@ -140,84 +153,96 @@ func (d *DirectoryList) load() {
 	d.titleBox.SetText(d.currentDir)
 }
 
-func (d *DirectoryList) configureInputEvents(
-	app *App,
-	details *DetailsView,
-) {
-	d.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
-		selectedItem, _ := d.GetItemText(d.GetCurrentItem())
+func (d *DirectoryList) configureInputEvents() *DirectoryList {
+	d.SetInputCapture(d.getInputCaptureHandler())
 
-		getNextItemIndex := func(isIncrementing bool) int {
-			var increment int
-			if isIncrementing {
-				increment = 1
-			} else {
-				increment = -1
-			}
-			itemCount := d.GetItemCount()
-			nextItemIndex := d.GetCurrentItem() + increment
-			// Note: Euclidean modulo operation, https://stackoverflow.com/questions/43018206/modulo-of-negative-integers-in-go
-			return ((nextItemIndex % itemCount) + itemCount) % itemCount
-		}
+	return d
+}
 
-		displayDirectoryDetails := func(isNavigatingDown bool) {
-			details.Clear()
-			nextItemIndex := getNextItemIndex(isNavigatingDown)
-			nextItem, _ := d.GetItemText(nextItemIndex)
-			if !d.isMenuItem(nextItem) {
-				details.SetText(getDetailsText(app, d.currentDir + nextItem))
-			} else if nextItem == listUIEnterDir {
-				details.SetText(getDetailsText(app, d.currentDir))
-			}
-			details.ScrollToBeginning()
-		}
-
+func (d *DirectoryList) getInputCaptureHandler() func(event *tcell.EventKey) *tcell.EventKey {
+	return func(event *tcell.EventKey) *tcell.EventKey {
 		switch event.Key() {
 		case tcell.KeyLeft:
-			if strings.Count(d.currentDir, utils.OsPathSeparator) > 1 {
-				d.filterText = ""
-				d.SetTitle(listUITitle)
-				paths := strings.Split(d.currentDir, utils.OsPathSeparator)
-				paths = paths[:len(paths)-2]
-				d.currentDir = strings.Join(paths, utils.OsPathSeparator) + utils.OsPathSeparator
-				d.load()
-
-				details.Clear()
-				details.SetText(getDetailsText(app, d.currentDir)).
-					ScrollToBeginning()
-			}
+			d.handleLeftKeyEvent()
 			return nil
 		case tcell.KeyRight:
-			if !d.isMenuItem(selectedItem) {
-				d.filterText = ""
-				d.SetTitle(listUITitle)
-				nextDir := d.currentDir + selectedItem
-				if utils.DirectoryIsAccessible(nextDir) {
-					d.currentDir = nextDir
-					d.load()
-				} else {
-					details.Clear().
-						SetText("[red]Directory inaccessible, unable to navigate. You may have insufficient privileges.[white]").
-						ScrollToBeginning()
-				}
-			}
+			d.handleRightKeyEvent()
 			return nil
 		case tcell.KeyUp:
-			displayDirectoryDetails(false)
+			d.setDetailsText(false)
 			return event
 		case tcell.KeyDown:
-			displayDirectoryDetails(true)
+			d.setDetailsText(true)
 			return event
 		case tcell.KeyTab:
-			app.SetFocus(details)
+			d.app.SetFocus(d.details)
 			return nil
 		}
 
 		return event
-	})
+	}
 }
 
-func getDetailsText(app *App, directory string) string {
+func (d *DirectoryList) handleLeftKeyEvent() {
+	if strings.Count(d.currentDir, utils.OsPathSeparator) > 1 {
+		d.filterText = ""
+		d.SetTitle(listUITitle)
+		paths := strings.Split(d.currentDir, utils.OsPathSeparator)
+		paths = paths[:len(paths)-2]
+		d.currentDir = strings.Join(paths, utils.OsPathSeparator) + utils.OsPathSeparator
+		d.load()
+
+		d.details.Clear()
+		d.details.
+			SetText(d.getDetailsText(d.currentDir)).
+			ScrollToBeginning()
+	}
+}
+
+func (d *DirectoryList) handleRightKeyEvent() {
+	selectedItem, _ := d.GetItemText(d.GetCurrentItem())
+
+	if !d.isMenuItem(selectedItem) {
+		d.filterText = ""
+		d.SetTitle(listUITitle)
+		nextDir := d.currentDir + selectedItem
+		if utils.DirectoryIsAccessible(nextDir) {
+			d.currentDir = nextDir
+			d.load()
+		} else {
+			d.details.Clear()
+			d.details.SetText("[red]Directory inaccessible, unable to navigate. You may have insufficient privileges.[white]").
+				ScrollToBeginning()
+		}
+	}
+}
+
+func (d *DirectoryList) setDetailsText(isNavigatingDown bool) {
+	d.details.Clear()
+	nextItemIndex := d.getNextItemIndex(isNavigatingDown)
+	nextItem, _ := d.GetItemText(nextItemIndex)
+	if !d.isMenuItem(nextItem) {
+		d.details.SetText(d.getDetailsText(d.currentDir + nextItem))
+	} else if nextItem == listUIEnterDir {
+		d.details.SetText(d.getDetailsText(d.currentDir))
+	}
+	d.details.ScrollToBeginning()
+}
+
+func (d *DirectoryList) getNextItemIndex(isIncrementing bool) int {
+	var increment int
+	if isIncrementing {
+		increment = 1
+	} else {
+		increment = -1
+	}
+	itemCount := d.GetItemCount()
+	nextItemIndex := d.GetCurrentItem() + increment
+	// Note: Euclidean modulo operation, https://stackoverflow.com/questions/43018206/modulo-of-negative-integers-in-go
+	return ((nextItemIndex % itemCount) + itemCount) % itemCount
+}
+
+func (d *DirectoryList) getDetailsText(directory string) string {
 	var (
 		detailsText string
 		err         error
@@ -228,7 +253,7 @@ func getDetailsText(app *App, directory string) string {
 		if isDirError && dErr.ErrorCode == utils.DirUnprivilegedError {
 			detailsText = "[red]Unable to read directory details. You may have insufficient privileges.[white]"
 		} else {
-			app.HandleError(err, true)
+			d.app.HandleError(err, true)
 		}
 	}
 
@@ -243,48 +268,57 @@ func CreateDirectoryList(
 	details *DetailsView,
 ) *DirectoryList {
 
-	list, err := newDirectoryList(app, titleBox, filter, pages)
+	list, err := newDirectoryList(app, titleBox, filter, pages, details)
 	app.HandleError(err, true)
 
 	titleBox.Clear()
 	titleBox.SetText(list.currentDir)
 
 	details.Clear().
-		SetText(getDetailsText(app, list.currentDir)).
+		SetText(list.getDetailsText(list.currentDir)).
 		ScrollToBeginning().
-		SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
-			switch event.Key() {
-			case tcell.KeyEscape:
-				fallthrough
-			case tcell.KeyEnter:
-				fallthrough
-			case tcell.KeyTab:
-				app.SetFocus(list)
-				return nil
-			case 'q':
-				app.PrintAndExit(".")
-			}
+		SetInputCapture(list.getInputCaptureHandler())
 
-			return event
-		})
+	filter.SetDoneFunc(list.getFilterEntryHandler())
 
-	// TODO: Ensure Esc does not apply any existing filter
-	filter.SetDoneFunc(func(key tcell.Key) {
-		list.filterText = filter.GetText()
-		if len(list.filterText) > 0 {
-			list.SetTitle(fmt.Sprintf("%v - Filter: %v", listUITitle, list.filterText))
-		} else {
-			list.SetTitle(listUITitle)
-		}
-		filter.SetText("")
-		pages.HidePage("Filter")
-		app.SetFocus(list)
-		list.load()
-	})
-
-	list.configureBorder()
-	list.configureInputEvents(app, details)
-	list.load()
+	list.
+		configureBorder().
+		configureInputEvents().
+		load()
 
 	return list
+}
+
+func (d *DirectoryList) getDetailsInputCaptureHandler() func(event *tcell.EventKey) *tcell.EventKey {
+	return func(event *tcell.EventKey) *tcell.EventKey {
+		switch event.Key() {
+		case tcell.KeyEscape:
+			fallthrough
+		case tcell.KeyEnter:
+			fallthrough
+		case tcell.KeyTab:
+			d.app.SetFocus(d)
+			return nil
+		case 'q':
+			d.app.PrintAndExit(".")
+		}
+
+		return event
+	}
+}
+
+func (d *DirectoryList) getFilterEntryHandler() func(key tcell.Key) {
+	return func(key tcell.Key) {
+		// TODO: Ensure Esc does not apply any existing filter
+		d.filterText = d.filter.GetText()
+		if len(d.filterText) > 0 {
+			d.SetTitle(fmt.Sprintf("%v - Filter: %v", listUITitle, d.filterText))
+		} else {
+			d.SetTitle(listUITitle)
+		}
+		d.filter.SetText("")
+		d.pages.HidePage("Filter")
+		d.app.SetFocus(d)
+		d.load()
+	}
 }

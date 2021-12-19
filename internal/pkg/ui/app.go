@@ -9,6 +9,8 @@ import (
 type App struct {
 	*tview.Application
 	screenBufferActive bool
+	// TODO: Add property to store the output stream (e.g. os.Stdout). This will
+	//  make the rest of the application less dependent on a specific output stream.
 }
 
 func NewApplication() *App {
@@ -50,6 +52,10 @@ func (a *App) Stop() {
 
 func (a *App) PrintAndExit(data string) {
 	a.Stop()
+	// TODO: For testability, use an io.Writer parameter to write output. Looks like
+	//  func (a *App) PrintAndExit(output io.Writer, data string). Find other places
+	//  in the code that use the output stream instance directly and make similar
+	//  changes.
 	_, err := os.Stdout.WriteString(data)
 	a.HandleError(err, true)
 	os.Exit(0)
