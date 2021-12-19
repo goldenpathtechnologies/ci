@@ -30,6 +30,36 @@ type DirectoryList struct {
 	menuItems  map[string]string
 }
 
+func CreateDirectoryList(
+	app *App,
+	titleBox *tview.TextView,
+	filter *tview.InputField,
+	pages *tview.Pages,
+	details *DetailsView,
+) *DirectoryList {
+
+	list, err := newDirectoryList(app, titleBox, filter, pages, details)
+	app.HandleError(err, true)
+
+	titleBox.Clear()
+	titleBox.SetText(list.currentDir)
+
+	details.Clear().
+		SetText(list.getDetailsText(list.currentDir)).
+		ScrollToBeginning().
+		SetInputCapture(list.getDetailsInputCaptureHandler())
+
+	filter.SetDoneFunc(list.getFilterEntryHandler())
+
+	list.
+		configureBorder().
+		configureInputEvents().
+		load()
+
+	return list
+}
+
+
 func newDirectoryList(
 	app *App,
 	titleBox *tview.TextView,
@@ -65,6 +95,58 @@ func newDirectoryList(
 		currentDir: currentDir,
 		menuItems:  menuItems,
 	}, err
+}
+
+func (d *DirectoryList) getDetailsText(directory string) string {
+	var (
+		detailsText string
+		err         error
+	)
+
+	if detailsText, err = utils.GetDirectoryInfo(directory); err != nil {
+		dErr, isDirError := err.(*utils.DirectoryError)
+		if isDirError && dErr.ErrorCode == utils.DirUnprivilegedError {
+			detailsText = "[red]Unable to read directory details. You may have insufficient privileges.[white]"
+		} else {
+			d.app.HandleError(err, true)
+		}
+	}
+
+	return detailsText
+}
+
+func (d *DirectoryList) getDetailsInputCaptureHandler() func(event *tcell.EventKey) *tcell.EventKey {
+	return func(event *tcell.EventKey) *tcell.EventKey {
+		switch event.Key() {
+		case tcell.KeyEscape:
+			fallthrough
+		case tcell.KeyEnter:
+			fallthrough
+		case tcell.KeyTab:
+			d.app.SetFocus(d)
+			return nil
+		case 'q':
+			d.app.PrintAndExit(".")
+		}
+
+		return event
+	}
+}
+
+func (d *DirectoryList) getFilterEntryHandler() func(key tcell.Key) {
+	return func(key tcell.Key) {
+		// TODO: Ensure Esc does not apply any existing filter
+		d.filterText = d.filter.GetText()
+		if len(d.filterText) > 0 {
+			d.SetTitle(fmt.Sprintf("%v - Filter: %v", listUITitle, d.filterText))
+		} else {
+			d.SetTitle(listUITitle)
+		}
+		d.filter.SetText("")
+		d.pages.HidePage("Filter")
+		d.app.SetFocus(d)
+		d.load()
+	}
 }
 
 func (d *DirectoryList) configureBorder() *DirectoryList {
@@ -106,51 +188,6 @@ func getListScrollPositionHandler(list *DirectoryList) func() (vScroll, hScroll 
 
 		return v, h
 	}
-}
-
-func (d *DirectoryList) isMenuItem(text string) bool {
-	_, exists := d.menuItems[text]
-	return exists
-}
-
-func (d *DirectoryList) load() {
-	d.Clear()
-
-	d.AddItem(listUIEnterDir, "", 'e', func() {
-		d.app.PrintAndExit(d.currentDir)
-	})
-
-	scanner, err := godirwalk.NewScanner(d.currentDir)
-	d.app.HandleError(err, true)
-
-	for scanner.Scan() {
-		entry, err := scanner.Dirent()
-		d.app.HandleError(err, true)
-
-		if entry.IsDir() {
-			if isMatch, _ := filepath.Match(d.filterText, entry.Name()); len(d.filterText) == 0 || isMatch {
-				d.AddItem(entry.Name() + utils.OsPathSeparator, "", 0, func() {
-					path := d.currentDir + entry.Name() + utils.OsPathSeparator
-					d.app.PrintAndExit(path)
-				})
-			}
-		}
-	}
-
-	d.AddItem(listUIQuit, "Press to exit", 'q', func() {
-		d.app.PrintAndExit(".")
-	})
-
-	// TODO: Implement in-app help.
-	d.AddItem(listUIHelp, "Get help with this program", 'h', func(){})
-
-	d.AddItem(listUIFilter, "Filter directories by text", 'f', func() {
-		d.pages.ShowPage("Filter")
-		d.app.SetFocus(d.filter)
-	})
-
-	d.titleBox.Clear()
-	d.titleBox.SetText(d.currentDir)
 }
 
 func (d *DirectoryList) configureInputEvents() *DirectoryList {
@@ -199,6 +236,46 @@ func (d *DirectoryList) handleLeftKeyEvent() {
 	}
 }
 
+func (d *DirectoryList) load() {
+	d.Clear()
+
+	d.AddItem(listUIEnterDir, "", 'e', func() {
+		d.app.PrintAndExit(d.currentDir)
+	})
+
+	scanner, err := godirwalk.NewScanner(d.currentDir)
+	d.app.HandleError(err, true)
+
+	for scanner.Scan() {
+		entry, err := scanner.Dirent()
+		d.app.HandleError(err, true)
+
+		if entry.IsDir() {
+			if isMatch, _ := filepath.Match(d.filterText, entry.Name()); len(d.filterText) == 0 || isMatch {
+				d.AddItem(entry.Name() + utils.OsPathSeparator, "", 0, func() {
+					path := d.currentDir + entry.Name() + utils.OsPathSeparator
+					d.app.PrintAndExit(path)
+				})
+			}
+		}
+	}
+
+	d.AddItem(listUIQuit, "Press to exit", 'q', func() {
+		d.app.PrintAndExit(".")
+	})
+
+	// TODO: Implement in-app help.
+	d.AddItem(listUIHelp, "Get help with this program", 'h', func(){})
+
+	d.AddItem(listUIFilter, "Filter directories by text", 'f', func() {
+		d.pages.ShowPage("Filter")
+		d.app.SetFocus(d.filter)
+	})
+
+	d.titleBox.Clear()
+	d.titleBox.SetText(d.currentDir)
+}
+
 func (d *DirectoryList) handleRightKeyEvent() {
 	selectedItem, _ := d.GetItemText(d.GetCurrentItem())
 
@@ -215,6 +292,11 @@ func (d *DirectoryList) handleRightKeyEvent() {
 				ScrollToBeginning()
 		}
 	}
+}
+
+func (d *DirectoryList) isMenuItem(text string) bool {
+	_, exists := d.menuItems[text]
+	return exists
 }
 
 func (d *DirectoryList) setDetailsText(isNavigatingDown bool) {
@@ -240,85 +322,4 @@ func (d *DirectoryList) getNextItemIndex(isIncrementing bool) int {
 	nextItemIndex := d.GetCurrentItem() + increment
 	// Note: Euclidean modulo operation, https://stackoverflow.com/questions/43018206/modulo-of-negative-integers-in-go
 	return ((nextItemIndex % itemCount) + itemCount) % itemCount
-}
-
-func (d *DirectoryList) getDetailsText(directory string) string {
-	var (
-		detailsText string
-		err         error
-	)
-
-	if detailsText, err = utils.GetDirectoryInfo(directory); err != nil {
-		dErr, isDirError := err.(*utils.DirectoryError)
-		if isDirError && dErr.ErrorCode == utils.DirUnprivilegedError {
-			detailsText = "[red]Unable to read directory details. You may have insufficient privileges.[white]"
-		} else {
-			d.app.HandleError(err, true)
-		}
-	}
-
-	return detailsText
-}
-
-func CreateDirectoryList(
-	app *App,
-	titleBox *tview.TextView,
-	filter *tview.InputField,
-	pages *tview.Pages,
-	details *DetailsView,
-) *DirectoryList {
-
-	list, err := newDirectoryList(app, titleBox, filter, pages, details)
-	app.HandleError(err, true)
-
-	titleBox.Clear()
-	titleBox.SetText(list.currentDir)
-
-	details.Clear().
-		SetText(list.getDetailsText(list.currentDir)).
-		ScrollToBeginning().
-		SetInputCapture(list.getInputCaptureHandler())
-
-	filter.SetDoneFunc(list.getFilterEntryHandler())
-
-	list.
-		configureBorder().
-		configureInputEvents().
-		load()
-
-	return list
-}
-
-func (d *DirectoryList) getDetailsInputCaptureHandler() func(event *tcell.EventKey) *tcell.EventKey {
-	return func(event *tcell.EventKey) *tcell.EventKey {
-		switch event.Key() {
-		case tcell.KeyEscape:
-			fallthrough
-		case tcell.KeyEnter:
-			fallthrough
-		case tcell.KeyTab:
-			d.app.SetFocus(d)
-			return nil
-		case 'q':
-			d.app.PrintAndExit(".")
-		}
-
-		return event
-	}
-}
-
-func (d *DirectoryList) getFilterEntryHandler() func(key tcell.Key) {
-	return func(key tcell.Key) {
-		// TODO: Ensure Esc does not apply any existing filter
-		d.filterText = d.filter.GetText()
-		if len(d.filterText) > 0 {
-			d.SetTitle(fmt.Sprintf("%v - Filter: %v", listUITitle, d.filterText))
-		} else {
-			d.SetTitle(listUITitle)
-		}
-		d.filter.SetText("")
-		d.pages.HidePage("Filter")
-		d.app.SetFocus(d)
-		d.load()
-	}
 }
