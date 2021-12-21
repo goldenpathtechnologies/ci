@@ -3,16 +3,18 @@ package utils
 import (
 	"bytes"
 	"fmt"
+	"io/fs"
 	"io/ioutil"
 	"os"
 	"path/filepath"
 	"text/tabwriter"
 )
 
+const OsPathSeparator = string(os.PathSeparator)
+
 const (
 	DirUnexpectedError = iota + 1
 	DirUnprivilegedError
-	OsPathSeparator = string(os.PathSeparator)
 )
 
 type DirectoryError struct {
@@ -24,22 +26,38 @@ func (d *DirectoryError) Error() string {
 	return d.Err.Error()
 }
 
-func GetInitialDirectory() (string, error) {
-	dir, err := filepath.Abs(".")
+type DirectoryController struct {
+	readDirectory func(dirname string) ([]fs.FileInfo, error)
+	getAbsolutePath func(path string) (string, error)
+}
+
+func NewDirectoryController() *DirectoryController {
+	return &DirectoryController{
+		readDirectory: func(dirname string) ([]fs.FileInfo, error) {
+			return ioutil.ReadDir(dirname)
+		},
+		getAbsolutePath: func(path string) (string, error) {
+			return filepath.Abs(path)
+		},
+	}
+}
+
+func (d *DirectoryController) GetInitialDirectory() (string, error) {
+	dir, err := d.getAbsolutePath(".")
 
 	return dir + OsPathSeparator, err
 }
 
-func DirectoryIsAccessible(dir string) bool {
-	_, err := ioutil.ReadDir(dir)
+func (d *DirectoryController) DirectoryIsAccessible(dir string) bool {
+	_, err := d.readDirectory(dir)
 
 	return err == nil
 }
 
-func GetDirectoryInfo(dir string) (string, error) {
+func (d *DirectoryController) GetDirectoryInfo(dir string) (string, error) {
 	var out bytes.Buffer
 
-	files, err := ioutil.ReadDir(dir)
+	files, err := d.readDirectory(dir)
 	if err != nil {
 		return "", &DirectoryError{
 			Err: err,

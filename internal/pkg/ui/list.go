@@ -25,6 +25,7 @@ type DirectoryList struct {
 	titleBox   *tview.TextView
 	filter     *tview.InputField
 	details    *DetailsView
+	dirUtil    *utils.DirectoryController
 	currentDir string
 	filterText string
 	menuItems  map[string]string
@@ -41,15 +42,15 @@ func CreateDirectoryList(
 	list, err := newDirectoryList(app, titleBox, filter, pages, details)
 	app.HandleError(err, true)
 
-	titleBox.Clear()
-	titleBox.SetText(list.currentDir)
+	list.titleBox.Clear()
+	list.titleBox.SetText(list.currentDir)
 
-	details.Clear().
+	list.details.Clear().
 		SetText(list.getDetailsText(list.currentDir)).
 		ScrollToBeginning().
 		SetInputCapture(list.getDetailsInputCaptureHandler())
 
-	filter.SetDoneFunc(list.getFilterEntryHandler())
+	list.filter.SetDoneFunc(list.getFilterEntryHandler())
 
 	list.
 		configureBorder().
@@ -76,7 +77,9 @@ func newDirectoryList(
 		ShowSecondaryText(false).
 		SetSelectedTextColor(tcell.ColorBlack)
 
-	currentDir, err = utils.GetInitialDirectory()
+	dirUtil := utils.NewDirectoryController()
+
+	currentDir, err = dirUtil.GetInitialDirectory()
 
 	menuItems := map[string]string{
 		listUIQuit:     listUIQuit,
@@ -92,6 +95,7 @@ func newDirectoryList(
 		titleBox:   titleBox,
 		filter:     filter,
 		details:    details,
+		dirUtil:    dirUtil,
 		currentDir: currentDir,
 		menuItems:  menuItems,
 	}, err
@@ -103,7 +107,7 @@ func (d *DirectoryList) getDetailsText(directory string) string {
 		err         error
 	)
 
-	if detailsText, err = utils.GetDirectoryInfo(directory); err != nil {
+	if detailsText, err = d.dirUtil.GetDirectoryInfo(directory); err != nil {
 		dErr, isDirError := err.(*utils.DirectoryError)
 		if isDirError && dErr.ErrorCode == utils.DirUnprivilegedError {
 			detailsText = "[red]Unable to read directory details. You may have insufficient privileges.[white]"
@@ -283,7 +287,7 @@ func (d *DirectoryList) handleRightKeyEvent() {
 		d.filterText = ""
 		d.SetTitle(listUITitle)
 		nextDir := d.currentDir + selectedItem
-		if utils.DirectoryIsAccessible(nextDir) {
+		if d.dirUtil.DirectoryIsAccessible(nextDir) {
 			d.currentDir = nextDir
 			d.load()
 		} else {
