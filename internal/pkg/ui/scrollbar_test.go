@@ -50,7 +50,7 @@ func Test_ScrollBar_GetScrollBarDrawFunc_ScrollbarNotDrawnWithoutBorderOrPadding
 }
 
 func runScrollBarBorderAndPaddingTests(border bool, padding padding, assert func(output, scrollBarChars string)) {
-	testApp := utils.NewTestApp().Init(screenWidth, screenHeight)
+	testApp := utils.NewTestScreenApp().Init(screenWidth, screenHeight)
 	testData := td.TestText["LoremIpsum"]
 	view := setUpTestTextView(
 		testData.Text,

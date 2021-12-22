@@ -6,19 +6,19 @@ import (
 	"time"
 )
 
-type TestApp struct {
+type TestScreenApp struct {
 	screen tcell.SimulationScreen
 	app    *tview.Application
 }
 
-func NewTestApp() *TestApp {
-	return &TestApp{
+func NewTestScreenApp() *TestScreenApp {
+	return &TestScreenApp{
 		screen: nil,
 		app:    nil,
 	}
 }
 
-func (t *TestApp) Init(width, height int) *TestApp {
+func (t *TestScreenApp) Init(width, height int) *TestScreenApp {
 	t.screen = setUpSimulationScreen(width, height)
 	t.app = setUpTestApplication(t.screen)
 
@@ -40,7 +40,7 @@ func setUpTestApplication(screen tcell.Screen) *tview.Application {
 		SetScreen(screen)
 }
 
-func (t *TestApp) GetPrimitiveOutput() string {
+func (t *TestScreenApp) GetPrimitiveOutput() string {
 	x, y, width, height := t.app.GetFocus().GetRect()
 	output := ""
 
@@ -55,7 +55,7 @@ func (t *TestApp) GetPrimitiveOutput() string {
 	return output
 }
 
-func (t *TestApp) Run(p tview.Primitive, autoStop bool, callback func()) {
+func (t *TestScreenApp) Run(p tview.Primitive, autoStop bool, callback func()) {
 	if autoStop {
 		defer t.app.Stop()
 	}
@@ -72,6 +72,6 @@ func (t *TestApp) Run(p tview.Primitive, autoStop bool, callback func()) {
 	callback()
 }
 
-func (t *TestApp) Stop() {
+func (t *TestScreenApp) Stop() {
 	t.app.Stop()
 }

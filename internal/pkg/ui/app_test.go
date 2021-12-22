@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"errors"
 	"github.com/gdamore/tcell/v2"
+	"io"
 	"log"
 	"testing"
 )
@@ -118,10 +119,10 @@ func Test_App_HandleError_DoesNothingIfNoError(t *testing.T) {
 }
 
 func Test_App_HandleError_OutputsErrorToLog(t *testing.T) {
-	var out, outStd, void bytes.Buffer
+	var out, outStd bytes.Buffer
 	log.SetOutput(&out)
 	screen := tcell.NewSimulationScreen("")
-	app := NewApp(screen, &void, &outStd)
+	app := NewApp(screen, io.Discard, &outStd)
 	app.handleErrorExit = func() {
 		// Do nothing for test
 	}
@@ -138,10 +139,10 @@ func Test_App_HandleError_OutputsErrorToLog(t *testing.T) {
 }
 
 func Test_App_HandleError_OutputsErrorToStream(t *testing.T) {
-	var out, outLog, void bytes.Buffer
+	var out, outLog bytes.Buffer
 	log.SetOutput(&outLog)
 	screen := tcell.NewSimulationScreen("")
-	app := NewApp(screen, &void, &out)
+	app := NewApp(screen, io.Discard, &out)
 	app.handleErrorExit = func() {
 		// Do nothing for test
 	}
@@ -158,10 +159,10 @@ func Test_App_HandleError_OutputsErrorToStream(t *testing.T) {
 }
 
 func Test_App_HandleError_ExitsScreenBuffer(t *testing.T) {
-	var out, void bytes.Buffer
-	log.SetOutput(&void)
+	var out bytes.Buffer
+	log.SetOutput(io.Discard)
 	screen := tcell.NewSimulationScreen("")
-	app := NewApp(screen, &out, &void)
+	app := NewApp(screen, &out, io.Discard)
 	app.handleErrorExit = func() {
 		// Do nothing for test
 	}
@@ -177,10 +178,9 @@ func Test_App_HandleError_ExitsScreenBuffer(t *testing.T) {
 }
 
 func Test_App_HandleError_ExitsWithError(t *testing.T) {
-	var void bytes.Buffer
-	log.SetOutput(&void)
+	log.SetOutput(io.Discard)
 	screen := tcell.NewSimulationScreen("")
-	app := NewApp(screen, &void, &void)
+	app := NewApp(screen, io.Discard, io.Discard)
 	exitedOnError := false
 	app.handleErrorExit = func() {
 		exitedOnError = true

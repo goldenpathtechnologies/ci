@@ -3,6 +3,7 @@ package utils
 import (
 	"bytes"
 	"fmt"
+	"io"
 	"io/fs"
 	"io/ioutil"
 	"os"
@@ -26,38 +27,75 @@ func (d *DirectoryError) Error() string {
 	return d.Err.Error()
 }
 
-type DirectoryController struct {
-	readDirectory func(dirname string) ([]fs.FileInfo, error)
-	getAbsolutePath func(path string) (string, error)
+type InfoWriter interface {
+	io.Writer
+	Flush() (string, error)
 }
 
-func NewDirectoryController() *DirectoryController {
-	return &DirectoryController{
-		readDirectory: func(dirname string) ([]fs.FileInfo, error) {
-			return ioutil.ReadDir(dirname)
-		},
-		getAbsolutePath: func(path string) (string, error) {
-			return filepath.Abs(path)
-		},
+type DefaultInfoWriter struct {
+	buffer bytes.Buffer
+	tabWriter *tabwriter.Writer
+}
+
+func (d *DefaultInfoWriter) Write(p []byte) (n int, err error) {
+	return d.tabWriter.Write(p)
+}
+
+func (d *DefaultInfoWriter) Flush() (string, error) {
+	err := d.tabWriter.Flush()
+	return d.buffer.String(), err
+}
+
+type DirectoryCommands interface {
+	ReadDirectory(dirname string) ([]fs.FileInfo, error)
+	GetAbsolutePath(path string) (string, error)
+}
+
+type DefaultDirectoryCommands struct {}
+
+func (*DefaultDirectoryCommands) ReadDirectory(dirname string) ([]fs.FileInfo, error) {
+	return ioutil.ReadDir(dirname)
+}
+
+func (*DefaultDirectoryCommands) GetAbsolutePath(path string) (string, error) {
+	return filepath.Abs(path)
+}
+
+type DirectoryController interface {
+	GetInitialDirectory() (string, error)
+	DirectoryIsAccessible(dir string) bool
+	GetDirectoryInfo(dir string) (string, error)
+}
+
+type DefaultDirectoryController struct {
+	Writer InfoWriter
+	Commands DirectoryCommands
+}
+
+func NewDefaultDirectoryController() *DefaultDirectoryController {
+	infoWriter := &DefaultInfoWriter{}
+	infoWriter.tabWriter = tabwriter.NewWriter(&infoWriter.buffer, 1, 2, 2, ' ', 0)
+
+	return &DefaultDirectoryController{
+		Writer:   infoWriter,
+		Commands: &DefaultDirectoryCommands{},
 	}
 }
 
-func (d *DirectoryController) GetInitialDirectory() (string, error) {
-	dir, err := d.getAbsolutePath(".")
+func (d *DefaultDirectoryController) GetInitialDirectory() (string, error) {
+	dir, err := d.Commands.GetAbsolutePath(".")
 
 	return dir + OsPathSeparator, err
 }
 
-func (d *DirectoryController) DirectoryIsAccessible(dir string) bool {
-	_, err := d.readDirectory(dir)
+func (d *DefaultDirectoryController) DirectoryIsAccessible(dir string) bool {
+	_, err := d.Commands.ReadDirectory(dir)
 
 	return err == nil
 }
 
-func (d *DirectoryController) GetDirectoryInfo(dir string) (string, error) {
-	var out bytes.Buffer
-
-	files, err := d.readDirectory(dir)
+func (d *DefaultDirectoryController) GetDirectoryInfo(dir string) (string, error) {
+	files, err := d.Commands.ReadDirectory(dir)
 	if err != nil {
 		return "", &DirectoryError{
 			Err: err,
@@ -65,9 +103,9 @@ func (d *DirectoryController) GetDirectoryInfo(dir string) (string, error) {
 		}
 	}
 
-	writer := tabwriter.NewWriter(&out, 1, 2, 2, ' ', 0)
+	// TODO: Return with a message if there are no files in the directory.
 
-	_, err = fmt.Fprintf(writer, "%v\t%v\t%v\t%v\n", "Mode", "Name", "ModTime", "Bytes")
+	_, err = fmt.Fprintf(d.Writer, "%v\t%v\t%v\t%v\n", "Mode", "Name", "ModTime", "Bytes")
 	if err != nil {
 		return "", &DirectoryError{
 			Err:       err,
@@ -75,7 +113,7 @@ func (d *DirectoryController) GetDirectoryInfo(dir string) (string, error) {
 		}
 	}
 
-	_, err = fmt.Fprintf(writer, "%v\t%v\t%v\t%v\n", "----", "----", "-------", "-----")
+	_, err = fmt.Fprintf(d.Writer, "%v\t%v\t%v\t%v\n", "----", "----", "-------", "-----")
 	if err != nil {
 		return "", &DirectoryError{
 			Err:       err,
@@ -86,7 +124,7 @@ func (d *DirectoryController) GetDirectoryInfo(dir string) (string, error) {
 	for _, f := range files {
 		dateFormat := "2006-01-02 3:04 PM"
 		modTime := f.ModTime().Format(dateFormat)
-		_, err = fmt.Fprintf(writer, "%v\t%v\t%v\t%v\n", f.Mode(), f.Name(), modTime, f.Size())
+		_, err = fmt.Fprintf(d.Writer, "%v\t%v\t%v\t%v\n", f.Mode(), f.Name(), modTime, f.Size())
 		if err != nil {
 			return "", &DirectoryError{
 				Err:       err,
@@ -95,7 +133,8 @@ func (d *DirectoryController) GetDirectoryInfo(dir string) (string, error) {
 		}
 	}
 
-	if err = writer.Flush(); err != nil {
+	var output string
+	if output, err = d.Writer.Flush(); err != nil {
 		return "", &DirectoryError{
 			Err:       err,
 			ErrorCode: DirUnexpectedError,
@@ -103,5 +142,5 @@ func (d *DirectoryController) GetDirectoryInfo(dir string) (string, error) {
 	}
 
 	// TODO: Prune last newline from output.
-	return out.String(), nil
+	return output, nil
 }

@@ -20,6 +20,12 @@ type App struct {
 	errorStream        io.Writer
 	handleNormalExit   func()
 	handleErrorExit    func()
+	// TODO: Add a flag that enables/disables logging throughout the app so that
+	//  it is handled consistently. I discovered during testing that I have to assume
+	//  the SUT enabled logging to determine where error output is received. It would
+	//  be better to configure this during tests so that I know where error output will
+	//  be at any time. See Test_DirectoryList_getDetailsText_HandlesUnexpectedErrors
+	//  for issues related to this change.
 }
 
 func NewApp(screen tcell.Screen, stream io.Writer, errStream io.Writer) *App {

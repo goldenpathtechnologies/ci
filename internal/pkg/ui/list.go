@@ -25,7 +25,7 @@ type DirectoryList struct {
 	titleBox   *tview.TextView
 	filter     *tview.InputField
 	details    *DetailsView
-	dirUtil    *utils.DirectoryController
+	dirUtil    utils.DirectoryController
 	currentDir string
 	filterText string
 	menuItems  map[string]string
@@ -77,7 +77,7 @@ func newDirectoryList(
 		ShowSecondaryText(false).
 		SetSelectedTextColor(tcell.ColorBlack)
 
-	dirUtil := utils.NewDirectoryController()
+	dirUtil := utils.NewDefaultDirectoryController()
 
 	currentDir, err = dirUtil.GetInitialDirectory()
 
