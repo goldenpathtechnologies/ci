@@ -72,7 +72,7 @@ func (a *App) enterScreenBuffer() {
 		return
 	}
 
-	if _, err := a.outputStream.Write([]byte(bufferEntrySequence)); err != nil {
+	if _, err := a.errorStream.Write([]byte(bufferEntrySequence)); err != nil {
 		log.Print(err)
 		a.handleErrorExit()
 	}
@@ -86,7 +86,7 @@ func (a *App) exitScreenBuffer() {
 		return
 	}
 
-	if _, err := a.outputStream.Write([]byte(bufferExitSequence)); err != nil {
+	if _, err := a.errorStream.Write([]byte(bufferExitSequence)); err != nil {
 		log.Print(err)
 		a.handleErrorExit()
 	}
