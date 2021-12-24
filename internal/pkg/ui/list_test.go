@@ -381,7 +381,31 @@ func Test_DirectoryList_handleRightKeyEvent_LoadsListForChildDirectory(t *testin
 	t.Error("Unimplemented test")
 }
 
-func Test_DirectoryList_handleRightKeyEvent_ListsContentsOfDirectoryInDetailsPane(t *testing.T) {
+func Test_DirectoryList_load_LoadsChildDirectoriesOfCurrentDirectory(t *testing.T) {
+	t.Error("Unimplemented test")
+}
+
+func Test_DirectoryList_load_SetsTitleToCurrentDirectoryPath(t *testing.T) {
+	t.Error("Unimplemented test")
+}
+
+func Test_DirectoryList_addNavigableItem_AddsListItemWhenFilterTextIsEmpty(t *testing.T) {
+	t.Error("Unimplemented test")
+}
+
+func Test_DirectoryList_addNavigableItem_AddsListItemWhenFilterTextMatchesDirectoryName(t *testing.T) {
+	t.Error("Unimplemented test")
+}
+
+func Test_DirectoryList_setDetailsText_ScrollsTextToTop(t *testing.T) {
+	t.Error("Unimplemented test")
+}
+
+func Test_DirectoryList_setDetailsText_SetsTextToCurrentDirectoryItemsWhenDefaultListItemSelected(t *testing.T) {
+	t.Error("Unimplemented test")
+}
+
+func Test_DirectoryList_setDetailsText_SetsTextToChildItemsOfSelectedListItem(t *testing.T) {
 	t.Error("Unimplemented test")
 }
 
@@ -450,4 +474,14 @@ func Test_DirectoryList_setDetailsText_ClearsOldTextBeforeDisplayingNewText(t *t
 	if !testsExecuted {
 		t.Error("No tests were run, test data may be invalid")
 	}
+}
+
+func Test_DirectoryList_getNextItemIndex_GetsIndexOfNextListItemWhenNavigatingUp(t *testing.T) {
+	// TODO: Include Euclidean modulo behaviour in test
+	t.Error("Unimplemented test")
+}
+
+func Test_DirectoryList_getNextItemIndex_GetsIndexOfNextListItemWhenNavigatingDown(t *testing.T) {
+	// TODO: Include Euclidean modulo behaviour in test
+	t.Error("Unimplemented test")
 }
