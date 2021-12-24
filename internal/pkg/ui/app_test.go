@@ -17,7 +17,7 @@ const (
 func Test_App_enterScreenBuffer(t *testing.T) {
 	var out bytes.Buffer
 	screen := tcell.NewSimulationScreen("") // "" = UTF-8 charset
-	app := NewApp(screen, &out, nil)
+	app := NewApp(screen, io.Discard, &out)
 	app.screenBufferActive = false
 
 	app.enterScreenBuffer()
@@ -51,7 +51,7 @@ func Test_App_enterScreenBuffer_NoOutputWhenBufferActive(t *testing.T) {
 func Test_App_exitScreenBuffer(t *testing.T) {
 	var out bytes.Buffer
 	screen := tcell.NewSimulationScreen("")
-	app := NewApp(screen, &out, nil)
+	app := NewApp(screen, io.Discard, &out)
 	app.screenBufferActive = true
 
 	app.exitScreenBuffer()
