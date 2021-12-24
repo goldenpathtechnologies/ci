@@ -11,7 +11,7 @@ function Invoke-Ci {
             if ((Get-Item $output) -is [System.IO.DirectoryInfo]) {
                 Set-Location -Path $output.ToString()
             } else {
-                Write-Host $output + " is not a directory."
+                Write-Host "$output is not a directory."
 
                 throw
             }

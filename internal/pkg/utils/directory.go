@@ -3,6 +3,7 @@ package utils
 import (
 	"bytes"
 	"fmt"
+	"github.com/karrick/godirwalk"
 	"io"
 	"io/fs"
 	"io/ioutil"
@@ -43,12 +44,19 @@ func (d *DefaultInfoWriter) Write(p []byte) (n int, err error) {
 
 func (d *DefaultInfoWriter) Flush() (string, error) {
 	err := d.tabWriter.Flush()
-	return d.buffer.String(), err
+	output := d.buffer.String()
+	d.buffer.Reset()
+	return output, err
+}
+
+type DirectoryScanner interface {
+	ScanDirectory(path string, callback func(dirName string)) error
 }
 
 type DirectoryCommands interface {
 	ReadDirectory(dirname string) ([]fs.FileInfo, error)
 	GetAbsolutePath(path string) (string, error)
+	DirectoryScanner
 }
 
 type DefaultDirectoryCommands struct {}
@@ -61,10 +69,36 @@ func (*DefaultDirectoryCommands) GetAbsolutePath(path string) (string, error) {
 	return filepath.Abs(path)
 }
 
+func (*DefaultDirectoryCommands) ScanDirectory(
+	path string,
+	callback func(dirName string),
+) error {
+	// TODO: Determine if godirwalk can/should be used instead of ioutil.ReadDir in ReadDirectory,
+	//  or vice-versa.
+	scanner, err := godirwalk.NewScanner(path)
+	if err != nil {
+		return err
+	}
+
+	for scanner.Scan() {
+		entry, err := scanner.Dirent()
+		if err != nil {
+			return err
+		}
+
+		if entry.IsDir() {
+			callback(entry.Name())
+		}
+	}
+
+	return nil
+}
+
 type DirectoryController interface {
 	GetInitialDirectory() (string, error)
 	DirectoryIsAccessible(dir string) bool
 	GetDirectoryInfo(dir string) (string, error)
+	DirectoryScanner
 }
 
 type DefaultDirectoryController struct {
@@ -95,6 +129,7 @@ func (d *DefaultDirectoryController) DirectoryIsAccessible(dir string) bool {
 }
 
 func (d *DefaultDirectoryController) GetDirectoryInfo(dir string) (string, error) {
+	// TODO: Ensure that the directory items are sorted in case-insensitive alphabetical order.
 	files, err := d.Commands.ReadDirectory(dir)
 	if err != nil {
 		return "", &DirectoryError{
@@ -143,4 +178,8 @@ func (d *DefaultDirectoryController) GetDirectoryInfo(dir string) (string, error
 
 	// TODO: Prune last newline from output.
 	return output, nil
+}
+
+func (d *DefaultDirectoryController) ScanDirectory(path string, callback func(dirName string)) error {
+	return d.Commands.ScanDirectory(path, callback)
 }

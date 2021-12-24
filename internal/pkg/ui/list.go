@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"github.com/gdamore/tcell/v2"
 	"github.com/goldenpathtechnologies/ci/internal/pkg/utils"
-	"github.com/karrick/godirwalk"
 	"github.com/rivo/tview"
 	"path/filepath"
 	"strings"
@@ -247,21 +246,10 @@ func (d *DirectoryList) load() {
 		d.app.PrintAndExit(d.currentDir)
 	})
 
-	scanner, err := godirwalk.NewScanner(d.currentDir)
-	d.app.HandleError(err, true)
-
-	for scanner.Scan() {
-		entry, err := scanner.Dirent()
+	if err := d.dirUtil.ScanDirectory(d.currentDir, func(dirName string) {
+		d.addNavigableItem(dirName)
+	}); err != nil {
 		d.app.HandleError(err, true)
-
-		if entry.IsDir() {
-			if isMatch, _ := filepath.Match(d.filterText, entry.Name()); len(d.filterText) == 0 || isMatch {
-				d.AddItem(entry.Name() + utils.OsPathSeparator, "", 0, func() {
-					path := d.currentDir + entry.Name() + utils.OsPathSeparator
-					d.app.PrintAndExit(path)
-				})
-			}
-		}
 	}
 
 	d.AddItem(listUIQuit, "Press to exit", 'q', func() {
@@ -278,6 +266,15 @@ func (d *DirectoryList) load() {
 
 	d.titleBox.Clear()
 	d.titleBox.SetText(d.currentDir)
+}
+
+func (d *DirectoryList) addNavigableItem(dirName string) {
+	if isMatch, _ := filepath.Match(d.filterText, dirName); len(d.filterText) == 0 || isMatch {
+		d.AddItem(dirName+ utils.OsPathSeparator, "", 0, func() {
+			path := d.currentDir + dirName + utils.OsPathSeparator
+			d.app.PrintAndExit(path)
+		})
+	}
 }
 
 func (d *DirectoryList) handleRightKeyEvent() {
