@@ -36,7 +36,7 @@ func Test_App_enterScreenBuffer(t *testing.T) {
 func Test_App_enterScreenBuffer_NoOutputWhenBufferActive(t *testing.T) {
 	var out bytes.Buffer
 	screen := tcell.NewSimulationScreen("")
-	app := NewApp(screen, &out, nil)
+	app := NewApp(screen, io.Discard, &out)
 	app.screenBufferActive = true
 
 	app.enterScreenBuffer()
@@ -45,6 +45,28 @@ func Test_App_enterScreenBuffer_NoOutputWhenBufferActive(t *testing.T) {
 
 	if result != expected {
 		t.Errorf("Expected hex output to be '%x', got '%x' instead", expected, result)
+	}
+}
+
+func Test_App_enterScreenBuffer_OnlyWritesToErrorStream(t *testing.T) {
+	var out, void bytes.Buffer
+	screen := tcell.NewSimulationScreen("")
+	app := NewApp(screen, &void, &out)
+	app.screenBufferActive = false
+
+	app.enterScreenBuffer()
+	expectedOut := testBufferEntrySequence
+	expectedVoid := ""
+
+	resultOut := out.String()
+	resultVoid :=void.String()
+
+	if resultOut != expectedOut {
+		t.Errorf("Expected hex output to be '%x', got '%x' instead", expectedOut, resultOut)
+	}
+
+	if resultVoid != expectedVoid {
+		t.Errorf("Expected hex output to be '%x', got '%x' instead", expectedVoid, resultVoid)
 	}
 }
 
@@ -70,7 +92,7 @@ func Test_App_exitScreenBuffer(t *testing.T) {
 func Test_App_exitScreenBuffer_NoOutputWhenBufferInactive(t *testing.T) {
 	var out bytes.Buffer
 	screen := tcell.NewSimulationScreen("")
-	app := NewApp(screen, &out, nil)
+	app := NewApp(screen, io.Discard, &out)
 	app.screenBufferActive = false
 
 	app.exitScreenBuffer()
@@ -82,10 +104,32 @@ func Test_App_exitScreenBuffer_NoOutputWhenBufferInactive(t *testing.T) {
 	}
 }
 
+func Test_App_exitScreenBuffer_OnlyWritesToErrorStream(t *testing.T) {
+	var out, void bytes.Buffer
+	screen := tcell.NewSimulationScreen("")
+	app := NewApp(screen, &void, &out)
+	app.screenBufferActive = true
+
+	app.exitScreenBuffer()
+	expectedOut := testBufferExitSequence
+	expectedVoid := ""
+
+	resultOut := out.String()
+	resultVoid :=void.String()
+
+	if resultOut != expectedOut {
+		t.Errorf("Expected hex output to be '%x', got '%x' instead", expectedOut, resultOut)
+	}
+
+	if resultVoid != expectedVoid {
+		t.Errorf("Expected hex output to be '%x', got '%x' instead", expectedVoid, resultVoid)
+	}
+}
+
 func Test_App_PrintAndExit_PrintsToOutputStreamAndExits(t *testing.T) {
 	var out bytes.Buffer
 	screen := tcell.NewSimulationScreen("")
-	app := NewApp(screen, &out, nil)
+	app := NewApp(screen, io.Discard, &out)
 	performedExit := false
 	app.handleNormalExit = func() {
 		performedExit = true
@@ -108,7 +152,7 @@ func Test_App_HandleError_DoesNothingIfNoError(t *testing.T) {
 	var out bytes.Buffer
 	log.SetOutput(&out)
 	screen := tcell.NewSimulationScreen("")
-	app := NewApp(screen, nil, &out)
+	app := NewApp(screen, io.Discard, &out)
 
 	app.HandleError(nil, true)
 	app.HandleError(nil, false)
@@ -162,13 +206,13 @@ func Test_App_HandleError_ExitsScreenBuffer(t *testing.T) {
 	var out bytes.Buffer
 	log.SetOutput(io.Discard)
 	screen := tcell.NewSimulationScreen("")
-	app := NewApp(screen, &out, io.Discard)
+	app := NewApp(screen, io.Discard, &out)
 	app.handleErrorExit = func() {
 		// Do nothing for test
 	}
 	app.screenBufferActive = true
 
-	app.HandleError(errors.New("this is an error"), false)
+	app.HandleError(errors.New("this is an error"), true)
 	result := out.String()
 	expected := testBufferExitSequence
 
