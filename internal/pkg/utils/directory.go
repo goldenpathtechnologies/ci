@@ -117,9 +117,7 @@ func NewDefaultDirectoryController() *DefaultDirectoryController {
 }
 
 func (d *DefaultDirectoryController) GetInitialDirectory() (string, error) {
-	dir, err := d.Commands.GetAbsolutePath(".")
-
-	return dir + OsPathSeparator, err
+	return d.Commands.GetAbsolutePath(".")
 }
 
 func (d *DefaultDirectoryController) DirectoryIsAccessible(dir string) bool {

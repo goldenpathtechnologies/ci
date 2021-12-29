@@ -129,7 +129,7 @@ func Test_App_exitScreenBuffer_OnlyWritesToErrorStream(t *testing.T) {
 func Test_App_PrintAndExit_PrintsToOutputStreamAndExits(t *testing.T) {
 	var out bytes.Buffer
 	screen := tcell.NewSimulationScreen("")
-	app := NewApp(screen, io.Discard, &out)
+	app := NewApp(screen, &out, io.Discard)
 	performedExit := false
 	app.handleNormalExit = func() {
 		performedExit = true

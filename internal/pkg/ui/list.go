@@ -38,7 +38,7 @@ func CreateDirectoryList(
 	details *DetailsView,
 ) *DirectoryList {
 
-	list, err := newDirectoryList(app, titleBox, filter, pages, details)
+	list, err := newDirectoryList(app, titleBox, filter, pages, details, nil)
 	app.HandleError(err, true)
 
 	list.titleBox.Clear()
@@ -66,6 +66,7 @@ func newDirectoryList(
 	filter *tview.InputField,
 	pages *tview.Pages,
 	details *DetailsView,
+	directoryController utils.DirectoryController,
 ) (*DirectoryList, error) {
 	var (
 		currentDir string
@@ -76,7 +77,12 @@ func newDirectoryList(
 		ShowSecondaryText(false).
 		SetSelectedTextColor(tcell.ColorBlack)
 
-	dirUtil := utils.NewDefaultDirectoryController()
+	var dirUtil utils.DirectoryController
+	if directoryController == nil {
+		dirUtil = utils.NewDefaultDirectoryController()
+	} else {
+		dirUtil = directoryController
+	}
 
 	currentDir, err = dirUtil.GetInitialDirectory()
 
@@ -130,6 +136,7 @@ func (d *DirectoryList) getDetailsInputCaptureHandler() func(event *tcell.EventK
 			return nil
 		case 'q':
 			d.app.PrintAndExit(".")
+			return nil
 		}
 
 		return event
@@ -138,13 +145,18 @@ func (d *DirectoryList) getDetailsInputCaptureHandler() func(event *tcell.EventK
 
 func (d *DirectoryList) getFilterEntryHandler() func(key tcell.Key) {
 	return func(key tcell.Key) {
-		// TODO: Ensure Esc does not apply any existing filter
+		if key == tcell.KeyEsc {
+			d.filter.SetText("")
+		}
+
 		d.filterText = d.filter.GetText()
+
 		if len(d.filterText) > 0 {
 			d.SetTitle(fmt.Sprintf("%v - Filter: %v", listUITitle, d.filterText))
 		} else {
 			d.SetTitle(listUITitle)
 		}
+
 		d.filter.SetText("")
 		d.pages.HidePage("Filter")
 		d.app.SetFocus(d)
@@ -158,28 +170,28 @@ func (d *DirectoryList) configureBorder() *DirectoryList {
 		SetBorderPadding(1, 1, 0, 1).
 		SetDrawFunc(GetScrollBarDrawFunc(
 			d,
-			getListScrollAreaHandler(d),
-			getListScrollPositionHandler(d)))
+			d.getScrollAreaHandler(),
+			d.getScrollPositionHandler()))
 
 	return d
 }
 
-func getListScrollAreaHandler(list *DirectoryList) func() (width, height int) {
+func (d *DirectoryList) getScrollAreaHandler() func() (width, height int) {
 	return func() (width, height int) {
-			_, _, listWidth, _ := list.GetInnerRect()
-			listHeight := list.GetItemCount()
+			_, _, listWidth, _ := d.GetInnerRect()
+			listHeight := d.GetItemCount()
 
 			return listWidth, listHeight
 	}
 }
 
-func getListScrollPositionHandler(list *DirectoryList) func() (vScroll, hScroll int) {
+func (d *DirectoryList) getScrollPositionHandler() func() (vScroll, hScroll int) {
 	return func() (vScroll, hScroll int) {
-		selectedItem := list.GetCurrentItem()
-		itemCount := list.GetItemCount()
-		_, _, _, pageHeight := list.GetInnerRect()
+		selectedItem := d.GetCurrentItem()
+		itemCount := d.GetItemCount()
+		_, _, _, pageHeight := d.GetInnerRect()
 
-		v, h := list.GetOffset()
+		v, h := d.GetOffset()
 
 		if selectedItem == 0 {
 			v = 0
@@ -228,8 +240,8 @@ func (d *DirectoryList) handleLeftKeyEvent() {
 		d.filterText = ""
 		d.SetTitle(listUITitle)
 		paths := strings.Split(d.currentDir, utils.OsPathSeparator)
-		paths = paths[:len(paths)-2]
-		d.currentDir = strings.Join(paths, utils.OsPathSeparator) + utils.OsPathSeparator
+		paths = paths[:len(paths)-1]
+		d.currentDir = strings.Join(paths, utils.OsPathSeparator)
 		d.load()
 
 		d.details.Clear()
@@ -270,10 +282,17 @@ func (d *DirectoryList) load() {
 
 func (d *DirectoryList) addNavigableItem(dirName string) {
 	if isMatch, _ := filepath.Match(d.filterText, dirName); len(d.filterText) == 0 || isMatch {
-		d.AddItem(dirName+ utils.OsPathSeparator, "", 0, func() {
-			path := d.currentDir + dirName + utils.OsPathSeparator
-			d.app.PrintAndExit(path)
-		})
+		d.AddItem(dirName,
+			"",
+			0,
+			d.getNavigableItemSelectionHandler(dirName))
+	}
+}
+
+func (d *DirectoryList) getNavigableItemSelectionHandler(dirName string) func() {
+	return func() {
+		path := d.currentDir + utils.OsPathSeparator + dirName
+		d.app.PrintAndExit(path)
 	}
 }
 
@@ -283,7 +302,7 @@ func (d *DirectoryList) handleRightKeyEvent() {
 	if !d.isMenuItem(selectedItem) {
 		d.filterText = ""
 		d.SetTitle(listUITitle)
-		nextDir := d.currentDir + selectedItem
+		nextDir := d.currentDir + utils.OsPathSeparator + selectedItem
 		if d.dirUtil.DirectoryIsAccessible(nextDir) {
 			d.currentDir = nextDir
 			d.load()
