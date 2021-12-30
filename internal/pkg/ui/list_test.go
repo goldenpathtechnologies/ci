@@ -1198,10 +1198,12 @@ func Test_DirectoryList_setDetailsText_SetsTextToCurrentDirectoryItemsWhenDefaul
 }
 
 func Test_DirectoryList_setDetailsText_SetsTextToChildItemsOfSelectedListItem(t *testing.T) {
+
+
 	t.Error("Unimplemented test")
 }
 
-func Test_DirectoryList_setDetailsText_ClearsOldTextBeforeDisplayingNewText(t *testing.T) {
+func Test_DirectoryList_setDetailsText_SetsDetailsOfDirectoryListItem(t *testing.T) {
 	var seedDirectories []*tdUtils.MockFileNode
 	seedDirNamePart := "test"
 	seedDirCount := 5
@@ -1222,14 +1224,7 @@ func Test_DirectoryList_setDetailsText_ClearsOldTextBeforeDisplayingNewText(t *t
 
 	for i := 0; i < seedDirCount; i++ {
 		dirName := seedDirNamePart + strconv.Itoa(i)
-		if _, err := mockFileSystem.Cd("/" + dirName); err != nil {
-			t.Fatal(err)
-		}
 		expectedDetailsText[dirName] = list.getDetailsText(dirName)
-	}
-
-	if _, err := mockFileSystem.Cd("/"); err != nil {
-		t.Fatal(err)
 	}
 
 	app.SetFocus(list)
@@ -1239,26 +1234,17 @@ func Test_DirectoryList_setDetailsText_ClearsOldTextBeforeDisplayingNewText(t *t
 
 	for i := 0; i < list.List.GetItemCount(); i++ {
 		itemText, _ := list.List.GetItemText(i)
-		itemText = strings.TrimRight(itemText, "/\\")
 		expected, isDir := expectedDetailsText[itemText]
 
 		if isDir {
 			testsExecuted = true
-			list.currentDir = itemText
-			if _, err := mockFileSystem.Cd(itemText); err != nil {
-				t.Fatal(err)
-			}
-			list.setDetailsText(true)
+			list.setDetailsText(itemText)
 			result := list.details.GetText(false)
 			if result != expected {
 				t.Errorf(
 					"Expected directory '%s' to have the following details:\n%s\nGot the following instead:\n%s\n",
 					itemText, expected, result)
 			}
-		}
-
-		if _, err := mockFileSystem.Cd("/"); err != nil {
-			t.Fatal(err)
 		}
 	}
 

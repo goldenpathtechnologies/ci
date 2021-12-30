@@ -221,10 +221,10 @@ func (d *DirectoryList) getInputCaptureHandler() func(event *tcell.EventKey) *tc
 			d.handleRightKeyEvent()
 			return nil
 		case tcell.KeyUp:
-			d.setDetailsText(false)
+			d.setPreviousDetailsText()
 			return event
 		case tcell.KeyDown:
-			d.setDetailsText(true)
+			d.setNextDetailsText()
 			return event
 		case tcell.KeyTab:
 			d.app.SetFocus(d.details)
@@ -319,16 +319,9 @@ func (d *DirectoryList) isMenuItem(text string) bool {
 	return exists
 }
 
-func (d *DirectoryList) setDetailsText(isNavigatingDown bool) {
-	d.details.Clear()
-	nextItemIndex := d.getNextItemIndex(isNavigatingDown)
-	nextItem, _ := d.GetItemText(nextItemIndex)
-	if !d.isMenuItem(nextItem) {
-		d.details.SetText(d.getDetailsText(d.currentDir + nextItem))
-	} else if nextItem == listUIEnterDir {
-		d.details.SetText(d.getDetailsText(d.currentDir))
-	}
-	d.details.ScrollToBeginning()
+func (d *DirectoryList) setPreviousDetailsText() {
+	item, _ := d.List.GetItemText(d.getNextItemIndex(false))
+	d.setDetailsText(item)
 }
 
 func (d *DirectoryList) getNextItemIndex(isIncrementing bool) int {
@@ -342,4 +335,19 @@ func (d *DirectoryList) getNextItemIndex(isIncrementing bool) int {
 	nextItemIndex := d.GetCurrentItem() + increment
 	// Note: Euclidean modulo operation, https://stackoverflow.com/questions/43018206/modulo-of-negative-integers-in-go
 	return ((nextItemIndex % itemCount) + itemCount) % itemCount
+}
+
+func (d *DirectoryList) setDetailsText(dirName string) {
+	d.details.Clear()
+	if !d.isMenuItem(dirName) {
+		d.details.SetText(d.getDetailsText(d.currentDir + utils.OsPathSeparator + dirName))
+	} else if dirName == listUIEnterDir {
+		d.details.SetText(d.getDetailsText(d.currentDir))
+	}
+	d.details.ScrollToBeginning()
+}
+
+func (d *DirectoryList) setNextDetailsText() {
+	item, _ := d.List.GetItemText(d.getNextItemIndex(true))
+	d.setDetailsText(item)
 }
