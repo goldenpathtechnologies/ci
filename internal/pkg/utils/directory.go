@@ -98,6 +98,7 @@ type DirectoryController interface {
 	GetInitialDirectory() (string, error)
 	DirectoryIsAccessible(dir string) bool
 	GetDirectoryInfo(dir string) (string, error)
+	GetAbsolutePath(dir string) (string, error)
 	DirectoryScanner
 }
 
@@ -176,6 +177,10 @@ func (d *DefaultDirectoryController) GetDirectoryInfo(dir string) (string, error
 
 	// TODO: Prune last newline from output.
 	return output, nil
+}
+
+func (d *DefaultDirectoryController) GetAbsolutePath(dir string) (string, error) {
+	return d.Commands.GetAbsolutePath(dir)
 }
 
 func (d *DefaultDirectoryController) ScanDirectory(path string, callback func(dirName string)) error {

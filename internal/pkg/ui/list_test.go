@@ -12,6 +12,7 @@ import (
 	"io/fs"
 	"log"
 	"path/filepath"
+	"runtime"
 	"strconv"
 	"strings"
 	"testing"
@@ -419,7 +420,51 @@ func Test_DirectoryList_getFilterEntryHandler_SetsAppFocusToListWhenFilterEntere
 }
 
 func Test_DirectoryList_getFilterEntryHandler_PerformsFilterWhenListReloaded(t *testing.T) {
-	seedDirectories := []*tdUtils.MockFileNode{
+	seedDirectories := getSampleExampleSeedDirectories()
+
+	mockFileSystem := tdUtils.NewMockFileSystem(seedDirectories, 1, 5)
+	dirCtrl := getDirectoryControllerWithMockCommands(mockFileSystem)
+	screen := tcell.NewSimulationScreen("")
+	filter := CreateFilterPane()
+	app := getAppWithDisabledExitHandlersAndOutputStreams(screen)
+	list, err := newDirectoryList(app, tview.NewTextView(), filter, tview.NewPages(), CreateDetailsPane(), dirCtrl)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	filterHandler := list.getFilterEntryHandler()
+	filter.SetDoneFunc(filterHandler)
+	filter.SetText("example2")
+
+	expectedFail := fmt.Sprintf(
+		"sample0%s sample1%s example0%s example1%s",
+		utils.OsPathSeparator,
+		utils.OsPathSeparator,
+		utils.OsPathSeparator,
+		utils.OsPathSeparator)
+
+	filterHandler(tcell.KeyEnter)
+
+	foundFilteredItem := false
+	for i := 0; i < list.GetItemCount(); i++ {
+		itemText, _ := list.GetItemText(i)
+
+		if strings.Contains(expectedFail, itemText) {
+			t.Errorf("Expected a filtered list but it contained the invalid item '%s'", itemText)
+		}
+
+		if itemText == "example2" {
+			foundFilteredItem = true
+		}
+	}
+
+	if !foundFilteredItem {
+		t.Errorf("Expected to find the filtered item 'example2', but it was not present")
+	}
+}
+
+func getSampleExampleSeedDirectories() []*tdUtils.MockFileNode {
+	return []*tdUtils.MockFileNode{
 		{
 			File:     tdUtils.MockFile{
 				FileName:    "sample0",
@@ -470,46 +515,6 @@ func Test_DirectoryList_getFilterEntryHandler_PerformsFilterWhenListReloaded(t *
 			Children: nil,
 			Parent:   nil,
 		},
-	}
-
-	mockFileSystem := tdUtils.NewMockFileSystem(seedDirectories, 1, 5)
-	dirCtrl := getDirectoryControllerWithMockCommands(mockFileSystem)
-	screen := tcell.NewSimulationScreen("")
-	filter := CreateFilterPane()
-	app := getAppWithDisabledExitHandlersAndOutputStreams(screen)
-	list, err := newDirectoryList(app, tview.NewTextView(), filter, tview.NewPages(), CreateDetailsPane(), dirCtrl)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	filterHandler := list.getFilterEntryHandler()
-	filter.SetDoneFunc(filterHandler)
-	filter.SetText("example2")
-
-	expectedFail := fmt.Sprintf(
-		"sample0%s sample1%s example0%s example1%s",
-		utils.OsPathSeparator,
-		utils.OsPathSeparator,
-		utils.OsPathSeparator,
-		utils.OsPathSeparator)
-
-	filterHandler(tcell.KeyEnter)
-
-	foundFilteredItem := false
-	for i := 0; i < list.GetItemCount(); i++ {
-		itemText, _ := list.GetItemText(i)
-
-		if strings.Contains(expectedFail, itemText) {
-			t.Errorf("Expected a filtered list but it contained the invalid item '%s'", itemText)
-		}
-
-		if itemText == "example2" {
-			foundFilteredItem = true
-		}
-	}
-
-	if !foundFilteredItem {
-		t.Errorf("Expected to find the filtered item 'example2', but it was not present")
 	}
 }
 
@@ -572,58 +577,7 @@ func Test_DirectoryList_getFilterEntryHandler_HidesFilterPaneAfterEntry(t *testi
 }
 
 func Test_DirectoryList_getFilterEntryHandler_DoesNotApplyFilterIfEscIsPressed(t *testing.T) {
-	seedDirectories := []*tdUtils.MockFileNode{
-		{
-			File:     tdUtils.MockFile{
-				FileName:    "sample0",
-				FileSize:    0,
-				FileMode:    fs.ModeDir | fs.ModePerm,
-				FileModTime: time.Now(),
-			},
-			Children: nil,
-			Parent:   nil,
-		},
-		{
-			File:     tdUtils.MockFile{
-				FileName:    "sample1",
-				FileSize:    0,
-				FileMode:    fs.ModeDir | fs.ModePerm,
-				FileModTime: time.Now(),
-			},
-			Children: nil,
-			Parent:   nil,
-		},
-		{
-			File:     tdUtils.MockFile{
-				FileName:    "example0",
-				FileSize:    0,
-				FileMode:    fs.ModeDir | fs.ModePerm,
-				FileModTime: time.Now(),
-			},
-			Children: nil,
-			Parent:   nil,
-		},
-		{
-			File:     tdUtils.MockFile{
-				FileName:    "example1",
-				FileSize:    0,
-				FileMode:    fs.ModeDir | fs.ModePerm,
-				FileModTime: time.Now(),
-			},
-			Children: nil,
-			Parent:   nil,
-		},
-		{
-			File:     tdUtils.MockFile{
-				FileName:    "example2",
-				FileSize:    0,
-				FileMode:    fs.ModeDir | fs.ModePerm,
-				FileModTime: time.Now(),
-			},
-			Children: nil,
-			Parent:   nil,
-		},
-	}
+	seedDirectories := getSampleExampleSeedDirectories()
 
 	mockFileSystem := tdUtils.NewMockFileSystem(seedDirectories, 1, 5)
 	dirCtrl := getDirectoryControllerWithMockCommands(mockFileSystem)
@@ -775,40 +729,7 @@ func Test_DirectoryList_getScrollPositionHandler_SetsScrollPositionAsListOffsetW
 }
 
 func Test_DirectoryList_getInputCaptureHandler_LeftArrowKeyNavigatesToPreviousDirectory(t *testing.T) {
-	seedDirectories := []*tdUtils.MockFileNode{
-		{
-			File:     tdUtils.MockFile{
-				FileName:    "testA",
-				FileSize:    0,
-				FileMode:    fs.ModeDir | fs.ModePerm,
-				FileModTime: time.Now(),
-			},
-			Children: []*tdUtils.MockFileNode{
-				{
-					File:     tdUtils.MockFile{
-						FileName:    "testB",
-						FileSize:    0,
-						FileMode:    fs.ModeDir | fs.ModePerm,
-						FileModTime: time.Now(),
-					},
-					Children: []*tdUtils.MockFileNode{
-						{
-							File:     tdUtils.MockFile{
-								FileName:    "testC",
-								FileSize:    0,
-								FileMode:    fs.ModeDir | fs.ModePerm,
-								FileModTime: time.Now(),
-							},
-							Children: nil,
-							Parent:   nil,
-						},
-					},
-					Parent:   nil,
-				},
-			},
-			Parent:   nil,
-		},
-	}
+	seedDirectories := getHierarchicalSeedDirectories()
 	mockFileSystem := tdUtils.NewMockFileSystem(seedDirectories, 4, 5)
 	dirCtrl := getDirectoryControllerWithMockCommands(mockFileSystem)
 	screen := tcell.NewSimulationScreen("")
@@ -835,8 +756,8 @@ func Test_DirectoryList_getInputCaptureHandler_LeftArrowKeyNavigatesToPreviousDi
 	}
 }
 
-func Test_DirectoryList_getInputCaptureHandler_RightArrowKeyNavigatesToNextDirectory(t *testing.T) {
-	seedDirectories := []*tdUtils.MockFileNode{
+func getHierarchicalSeedDirectories() []*tdUtils.MockFileNode {
+	return []*tdUtils.MockFileNode{
 		{
 			File:     tdUtils.MockFile{
 				FileName:    "testA",
@@ -870,6 +791,10 @@ func Test_DirectoryList_getInputCaptureHandler_RightArrowKeyNavigatesToNextDirec
 			Parent:   nil,
 		},
 	}
+}
+
+func Test_DirectoryList_getInputCaptureHandler_RightArrowKeyNavigatesToNextDirectory(t *testing.T) {
+	seedDirectories := getHierarchicalSeedDirectories()
 	mockFileSystem := tdUtils.NewMockFileSystem(seedDirectories, 4, 5)
 	dirCtrl := getDirectoryControllerWithMockCommands(mockFileSystem)
 	screen := tcell.NewSimulationScreen("")
@@ -947,51 +872,67 @@ func Test_DirectoryList_getInputCaptureHandler_UpArrowKeyDisplaysDetailsForPrevi
 	}
 }
 
-
-
 func Test_DirectoryList_getInputCaptureHandler_DownArrowKeyDisplaysDetailsForPreviousItem(t *testing.T) {
-	t.Error("Unimplemented test")
+	var seedDirectories []*tdUtils.MockFileNode
+	seedDirNamePart := "test"
+	seedDirCount := 3
+	seedDirectories = generateSeedDirectories(seedDirNamePart, seedDirCount)
+	mockFileSystem := tdUtils.NewMockFileSystem(seedDirectories, 2, 3)
+	dirCtrl := getDirectoryControllerWithMockCommands(mockFileSystem)
+	screen := tcell.NewSimulationScreen("")
+	app := getAppWithDisabledExitHandlersAndOutputStreams(screen)
+	details := CreateDetailsPane()
+	list, err := newDirectoryList(app, tview.NewTextView(), tview.NewInputField(), tview.NewPages(), details, dirCtrl)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	expectedDetailsText := map[string]string {}
+
+	for i := 0; i < seedDirCount; i++ {
+		dirName := seedDirNamePart + strconv.Itoa(i)
+		expectedDetailsText[dirName] = list.getDetailsText(dirName)
+	}
+
+	list.load()
+
+	setSelectedItem(list, "test0")
+
+	inputHandler := list.getInputCaptureHandler()
+	inputHandler(tcell.NewEventKey(tcell.KeyDown, rune(tcell.KeyDown), tcell.ModNone))
+
+	result := details.GetText(false)
+
+	if result != expectedDetailsText["test1"] {
+		t.Errorf(
+			"Expected the following details with '%s' selected:\n%s\nGot the following instead:\n%s\n",
+			tdUtils.NormalizePath("test1"), expectedDetailsText["test1"], result)
+	}
 }
 
 func Test_DirectoryList_getInputCaptureHandler_TabKeySetsFocusToDetailsPane(t *testing.T) {
-	t.Error("Unimplemented test")
+	screen := tcell.NewSimulationScreen("")
+	app := getAppWithDisabledExitHandlersAndOutputStreams(screen)
+	details := CreateDetailsPane()
+	list, err := newDirectoryList(app, tview.NewTextView(), tview.NewInputField(), tview.NewPages(), details, nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	app.SetFocus(list)
+
+	inputHandler := list.getInputCaptureHandler()
+	inputHandler(tcell.NewEventKey(tcell.KeyTab, rune(tcell.KeyTab), tcell.ModNone))
+
+	result := app.GetFocus()
+
+	if result != details {
+		t.Errorf("Expected the app focus to be '%v', got '%v' instead", details, result)
+	}
 }
 
 func Test_DirectoryList_handleLeftKeyEvent_SetsCurrentDirectoryToOneLevelUpFromPreviousValue(t *testing.T) {
-	seedDirectories := []*tdUtils.MockFileNode{
-		{
-			File:     tdUtils.MockFile{
-				FileName:    "testA",
-				FileSize:    0,
-				FileMode:    fs.ModeDir | fs.ModePerm,
-				FileModTime: time.Now(),
-			},
-			Children: []*tdUtils.MockFileNode{
-				{
-					File:     tdUtils.MockFile{
-						FileName:    "testB",
-						FileSize:    0,
-						FileMode:    fs.ModeDir | fs.ModePerm,
-						FileModTime: time.Now(),
-					},
-					Children: []*tdUtils.MockFileNode{
-						{
-							File:     tdUtils.MockFile{
-								FileName:    "testC",
-								FileSize:    0,
-								FileMode:    fs.ModeDir | fs.ModePerm,
-								FileModTime: time.Now(),
-							},
-							Children: nil,
-							Parent:   nil,
-						},
-					},
-					Parent:   nil,
-				},
-			},
-			Parent:   nil,
-		},
-	}
+	seedDirectories := getHierarchicalSeedDirectories()
 	mockFileSystem := tdUtils.NewMockFileSystem(seedDirectories, 4, 5)
 	dirCtrl := getDirectoryControllerWithMockCommands(mockFileSystem)
 	screen := tcell.NewSimulationScreen("")
@@ -1017,61 +958,228 @@ func Test_DirectoryList_handleLeftKeyEvent_SetsCurrentDirectoryToOneLevelUpFromP
 	}
 }
 
-func Test_DirectoryList_handleLeftKeyEvent_SetsTitleWhenNavigating(t *testing.T) {
-	t.Error("Unimplemented test")
+func Test_DirectoryList_handleLeftKeyEvent_SetsDirectoryListTitleWhenNavigating(t *testing.T) {
+	seedDirectories := getHierarchicalSeedDirectories()
+	mockFileSystem := tdUtils.NewMockFileSystem(seedDirectories, 4, 5)
+	dirCtrl := getDirectoryControllerWithMockCommands(mockFileSystem)
+	screen := tcell.NewSimulationScreen("")
+	app := getAppWithDisabledExitHandlersAndOutputStreams(screen)
+
+	if _, err := mockFileSystem.Cd("/testA/testB"); err != nil {
+		t.Fatal(err)
+	}
+
+	list, err := newDirectoryList(app, tview.NewTextView(), tview.NewInputField(), tview.NewPages(), CreateDetailsPane(), dirCtrl)
+	if err != nil {
+		t.Fatal(err)
+	}
+	list.load()
+	list.SetTitle("This should not appear")
+
+	list.handleLeftKeyEvent()
+
+	expectedTitle := listUITitle
+	result := list.GetTitle()
+
+	if result != expectedTitle {
+		t.Errorf("Expected title to be '%s', got '%s' instead", expectedTitle, result)
+	}
 }
 
 func Test_DirectoryList_handleLeftKeyEvent_DoesNotNavigateWhenAtRootDirectory(t *testing.T) {
-	t.Error("Unimplemented test")
+	seedDirectories := getHierarchicalSeedDirectories()
+	mockFileSystem := tdUtils.NewMockFileSystem(seedDirectories, 4, 5)
+	dirCtrl := getDirectoryControllerWithMockCommands(mockFileSystem)
+	screen := tcell.NewSimulationScreen("")
+	app := getAppWithDisabledExitHandlersAndOutputStreams(screen)
+	details := CreateDetailsPane()
+
+	if _, err := mockFileSystem.Cd("/"); err != nil {
+		t.Fatal(err)
+	}
+
+	list, err := newDirectoryList(app, tview.NewTextView(), tview.NewInputField(), tview.NewPages(), details, dirCtrl)
+	if err != nil {
+		t.Fatal(err)
+	}
+	list.load()
+	list.loadDetailsForCurrentDirectory()
+
+	expectedDetails := list.getDetailsText(tdUtils.NormalizePath("/"))
+	expectedCurrentDir := list.currentDir
+
+	list.handleLeftKeyEvent()
+
+	resultDetails := details.GetText(false)
+	resultCurrentDir := list.currentDir
+
+	if resultDetails != expectedDetails {
+		t.Errorf("Expected details to be the following:\n%s\nGot the following instead:\n%s\n",
+			expectedDetails, resultDetails)
+	}
+
+	if resultCurrentDir != expectedCurrentDir {
+		t.Errorf("Expected current directory to be '%s', got '%s' instead", expectedCurrentDir, resultCurrentDir)
+	}
 }
 
 func Test_DirectoryList_handleLeftKeyEvent_ClearsFilterWhenNavigating(t *testing.T) {
-	t.Error("Unimplemented test")
+	seedDirectories := getHierarchicalSeedDirectories()
+	mockFileSystem := tdUtils.NewMockFileSystem(seedDirectories, 4, 5)
+	dirCtrl := getDirectoryControllerWithMockCommands(mockFileSystem)
+	screen := tcell.NewSimulationScreen("")
+	app := getAppWithDisabledExitHandlersAndOutputStreams(screen)
+
+	if _, err := mockFileSystem.Cd("/testA/testB"); err != nil {
+		t.Fatal(err)
+	}
+
+	list, err := newDirectoryList(app, tview.NewTextView(), tview.NewInputField(), tview.NewPages(), CreateDetailsPane(), dirCtrl)
+	if err != nil {
+		t.Fatal(err)
+	}
+	list.load()
+	list.filterText = "This should not appear"
+
+	list.handleLeftKeyEvent()
+
+	expectedFilterText := ""
+	result := list.filterText
+
+	if result != expectedFilterText {
+		t.Errorf("Expected title to be '%s', got '%s' instead", expectedFilterText, result)
+	}
 }
 
 func Test_DirectoryList_handleLeftKeyEvent_LoadsListForParentDirectory(t *testing.T) {
-	t.Error("Unimplemented test")
+	seedDirectories := getHierarchicalSeedDirectories()
+	mockFileSystem := tdUtils.NewMockFileSystem(seedDirectories, 4, 5)
+	dirCtrl := getDirectoryControllerWithMockCommands(mockFileSystem)
+	screen := tcell.NewSimulationScreen("")
+	app := getAppWithDisabledExitHandlersAndOutputStreams(screen)
+
+	if _, err := mockFileSystem.Cd("/testA"); err != nil {
+		t.Fatal(err)
+	}
+
+	files, err := mockFileSystem.Ls(".")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	var expectedDirNames []string
+	for _, file := range files {
+		if file.IsDir() {
+			expectedDirNames = append(expectedDirNames, file.Name())
+		}
+	}
+
+	if _, err := mockFileSystem.Cd("/testA/testB"); err != nil {
+		t.Fatal(err)
+	}
+
+	list, err := newDirectoryList(app, tview.NewTextView(), tview.NewInputField(), tview.NewPages(), CreateDetailsPane(), dirCtrl)
+	if err != nil {
+		t.Fatal(err)
+	}
+	list.load()
+
+	list.handleLeftKeyEvent()
+
+	for _, expected := range expectedDirNames {
+		setSelectedItem(list, expected)
+
+		selected, _ := list.GetItemText(list.GetCurrentItem())
+
+		if expected != selected {
+			t.Errorf("Expected '%s' to be in the list but it was not present", expected)
+		}
+	}
+}
+
+func Test_DirectoryList_handleLeftKeyEvent_LoadsListForRootDirectory(t *testing.T) {
+	seedDirectories := getHierarchicalSeedDirectories()
+	mockFileSystem := tdUtils.NewMockFileSystem(seedDirectories, 4, 5)
+	dirCtrl := getDirectoryControllerWithMockCommands(mockFileSystem)
+	screen := tcell.NewSimulationScreen("")
+	app := getAppWithDisabledExitHandlersAndOutputStreams(screen)
+
+	files, err := mockFileSystem.Ls(".")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	var expectedDirNames []string
+	for _, file := range files {
+		if file.IsDir() {
+			expectedDirNames = append(expectedDirNames, file.Name())
+		}
+	}
+
+	if _, err := mockFileSystem.Cd("/testA"); err != nil {
+		t.Fatal(err)
+	}
+
+	runTest := func(prependDriveLetter bool) {
+		list, err := newDirectoryList(app, tview.NewTextView(), tview.NewInputField(), tview.NewPages(), CreateDetailsPane(), dirCtrl)
+		if err != nil {
+			t.Fatal(err)
+		}
+		list.load()
+
+		if prependDriveLetter && runtime.GOOS == "windows" {
+			list.currentDir = "C:" + list.currentDir
+		}
+
+		list.handleLeftKeyEvent()
+
+		for _, expected := range expectedDirNames {
+			setSelectedItem(list, expected)
+
+			selected, _ := list.GetItemText(list.GetCurrentItem())
+
+			if expected != selected {
+				t.Errorf("Expected '%s' to be in the list but it was not present", expected)
+			}
+		}
+	}
+
+	runTest(false)
+	runTest(true)
 }
 
 func Test_DirectoryList_handleLeftKeyEvent_ListsContentsOfDirectoryInDetailsPane(t *testing.T) {
-	t.Error("Unimplemented test")
+	seedDirectories := getHierarchicalSeedDirectories()
+	mockFileSystem := tdUtils.NewMockFileSystem(seedDirectories, 4, 5)
+	dirCtrl := getDirectoryControllerWithMockCommands(mockFileSystem)
+	screen := tcell.NewSimulationScreen("")
+	app := getAppWithDisabledExitHandlersAndOutputStreams(screen)
+	details := CreateDetailsPane()
+
+	if _, err := mockFileSystem.Cd("/testA/testB"); err != nil {
+		t.Fatal(err)
+	}
+
+	list, err := newDirectoryList(app, tview.NewTextView(), tview.NewInputField(), tview.NewPages(), details, dirCtrl)
+	if err != nil {
+		t.Fatal(err)
+	}
+	list.load()
+
+	expectedDetails := list.getDetailsText(tdUtils.NormalizePath("/testA"))
+
+	list.handleLeftKeyEvent()
+
+	resultDetails := details.GetText(false)
+
+	if resultDetails != expectedDetails {
+		t.Errorf("Expected details to be the following:\n%s\nGot the following instead:\n%s\n",
+			expectedDetails, resultDetails)
+	}
 }
 
 func Test_DirectoryList_handleRightKeyEvent_SetsCurrentDirectoryToOneLevelDownFromPreviousValue(t *testing.T) {
-	seedDirectories := []*tdUtils.MockFileNode{
-		{
-			File:     tdUtils.MockFile{
-				FileName:    "testA",
-				FileSize:    0,
-				FileMode:    fs.ModeDir | fs.ModePerm,
-				FileModTime: time.Now(),
-			},
-			Children: []*tdUtils.MockFileNode{
-				{
-					File:     tdUtils.MockFile{
-						FileName:    "testB",
-						FileSize:    0,
-						FileMode:    fs.ModeDir | fs.ModePerm,
-						FileModTime: time.Now(),
-					},
-					Children: []*tdUtils.MockFileNode{
-						{
-							File:     tdUtils.MockFile{
-								FileName:    "testC",
-								FileSize:    0,
-								FileMode:    fs.ModeDir | fs.ModePerm,
-								FileModTime: time.Now(),
-							},
-							Children: nil,
-							Parent:   nil,
-						},
-					},
-					Parent:   nil,
-				},
-			},
-			Parent:   nil,
-		},
-	}
+	seedDirectories := getHierarchicalSeedDirectories()
 	mockFileSystem := tdUtils.NewMockFileSystem(seedDirectories, 4, 5)
 	dirCtrl := getDirectoryControllerWithMockCommands(mockFileSystem)
 	screen := tcell.NewSimulationScreen("")
@@ -1087,7 +1195,7 @@ func Test_DirectoryList_handleRightKeyEvent_SetsCurrentDirectoryToOneLevelDownFr
 	}
 	list.load()
 
-	setSelectedItem(list, tdUtils.NormalizePath("testC"))
+	setSelectedItem(list, "testC")
 
 	list.handleRightKeyEvent()
 
@@ -1100,23 +1208,215 @@ func Test_DirectoryList_handleRightKeyEvent_SetsCurrentDirectoryToOneLevelDownFr
 }
 
 func Test_DirectoryList_handleRightKeyEvent_DoesNotNavigateIfListItemIsAMenuItem(t *testing.T) {
-	t.Error("Unimplemented test")
+	mockFileSystem := tdUtils.NewMockFileSystem(nil, 1, 10)
+	dirCtrl := getDirectoryControllerWithMockCommands(mockFileSystem)
+	screen := tcell.NewSimulationScreen("")
+	app := getAppWithDisabledExitHandlersAndOutputStreams(screen)
+
+	list, err := newDirectoryList(app, tview.NewTextView(), tview.NewInputField(), tview.NewPages(), CreateDetailsPane(), dirCtrl)
+	if err != nil {
+		t.Fatal(err)
+	}
+	list.load()
+
+	setSelectedItem(list, listUIEnterDir)
+
+	expectedCurrentDir := list.currentDir
+
+	list.handleRightKeyEvent()
+
+	resultCurrentDir := list.currentDir
+
+	if resultCurrentDir != expectedCurrentDir {
+		t.Errorf("Expected the current directory to be '%s', got '%s' instead",
+			expectedCurrentDir, resultCurrentDir)
+	}
 }
 
 func Test_DirectoryList_handleRightKeyEvent_ClearsFilterWhenNavigating(t *testing.T) {
-	t.Error("Unimplemented test")
+	seedDirectories := getHierarchicalSeedDirectories()
+	mockFileSystem := tdUtils.NewMockFileSystem(seedDirectories, 4, 5)
+	dirCtrl := getDirectoryControllerWithMockCommands(mockFileSystem)
+	screen := tcell.NewSimulationScreen("")
+	app := getAppWithDisabledExitHandlersAndOutputStreams(screen)
+
+	if _, err := mockFileSystem.Cd("/testA"); err != nil {
+		t.Fatal(err)
+	}
+
+	list, err := newDirectoryList(app, tview.NewTextView(), tview.NewInputField(), tview.NewPages(), CreateDetailsPane(), dirCtrl)
+	if err != nil {
+		t.Fatal(err)
+	}
+	list.load()
+	list.filterText = "This should not appear"
+
+	setSelectedItem(list, "testB")
+
+	list.handleRightKeyEvent()
+
+	expectedFilterText := ""
+	result := list.filterText
+
+	if result != expectedFilterText {
+		t.Errorf("Expected filter text to be '%s', got '%s' instead", expectedFilterText, result)
+	}
 }
 
 func Test_DirectoryList_handleRightKeyEvent_DoesNotNavigateIfDirectoryIsInaccessible(t *testing.T) {
-	t.Error("Unimplemented test")
+	seedDirectories := getHierarchicalSeedDirectories()
+	mockFileSystem := tdUtils.NewMockFileSystem(seedDirectories, 4, 5)
+	dirCtrl := getDirectoryControllerWithMockCommands(mockFileSystem)
+	screen := tcell.NewSimulationScreen("")
+	app := getAppWithDisabledExitHandlersAndOutputStreams(screen)
+
+	if _, err := mockFileSystem.Cd("/testA"); err != nil {
+		t.Fatal(err)
+	}
+
+	list, err := newDirectoryList(app, tview.NewTextView(), tview.NewInputField(), tview.NewPages(), CreateDetailsPane(), dirCtrl)
+	if err != nil {
+		t.Fatal(err)
+	}
+	list.load()
+
+	setSelectedItem(list, "testB")
+
+	expectedDetails := "[red]Directory inaccessible, unable to navigate. You may have insufficient privileges.[white]"
+	expectedCurrentDir := list.currentDir
+
+	dirCtrl.Commands = &MockDirectoryCommands{
+		readDirectory: func(dirname string) ([]fs.FileInfo, error) {
+			return nil, errors.New("error triggered by test")
+		},
+		getAbsolutePath: func(path string) (string, error) {
+			return "", errors.New("error triggered by test")
+		},
+		scanDirectory: func(path string, callback func(dirName string)) error {
+			return errors.New("error triggered by test")
+		},
+	}
+
+	list.handleRightKeyEvent()
+
+	resultDetails := list.details.GetText(false)
+	resultCurrentDir := list.currentDir
+
+	if resultDetails != expectedDetails {
+		t.Errorf("Expected details to be the following:\n%s\nGot the following instead:\n%s\n",
+			expectedDetails, resultDetails)
+	}
+
+	if resultCurrentDir != expectedCurrentDir {
+		t.Errorf("Expected current directory to be '%s', got '%s' instead", expectedCurrentDir, resultCurrentDir)
+	}
 }
 
-func Test_DirectoryList_handleRightKeyEvent_SetsTitleWhenNavigating(t *testing.T) {
-	t.Error("Unimplemented test")
+func Test_DirectoryList_handleRightKeyEvent_SetsDirectoryListTitleWhenNavigating(t *testing.T) {
+	seedDirectories := getHierarchicalSeedDirectories()
+	mockFileSystem := tdUtils.NewMockFileSystem(seedDirectories, 4, 5)
+	dirCtrl := getDirectoryControllerWithMockCommands(mockFileSystem)
+	screen := tcell.NewSimulationScreen("")
+	app := getAppWithDisabledExitHandlersAndOutputStreams(screen)
+
+	if _, err := mockFileSystem.Cd("/testA/testB"); err != nil {
+		t.Fatal(err)
+	}
+
+	list, err := newDirectoryList(app, tview.NewTextView(), tview.NewInputField(), tview.NewPages(), CreateDetailsPane(), dirCtrl)
+	if err != nil {
+		t.Fatal(err)
+	}
+	list.load()
+	list.SetTitle("This should not appear")
+
+	setSelectedItem(list, "testC")
+
+	list.handleRightKeyEvent()
+
+	expectedTitle := listUITitle
+	result := list.GetTitle()
+
+	if result != expectedTitle {
+		t.Errorf("Expected title to be '%s', got '%s' instead", expectedTitle, result)
+	}
 }
 
 func Test_DirectoryList_handleRightKeyEvent_LoadsListForChildDirectory(t *testing.T) {
-	t.Error("Unimplemented test")
+	seedDirectories := getHierarchicalSeedDirectories()
+	mockFileSystem := tdUtils.NewMockFileSystem(seedDirectories, 4, 5)
+	dirCtrl := getDirectoryControllerWithMockCommands(mockFileSystem)
+	screen := tcell.NewSimulationScreen("")
+	app := getAppWithDisabledExitHandlersAndOutputStreams(screen)
+
+	if _, err := mockFileSystem.Cd("/testA/testB"); err != nil {
+		t.Fatal(err)
+	}
+
+	files, err := mockFileSystem.Ls(".")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	var expectedDirNames []string
+	for _, file := range files {
+		if file.IsDir() {
+			expectedDirNames = append(expectedDirNames, file.Name())
+		}
+	}
+
+	if _, err := mockFileSystem.Cd("/testA"); err != nil {
+		t.Fatal(err)
+	}
+
+	list, err := newDirectoryList(app, tview.NewTextView(), tview.NewInputField(), tview.NewPages(), CreateDetailsPane(), dirCtrl)
+	if err != nil {
+		t.Fatal(err)
+	}
+	list.load()
+
+	setSelectedItem(list, "testB")
+
+	list.handleRightKeyEvent()
+
+	for _, expected := range expectedDirNames {
+		setSelectedItem(list, expected)
+
+		selected, _ := list.GetItemText(list.GetCurrentItem())
+
+		if expected != selected {
+			t.Errorf("Expected '%s' to be in the list but it was not present", expected)
+		}
+	}
+}
+
+func Test_DirectoryList_handleRightKeyEvent_SetsCurrentDirectoryCorrectlyFromRootDirectory(t *testing.T) {
+	seedDirectories := getHierarchicalSeedDirectories()
+	mockFileSystem := tdUtils.NewMockFileSystem(seedDirectories, 4, 5)
+	dirCtrl := getDirectoryControllerWithMockCommands(mockFileSystem)
+	screen := tcell.NewSimulationScreen("")
+	app := getAppWithDisabledExitHandlersAndOutputStreams(screen)
+
+	if _, err := mockFileSystem.Cd("/"); err != nil {
+		t.Fatal(err)
+	}
+
+	list, err := newDirectoryList(app, tview.NewTextView(), tview.NewInputField(), tview.NewPages(), CreateDetailsPane(), dirCtrl)
+	if err != nil {
+		t.Fatal(err)
+	}
+	list.load()
+
+	setSelectedItem(list, "testA")
+
+	list.handleRightKeyEvent()
+
+	expectedCurrentDir := tdUtils.NormalizePath("/testA")
+
+	if list.currentDir != expectedCurrentDir {
+		t.Errorf("Expected the current directory to be '%s', got '%s' instead",
+			expectedCurrentDir, list.currentDir)
+	}
 }
 
 func Test_DirectoryList_load_LoadsChildDirectoriesOfCurrentDirectory(t *testing.T) {
@@ -1124,6 +1424,10 @@ func Test_DirectoryList_load_LoadsChildDirectoriesOfCurrentDirectory(t *testing.
 }
 
 func Test_DirectoryList_load_SetsTitleToCurrentDirectoryPath(t *testing.T) {
+	t.Error("Unimplemented test")
+}
+
+func Test_DirectoryList_load_LoadsChildDirectoriesOfRootDirectory(t *testing.T) {
 	t.Error("Unimplemented test")
 }
 
@@ -1194,12 +1498,6 @@ func Test_DirectoryList_setDetailsText_ScrollsTextToTop(t *testing.T) {
 }
 
 func Test_DirectoryList_setDetailsText_SetsTextToCurrentDirectoryItemsWhenDefaultListItemSelected(t *testing.T) {
-	t.Error("Unimplemented test")
-}
-
-func Test_DirectoryList_setDetailsText_SetsTextToChildItemsOfSelectedListItem(t *testing.T) {
-
-
 	t.Error("Unimplemented test")
 }
 

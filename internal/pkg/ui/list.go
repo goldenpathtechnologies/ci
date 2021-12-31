@@ -44,10 +44,8 @@ func CreateDirectoryList(
 	list.titleBox.Clear()
 	list.titleBox.SetText(list.currentDir)
 
-	list.details.Clear().
-		SetText(list.getDetailsText(list.currentDir)).
-		ScrollToBeginning().
-		SetInputCapture(list.getDetailsInputCaptureHandler())
+	list.loadDetailsForCurrentDirectory()
+	list.details.SetInputCapture(list.getDetailsInputCaptureHandler())
 
 	list.filter.SetDoneFunc(list.getFilterEntryHandler())
 
@@ -104,6 +102,13 @@ func newDirectoryList(
 		currentDir: currentDir,
 		menuItems:  menuItems,
 	}, err
+}
+
+func (d *DirectoryList) loadDetailsForCurrentDirectory() {
+	d.details.
+		Clear().
+		SetText(d.getDetailsText(d.currentDir)).
+		ScrollToBeginning()
 }
 
 func (d *DirectoryList) getDetailsText(directory string) string {
@@ -236,18 +241,18 @@ func (d *DirectoryList) getInputCaptureHandler() func(event *tcell.EventKey) *tc
 }
 
 func (d *DirectoryList) handleLeftKeyEvent() {
-	if strings.Count(d.currentDir, utils.OsPathSeparator) > 1 {
+	paths := strings.Split(strings.TrimRight(d.currentDir, utils.OsPathSeparator), utils.OsPathSeparator)
+	if len(paths) > 1 {
 		d.filterText = ""
 		d.SetTitle(listUITitle)
-		paths := strings.Split(d.currentDir, utils.OsPathSeparator)
 		paths = paths[:len(paths)-1]
-		d.currentDir = strings.Join(paths, utils.OsPathSeparator)
+		if len(paths) == 1 && (paths[0] == "" || strings.Contains(paths[0], ":")){
+			d.currentDir, _ = d.dirUtil.GetAbsolutePath(utils.OsPathSeparator)
+		} else {
+			d.currentDir = strings.Join(paths, utils.OsPathSeparator)
+		}
 		d.load()
-
-		d.details.Clear()
-		d.details.
-			SetText(d.getDetailsText(d.currentDir)).
-			ScrollToBeginning()
+		d.loadDetailsForCurrentDirectory()
 	}
 }
 
@@ -302,7 +307,14 @@ func (d *DirectoryList) handleRightKeyEvent() {
 	if !d.isMenuItem(selectedItem) {
 		d.filterText = ""
 		d.SetTitle(listUITitle)
-		nextDir := d.currentDir + utils.OsPathSeparator + selectedItem
+		pathCount := len(strings.Split(strings.TrimRight(d.currentDir, utils.OsPathSeparator), utils.OsPathSeparator))
+		var pathSeparator string
+		if pathCount > 1 {
+			pathSeparator = utils.OsPathSeparator
+		} else {
+			pathSeparator = ""
+		}
+		nextDir := d.currentDir + pathSeparator + selectedItem
 		if d.dirUtil.DirectoryIsAccessible(nextDir) {
 			d.currentDir = nextDir
 			d.load()

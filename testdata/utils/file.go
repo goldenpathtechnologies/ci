@@ -249,7 +249,7 @@ func NewMockFileSystem(seed []*MockFileNode, depth, maxItemsPerDir int) *MockFil
 }
 
 func generateMockFiles(node *MockFileNode, depth, maxItemsPerDir int) *MockFileNode {
-	if depth <= 0 {
+	if depth <= 0 || maxItemsPerDir <= 0{
 		return node
 	}
 
