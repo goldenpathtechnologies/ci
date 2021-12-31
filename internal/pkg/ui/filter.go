@@ -2,17 +2,12 @@ package ui
 
 import "github.com/rivo/tview"
 
+const maxFilterLength = 32
+
 func CreateFilterPane() *tview.InputField {
-	// TODO: Put the field width and max length in a constant
 	filter := tview.NewInputField().
 		SetLabel("Enter filter text: ").
-		SetAcceptanceFunc(func(textToCheck string, lastChar rune) bool {
-			if lastChar == '/' || lastChar == '\\' {
-				return false
-			}
-
-			return len(textToCheck) <= 32
-		})
+		SetAcceptanceFunc(handleFilterAcceptance)
 
 	filter.SetBorder(true).
 		SetBorderPadding(1, 1, 1, 1).
@@ -21,3 +16,10 @@ func CreateFilterPane() *tview.InputField {
 	return filter
 }
 
+func handleFilterAcceptance(textToCheck string, lastChar rune) bool {
+	if lastChar == '/' || lastChar == '\\' {
+		return false
+	}
+
+	return len(textToCheck) <= maxFilterLength
+}

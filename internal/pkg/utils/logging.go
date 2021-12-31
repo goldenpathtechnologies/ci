@@ -19,7 +19,6 @@ func InitFileLogging() func() {
 		log.Fatal(err)
 	}
 
-
 	exeDir := filepath.Dir(exe)
 	logFile := fmt.Sprintf("%v/.log", exeDir)
 	if file, err = os.OpenFile(logFile, os.O_CREATE | os.O_APPEND | os.O_WRONLY, 0644); err != nil {
