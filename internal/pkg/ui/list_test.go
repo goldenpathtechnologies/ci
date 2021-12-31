@@ -1420,18 +1420,108 @@ func Test_DirectoryList_handleRightKeyEvent_SetsCurrentDirectoryCorrectlyFromRoo
 }
 
 func Test_DirectoryList_load_LoadsChildDirectoriesOfCurrentDirectory(t *testing.T) {
-	t.Error("Unimplemented test")
+	seedDirectories := getHierarchicalSeedDirectories()
+	mockFileSystem := tdUtils.NewMockFileSystem(seedDirectories, 4, 10)
+	dirCtrl := getDirectoryControllerWithMockCommands(mockFileSystem)
+	screen := tcell.NewSimulationScreen("")
+	app := getAppWithDisabledExitHandlersAndOutputStreams(screen)
+
+	if _, err := mockFileSystem.Cd("/testA/testB"); err != nil {
+		t.Fatal(err)
+	}
+
+	files, err := mockFileSystem.Ls(".")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	var expectedDirNames []string
+	for _, file := range files {
+		if file.IsDir() {
+			expectedDirNames = append(expectedDirNames, file.Name())
+		}
+	}
+
+	list, err := newDirectoryList(app, tview.NewTextView(), tview.NewInputField(), tview.NewPages(), CreateDetailsPane(), dirCtrl)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	list.load()
+
+	for _, expectedDirName := range expectedDirNames {
+		setSelectedItem(list, expectedDirName)
+		result, _ := list.GetItemText(list.GetCurrentItem())
+
+		if result != expectedDirName {
+			t.Errorf("Expected the directory '%s' to be present in the list, but it was not", expectedDirName)
+		}
+	}
 }
 
-func Test_DirectoryList_load_SetsTitleToCurrentDirectoryPath(t *testing.T) {
-	t.Error("Unimplemented test")
+func Test_DirectoryList_load_SetsAppTitleBoxTextToCurrentDirectoryPath(t *testing.T) {
+	seedDirectories := getHierarchicalSeedDirectories()
+	mockFileSystem := tdUtils.NewMockFileSystem(seedDirectories, 4, 5)
+	dirCtrl := getDirectoryControllerWithMockCommands(mockFileSystem)
+	screen := tcell.NewSimulationScreen("")
+	app := getAppWithDisabledExitHandlersAndOutputStreams(screen)
+	title := tview.NewTextView()
+
+	expectedTitleText := tdUtils.NormalizePath("/testA/testB/testC")
+	if _, err := mockFileSystem.Cd("/testA/testB/testC"); err != nil {
+		t.Fatal(err)
+	}
+
+	list, err := newDirectoryList(app, title, tview.NewInputField(), tview.NewPages(), CreateDetailsPane(), dirCtrl)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	list.load()
+
+	result := title.GetText(true)
+
+	if result != expectedTitleText {
+		t.Errorf("Expected the text of the title box to be '%s', got '%s' instead", expectedTitleText, result)
+	}
 }
 
 func Test_DirectoryList_load_LoadsChildDirectoriesOfRootDirectory(t *testing.T) {
-	t.Error("Unimplemented test")
+	mockFileSystem := tdUtils.NewMockFileSystem(nil, 1, 10)
+	dirCtrl := getDirectoryControllerWithMockCommands(mockFileSystem)
+	screen := tcell.NewSimulationScreen("")
+	app := getAppWithDisabledExitHandlersAndOutputStreams(screen)
+
+	list, err := newDirectoryList(app, tview.NewTextView(), tview.NewInputField(), tview.NewPages(), CreateDetailsPane(), dirCtrl)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	files, err := mockFileSystem.Ls(".")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	var expectedDirNames []string
+	for _, file := range files {
+		if file.IsDir() {
+			expectedDirNames = append(expectedDirNames, file.Name())
+		}
+	}
+
+	list.load()
+
+	for _, expectedDirName := range expectedDirNames {
+		setSelectedItem(list, expectedDirName)
+		result, _ := list.GetItemText(list.GetCurrentItem())
+
+		if result != expectedDirName {
+			t.Errorf("Expected the directory '%s' to be present in the list, but it was not", expectedDirName)
+		}
+	}
 }
 
-func Test_DirectoryList_addNavigableItem_AddsItemToList(t *testing.T) {
+func Test_DirectoryList_addNavigableItem_AddsListItemWhenFilterTextIsEmpty(t *testing.T) {
 	screen := tcell.NewSimulationScreen("")
 	app := getAppWithDisabledExitHandlersAndOutputStreams(screen)
 	list, err := newDirectoryList(app, tview.NewTextView(), tview.NewInputField(), tview.NewPages(), CreateDetailsPane(), nil)
@@ -1457,16 +1547,65 @@ func Test_DirectoryList_addNavigableItem_AddsItemToList(t *testing.T) {
 	}
 }
 
-func Test_DirectoryList_addNavigableItem_AddsListItemWhenFilterTextIsEmpty(t *testing.T) {
-	t.Error("Unimplemented test")
-}
-
 func Test_DirectoryList_addNavigableItem_AddsListItemWhenFilterTextMatchesDirectoryName(t *testing.T) {
-	t.Error("Unimplemented test")
+	screen := tcell.NewSimulationScreen("")
+	app := getAppWithDisabledExitHandlersAndOutputStreams(screen)
+	list, err := newDirectoryList(app, tview.NewTextView(), tview.NewInputField(), tview.NewPages(), CreateDetailsPane(), nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	list.filterText = "bananas"
+
+	expectedItem := "bananas"
+	list.addNavigableItem(expectedItem)
+
+	var allItems []string
+	foundItem := false
+	for i := 0; i < list.GetItemCount() && !foundItem; i++ {
+		item, _ := list.GetItemText(i)
+		foundItem = item  == expectedItem
+		allItems = append(allItems, item)
+	}
+
+	if !foundItem {
+		t.Errorf("Expected to find '%s' in the list, got the following items instead:\n%s\n",
+			expectedItem,
+			fmt.Sprintf("%v", allItems))
+	}
 }
 
 func Test_DirectoryList_addNavigableItem_AddsListItemWhenFilterTextMatchesGlobPattern(t *testing.T) {
-	t.Error("Unimplemented test")
+	screen := tcell.NewSimulationScreen("")
+	app := getAppWithDisabledExitHandlersAndOutputStreams(screen)
+	list, err := newDirectoryList(app, tview.NewTextView(), tview.NewInputField(), tview.NewPages(), CreateDetailsPane(), nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	runTest := func(filter, expected string) {
+		list.filterText = filter
+
+		expectedItem := expected
+		list.addNavigableItem(expectedItem)
+
+		var allItems []string
+		foundItem := false
+		for i := 0; i < list.GetItemCount() && !foundItem; i++ {
+			item, _ := list.GetItemText(i)
+			foundItem = item  == expectedItem
+			allItems = append(allItems, item)
+		}
+
+		if !foundItem {
+			t.Errorf("Expected to find '%s' in the list, got the following items instead:\n%s\n",
+				expectedItem,
+				fmt.Sprintf("%v", allItems))
+		}
+	}
+
+	runTest("ban*", "bananas")
+	runTest("*pples", "apples")
+	runTest("*ang*", "oranges")
 }
 
 func Test_DirectoryList_getNavigableItemSelectionHandler_GeneratesFullPathToDirectory(t *testing.T) {
@@ -1494,11 +1633,57 @@ func Test_DirectoryList_getNavigableItemSelectionHandler_GeneratesFullPathToDire
 }
 
 func Test_DirectoryList_setDetailsText_ScrollsTextToTop(t *testing.T) {
-	t.Error("Unimplemented test")
+	seedDirectories := getHierarchicalSeedDirectories()
+	mockFileSystem := tdUtils.NewMockFileSystem(seedDirectories, 4, 10)
+	dirCtrl := getDirectoryControllerWithMockCommands(mockFileSystem)
+	screen := tcell.NewSimulationScreen("")
+	app := getAppWithDisabledExitHandlersAndOutputStreams(screen)
+	details := CreateDetailsPane()
+
+	if _, err := mockFileSystem.Cd("/testA/testB"); err != nil {
+		t.Fatal(err)
+	}
+
+	list, err := newDirectoryList(app, tview.NewTextView(), tview.NewInputField(), tview.NewPages(), details, dirCtrl)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	list.setDetailsText("testC")
+
+	resultX, resultY := details.GetScrollOffset()
+
+	if resultX != 0 || resultY != 0 {
+		t.Errorf(
+			"Expected the details pane scroll position to be reset, got the following coordinates instead: (%v, %v)",
+			resultX, resultY)
+	}
 }
 
 func Test_DirectoryList_setDetailsText_SetsTextToCurrentDirectoryItemsWhenDefaultListItemSelected(t *testing.T) {
-	t.Error("Unimplemented test")
+	mockFileSystem := tdUtils.NewMockFileSystem(nil, 2, 10)
+	dirCtrl := getDirectoryControllerWithMockCommands(mockFileSystem)
+	screen := tcell.NewSimulationScreen("")
+	app := getAppWithDisabledExitHandlersAndOutputStreams(screen)
+	details := CreateDetailsPane()
+
+	list, err := newDirectoryList(app, tview.NewTextView(), tview.NewInputField(), tview.NewPages(), details, dirCtrl)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	expectedDetailsText := list.getDetailsText(".")
+
+	list.setDetailsText(listUIEnterDir)
+
+	result := details.GetText(false)
+
+	if result != expectedDetailsText {
+		t.Errorf(
+			"Expected details text to be the following:\n%s\nGot the following instead:\n%s\n",
+			expectedDetailsText,
+			result)
+	}
 }
 
 func Test_DirectoryList_setDetailsText_SetsDetailsOfDirectoryListItem(t *testing.T) {
