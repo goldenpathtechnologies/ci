@@ -1,3 +1,10 @@
+## [1.0.0-dev.16](https://github.com/goldenpathtechnologies/ci/compare/v1.0.0-dev.15...v1.0.0-dev.16) (2021-12-31)
+
+
+### Features
+
+* **coverage:** implemented code coverage to an acceptable threshold ([fdcd78d](https://github.com/goldenpathtechnologies/ci/commit/fdcd78d0c9bdcc0a203481e8bc88d8c1c6259331)), closes [#9](https://github.com/goldenpathtechnologies/ci/issues/9) [#2](https://github.com/goldenpathtechnologies/ci/issues/2)
+
 ## [1.0.0-dev.15](https://github.com/GoldenPathTechnologies/ci/compare/v1.0.0-dev.14...v1.0.0-dev.15) (2021-12-02)
 
 
