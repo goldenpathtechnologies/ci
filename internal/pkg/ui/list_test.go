@@ -20,9 +20,9 @@ import (
 )
 
 type MockDirectoryCommands struct {
-	readDirectory func(dirname string) ([]fs.FileInfo, error)
+	readDirectory   func(dirname string) ([]fs.FileInfo, error)
 	getAbsolutePath func(path string) (string, error)
-	scanDirectory func(path string, callback func(dirName string)) error
+	scanDirectory   func(path string, callback func(dirName string)) error
 }
 
 func (m *MockDirectoryCommands) ReadDirectory(dirname string) ([]fs.FileInfo, error) {
@@ -130,7 +130,7 @@ func Test_DirectoryList_getDetailsText_ReturnsUnprivilegedMessageWhenDirectoryIn
 func Test_DirectoryList_getDetailsText_HandlesUnexpectedErrors(t *testing.T) {
 	var (
 		files []fs.FileInfo
-		out bytes.Buffer
+		out   bytes.Buffer
 	)
 
 	errorMessage := "error triggered by test"
@@ -271,7 +271,6 @@ func getAppWithDisabledExitHandlersAndOutputStreams(screen tcell.SimulationScree
 	return app
 }
 
-
 func Test_DirectoryList_getDetailsInputCaptureHandler_SetsFocusToListWhenTabPressed(t *testing.T) {
 	screen := tcell.NewSimulationScreen("")
 	app := getAppWithDisabledExitHandlersAndOutputStreams(screen)
@@ -330,9 +329,9 @@ func Test_DirectoryList_getDetailsInputCaptureHandler_DoesNotReturnEventForHandl
 
 	handledKeyPresses := map[tcell.Key]rune{
 		tcell.KeyEscape: rune(tcell.KeyEscape),
-		tcell.KeyEnter: rune(tcell.KeyEnter),
-		tcell.KeyTab: rune(tcell.KeyTab),
-		'q': 'q',
+		tcell.KeyEnter:  rune(tcell.KeyEnter),
+		tcell.KeyTab:    rune(tcell.KeyTab),
+		'q':             'q',
 	}
 
 	for i := range handledKeyPresses {
@@ -466,7 +465,7 @@ func Test_DirectoryList_getFilterEntryHandler_PerformsFilterWhenListReloaded(t *
 func getSampleExampleSeedDirectories() []*tdUtils.MockFileNode {
 	return []*tdUtils.MockFileNode{
 		{
-			File:     tdUtils.MockFile{
+			File: tdUtils.MockFile{
 				FileName:    "sample0",
 				FileSize:    0,
 				FileMode:    fs.ModeDir | fs.ModePerm,
@@ -476,7 +475,7 @@ func getSampleExampleSeedDirectories() []*tdUtils.MockFileNode {
 			Parent:   nil,
 		},
 		{
-			File:     tdUtils.MockFile{
+			File: tdUtils.MockFile{
 				FileName:    "sample1",
 				FileSize:    0,
 				FileMode:    fs.ModeDir | fs.ModePerm,
@@ -486,7 +485,7 @@ func getSampleExampleSeedDirectories() []*tdUtils.MockFileNode {
 			Parent:   nil,
 		},
 		{
-			File:     tdUtils.MockFile{
+			File: tdUtils.MockFile{
 				FileName:    "example0",
 				FileSize:    0,
 				FileMode:    fs.ModeDir | fs.ModePerm,
@@ -496,7 +495,7 @@ func getSampleExampleSeedDirectories() []*tdUtils.MockFileNode {
 			Parent:   nil,
 		},
 		{
-			File:     tdUtils.MockFile{
+			File: tdUtils.MockFile{
 				FileName:    "example1",
 				FileSize:    0,
 				FileMode:    fs.ModeDir | fs.ModePerm,
@@ -506,7 +505,7 @@ func getSampleExampleSeedDirectories() []*tdUtils.MockFileNode {
 			Parent:   nil,
 		},
 		{
-			File:     tdUtils.MockFile{
+			File: tdUtils.MockFile{
 				FileName:    "example2",
 				FileSize:    0,
 				FileMode:    fs.ModeDir | fs.ModePerm,
@@ -627,7 +626,7 @@ func Test_DirectoryList_getScrollPositionHandler_SetsVerticalOffsetToMinimumWhen
 	if err != nil {
 		t.Fatal(err)
 	}
-	
+
 	listWidth := 20
 	listHeight := 10
 	list.SetRect(0, 0, listWidth, listHeight)
@@ -665,7 +664,7 @@ func Test_DirectoryList_getScrollPositionHandler_SetsVerticalOffsetToMaximumWhen
 	if err != nil {
 		t.Fatal(err)
 	}
-	
+
 	listWidth := 20
 	listHeight := 10
 	list.SetRect(0, 0, listWidth, listHeight)
@@ -680,7 +679,7 @@ func Test_DirectoryList_getScrollPositionHandler_SetsVerticalOffsetToMaximumWhen
 
 	itemCount := list.GetItemCount()
 	expectedVPosition := itemCount - listPageHeight
-	list.SetCurrentItem(itemCount-1)
+	list.SetCurrentItem(itemCount - 1)
 	list.SetOffset(listHeight, 0)
 	vPosition, _ := scrollPosHandler()
 
@@ -705,7 +704,7 @@ func Test_DirectoryList_getScrollPositionHandler_SetsScrollPositionAsListOffsetW
 	if err != nil {
 		t.Fatal(err)
 	}
-	
+
 	listWidth := 20
 	listHeight := 10
 	list.SetRect(0, 0, listWidth, listHeight)
@@ -759,7 +758,7 @@ func Test_DirectoryList_getInputCaptureHandler_LeftArrowKeyNavigatesToPreviousDi
 func getHierarchicalSeedDirectories() []*tdUtils.MockFileNode {
 	return []*tdUtils.MockFileNode{
 		{
-			File:     tdUtils.MockFile{
+			File: tdUtils.MockFile{
 				FileName:    "testA",
 				FileSize:    0,
 				FileMode:    fs.ModeDir | fs.ModePerm,
@@ -767,7 +766,7 @@ func getHierarchicalSeedDirectories() []*tdUtils.MockFileNode {
 			},
 			Children: []*tdUtils.MockFileNode{
 				{
-					File:     tdUtils.MockFile{
+					File: tdUtils.MockFile{
 						FileName:    "testB",
 						FileSize:    0,
 						FileMode:    fs.ModeDir | fs.ModePerm,
@@ -775,7 +774,7 @@ func getHierarchicalSeedDirectories() []*tdUtils.MockFileNode {
 					},
 					Children: []*tdUtils.MockFileNode{
 						{
-							File:     tdUtils.MockFile{
+							File: tdUtils.MockFile{
 								FileName:    "testC",
 								FileSize:    0,
 								FileMode:    fs.ModeDir | fs.ModePerm,
@@ -785,10 +784,10 @@ func getHierarchicalSeedDirectories() []*tdUtils.MockFileNode {
 							Parent:   nil,
 						},
 					},
-					Parent:   nil,
+					Parent: nil,
 				},
 			},
-			Parent:   nil,
+			Parent: nil,
 		},
 	}
 }
@@ -849,7 +848,7 @@ func Test_DirectoryList_getInputCaptureHandler_UpArrowKeyDisplaysDetailsForPrevi
 		t.Fatal(err)
 	}
 
-	expectedDetailsText := map[string]string {}
+	expectedDetailsText := map[string]string{}
 
 	for i := 0; i < seedDirCount; i++ {
 		dirName := seedDirNamePart + strconv.Itoa(i)
@@ -887,7 +886,7 @@ func Test_DirectoryList_getInputCaptureHandler_DownArrowKeyDisplaysDetailsForPre
 		t.Fatal(err)
 	}
 
-	expectedDetailsText := map[string]string {}
+	expectedDetailsText := map[string]string{}
 
 	for i := 0; i < seedDirCount; i++ {
 		dirName := seedDirNamePart + strconv.Itoa(i)
@@ -1536,7 +1535,7 @@ func Test_DirectoryList_addNavigableItem_AddsListItemWhenFilterTextIsEmpty(t *te
 	foundItem := false
 	for i := 0; i < list.GetItemCount() && !foundItem; i++ {
 		item, _ := list.GetItemText(i)
-		foundItem = item  == expectedItem
+		foundItem = item == expectedItem
 		allItems = append(allItems, item)
 	}
 
@@ -1563,7 +1562,7 @@ func Test_DirectoryList_addNavigableItem_AddsListItemWhenFilterTextMatchesDirect
 	foundItem := false
 	for i := 0; i < list.GetItemCount() && !foundItem; i++ {
 		item, _ := list.GetItemText(i)
-		foundItem = item  == expectedItem
+		foundItem = item == expectedItem
 		allItems = append(allItems, item)
 	}
 
@@ -1592,7 +1591,7 @@ func Test_DirectoryList_addNavigableItem_AddsListItemWhenFilterTextMatchesGlobPa
 		foundItem := false
 		for i := 0; i < list.GetItemCount() && !foundItem; i++ {
 			item, _ := list.GetItemText(i)
-			foundItem = item  == expectedItem
+			foundItem = item == expectedItem
 			allItems = append(allItems, item)
 		}
 
@@ -1703,7 +1702,7 @@ func Test_DirectoryList_setDetailsText_SetsDetailsOfDirectoryListItem(t *testing
 		t.Fatal(err)
 	}
 
-	expectedDetailsText := map[string]string {}
+	expectedDetailsText := map[string]string{}
 
 	for i := 0; i < seedDirCount; i++ {
 		dirName := seedDirNamePart + strconv.Itoa(i)
@@ -1739,7 +1738,7 @@ func Test_DirectoryList_setDetailsText_SetsDetailsOfDirectoryListItem(t *testing
 func Test_DirectoryList_getNextItemIndex_GetsIndexOfNextListItemWhenNavigatingUp(t *testing.T) {
 	var (
 		list *DirectoryList
-		err error
+		err  error
 	)
 
 	if list, err = newDirectoryList(nil, nil, nil, nil, nil, nil); err != nil {
@@ -1747,7 +1746,7 @@ func Test_DirectoryList_getNextItemIndex_GetsIndexOfNextListItemWhenNavigatingUp
 	}
 
 	for i := 0; i < 5; i++ {
-		list.AddItem("Test" + strconv.Itoa(i), "", 0, nil)
+		list.AddItem("Test"+strconv.Itoa(i), "", 0, nil)
 	}
 
 	list.SetCurrentItem(1)
@@ -1771,7 +1770,7 @@ func Test_DirectoryList_getNextItemIndex_GetsIndexOfNextListItemWhenNavigatingUp
 func Test_DirectoryList_getNextItemIndex_GetsIndexOfNextListItemWhenNavigatingDown(t *testing.T) {
 	var (
 		list *DirectoryList
-		err error
+		err  error
 	)
 
 	if list, err = newDirectoryList(nil, nil, nil, nil, nil, nil); err != nil {
@@ -1779,7 +1778,7 @@ func Test_DirectoryList_getNextItemIndex_GetsIndexOfNextListItemWhenNavigatingDo
 	}
 
 	for i := 0; i < 5; i++ {
-		list.AddItem("Test" + strconv.Itoa(i), "", 0, nil)
+		list.AddItem("Test"+strconv.Itoa(i), "", 0, nil)
 	}
 
 	list.SetCurrentItem(1)

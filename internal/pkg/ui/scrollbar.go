@@ -23,7 +23,7 @@ func GetScrollBarDrawFunc(
 	s Scrollable,
 	getScrollArea func() (width, height int),
 	getScrollPosition func() (vScroll, hScroll int),
-	) func(screen tcell.Screen, x, y, width, height int) (int, int, int, int) {
+) func(screen tcell.Screen, x, y, width, height int) (int, int, int, int) {
 
 	return func(screen tcell.Screen, x, y, width, height int) (int, int, int, int) {
 		xI, yI, rectWidth, rectHeight := s.GetInnerRect()
@@ -86,7 +86,7 @@ func GetScrollBarDrawFunc(
 
 		// Draw the vertical scroll bar
 		if contentHeight > rectHeight {
-			scrollY := y+borderWidth
+			scrollY := y + borderWidth
 			for i := scrollY; i < scrollY+vScrollBarSize; i++ {
 				if i >= scrollY+vThumbScroll && i < scrollY+vThumbScroll+vThumbSize {
 					screen.SetContent(x+width-1, i, vThumbRune, nil, thumbStyle)
@@ -98,7 +98,7 @@ func GetScrollBarDrawFunc(
 
 		// Draw the horizontal scroll bar
 		if contentWidth > rectWidth {
-			scrollX := x+borderWidth
+			scrollX := x + borderWidth
 			for j := scrollX; j < scrollX+hScrollBarSize; j++ {
 				if j >= scrollX+hThumbScroll && j < scrollX+hThumbScroll+hThumbSize {
 					screen.SetContent(j, y+height-1, hThumbRune, nil, thumbStyle)

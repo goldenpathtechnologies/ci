@@ -44,8 +44,8 @@ func (t *TestScreenApp) GetPrimitiveOutput() string {
 	x, y, width, height := t.app.GetFocus().GetRect()
 	output := ""
 
-	for j := y; j < y + height; j++ {
-		for i := x; i < x + width; i++ {
+	for j := y; j < y+height; j++ {
+		for i := x; i < x+width; i++ {
 			c, _, _, _ := t.screen.GetContent(i, j)
 			output += string(c)
 		}

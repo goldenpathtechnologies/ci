@@ -11,9 +11,9 @@ import (
 )
 
 type MockFile struct {
-	FileName string
-	FileSize int64
-	FileMode fs.FileMode
+	FileName    string
+	FileSize    int64
+	FileMode    fs.FileMode
 	FileModTime time.Time
 }
 
@@ -67,13 +67,13 @@ type VirtualFileSystem interface {
 }
 
 type MockFileNode struct {
-	File MockFile
+	File     MockFile
 	Children []*MockFileNode
-	Parent *MockFileNode
+	Parent   *MockFileNode
 }
 
 type MockFileSystem struct {
-	rootNode *MockFileNode
+	rootNode   *MockFileNode
 	currentDir *MockFileNode
 }
 
@@ -144,7 +144,7 @@ func NormalizePath(path string) string {
 func (m *MockFileSystem) Ls(dirName string) ([]fs.FileInfo, error) {
 	var (
 		files []fs.FileInfo
-		node *MockFileNode
+		node  *MockFileNode
 	)
 
 	dirName = NormalizePath(dirName)
@@ -192,7 +192,7 @@ func findNode(fileName string, nodes []*MockFileNode) (*MockFileNode, error) {
 func (m *MockFileSystem) ReadLink(linkName string) (string, error) {
 	var (
 		node *MockFileNode
-		err error
+		err  error
 	)
 
 	linkName = NormalizePath(linkName)
@@ -249,7 +249,7 @@ func NewMockFileSystem(seed []*MockFileNode, depth, maxItemsPerDir int) *MockFil
 }
 
 func generateMockFiles(node *MockFileNode, depth, maxItemsPerDir int) *MockFileNode {
-	if depth <= 0 || maxItemsPerDir <= 0{
+	if depth <= 0 || maxItemsPerDir <= 0 {
 		return node
 	}
 

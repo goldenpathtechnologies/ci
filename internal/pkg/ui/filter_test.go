@@ -3,7 +3,7 @@ package ui
 import "testing"
 
 func Test_FilterPane_handleFilterAcceptance_LastChar(t *testing.T) {
-	lastChars := []rune{ '/', '\\' }
+	lastChars := []rune{'/', '\\'}
 
 	for _, lastChar := range lastChars {
 		if handleFilterAcceptance("", lastChar) {

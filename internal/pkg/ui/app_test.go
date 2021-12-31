@@ -11,7 +11,7 @@ import (
 
 const (
 	testBufferEntrySequence = "\033[?1049h"
-	testBufferExitSequence = "\033[?1049l"
+	testBufferExitSequence  = "\033[?1049l"
 )
 
 func Test_App_enterScreenBuffer(t *testing.T) {
@@ -59,7 +59,7 @@ func Test_App_enterScreenBuffer_OnlyWritesToErrorStream(t *testing.T) {
 	expectedVoid := ""
 
 	resultOut := out.String()
-	resultVoid :=void.String()
+	resultVoid := void.String()
 
 	if resultOut != expectedOut {
 		t.Errorf("Expected hex output to be '%x', got '%x' instead", expectedOut, resultOut)
@@ -115,7 +115,7 @@ func Test_App_exitScreenBuffer_OnlyWritesToErrorStream(t *testing.T) {
 	expectedVoid := ""
 
 	resultOut := out.String()
-	resultVoid :=void.String()
+	resultVoid := void.String()
 
 	if resultOut != expectedOut {
 		t.Errorf("Expected hex output to be '%x', got '%x' instead", expectedOut, resultOut)

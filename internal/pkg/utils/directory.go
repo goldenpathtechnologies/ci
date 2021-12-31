@@ -20,7 +20,7 @@ const (
 )
 
 type DirectoryError struct {
-	Err error
+	Err       error
 	ErrorCode int
 }
 
@@ -34,7 +34,7 @@ type InfoWriter interface {
 }
 
 type DefaultInfoWriter struct {
-	buffer bytes.Buffer
+	buffer    bytes.Buffer
 	tabWriter *tabwriter.Writer
 }
 
@@ -59,7 +59,7 @@ type DirectoryCommands interface {
 	DirectoryScanner
 }
 
-type DefaultDirectoryCommands struct {}
+type DefaultDirectoryCommands struct{}
 
 func (*DefaultDirectoryCommands) ReadDirectory(dirname string) ([]fs.FileInfo, error) {
 	return ioutil.ReadDir(dirname)
@@ -103,7 +103,7 @@ type DirectoryController interface {
 }
 
 type DefaultDirectoryController struct {
-	Writer InfoWriter
+	Writer   InfoWriter
 	Commands DirectoryCommands
 }
 
@@ -132,7 +132,7 @@ func (d *DefaultDirectoryController) GetDirectoryInfo(dir string) (string, error
 	files, err := d.Commands.ReadDirectory(dir)
 	if err != nil {
 		return "", &DirectoryError{
-			Err: err,
+			Err:       err,
 			ErrorCode: DirUnprivilegedError,
 		}
 	}

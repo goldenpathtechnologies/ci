@@ -10,10 +10,10 @@ import (
 )
 
 const (
-	listUITitle = "Directory List"
-	listUIQuit = "<Quit>"
-	listUIHelp = "<Help>"
-	listUIFilter = "<Filter>"
+	listUITitle    = "Directory List"
+	listUIQuit     = "<Quit>"
+	listUIHelp     = "<Help>"
+	listUIFilter   = "<Filter>"
 	listUIEnterDir = "<Enter directory>"
 )
 
@@ -56,7 +56,6 @@ func CreateDirectoryList(
 
 	return list
 }
-
 
 func newDirectoryList(
 	app *App,
@@ -183,10 +182,10 @@ func (d *DirectoryList) configureBorder() *DirectoryList {
 
 func (d *DirectoryList) getScrollAreaHandler() func() (width, height int) {
 	return func() (width, height int) {
-			_, _, listWidth, _ := d.GetInnerRect()
-			listHeight := d.GetItemCount()
+		_, _, listWidth, _ := d.GetInnerRect()
+		listHeight := d.GetItemCount()
 
-			return listWidth, listHeight
+		return listWidth, listHeight
 	}
 }
 
@@ -246,7 +245,7 @@ func (d *DirectoryList) handleLeftKeyEvent() {
 		d.filterText = ""
 		d.SetTitle(listUITitle)
 		paths = paths[:len(paths)-1]
-		if len(paths) == 1 && (paths[0] == "" || strings.Contains(paths[0], ":")){
+		if len(paths) == 1 && (paths[0] == "" || strings.Contains(paths[0], ":")) {
 			d.currentDir, _ = d.dirUtil.GetAbsolutePath(utils.OsPathSeparator)
 		} else {
 			d.currentDir = strings.Join(paths, utils.OsPathSeparator)
@@ -274,7 +273,7 @@ func (d *DirectoryList) load() {
 	})
 
 	// TODO: Implement in-app help.
-	d.AddItem(listUIHelp, "Get help with this program", 'h', func(){})
+	d.AddItem(listUIHelp, "Get help with this program", 'h', func() {})
 
 	d.AddItem(listUIFilter, "Filter directories by text", 'f', func() {
 		d.pages.ShowPage("Filter")

@@ -10,7 +10,7 @@ import (
 
 const (
 	bufferEntrySequence = "\033[?1049h"
-	bufferExitSequence = "\033[?1049l"
+	bufferExitSequence  = "\033[?1049l"
 )
 
 type App struct {

@@ -96,7 +96,7 @@ func calculateLineStats(text string, maxWidth int, wrap, wordWrap bool) lineStat
 		}
 	}
 
-	return lineStats{longestLine, len(lines)+wrappedLines}
+	return lineStats{longestLine, len(lines) + wrappedLines}
 }
 
 func (d *DetailsView) GetText(stripAllTags bool) string {
