@@ -2,6 +2,8 @@ name: Test, analyze, and version
 
 on:
   push:
+    branches:
+      - "**"
     paths-ignore:
       - CHANGELOG.md
       - README.md
@@ -9,7 +11,11 @@ on:
       - .github/CODE_OF_CONDUCT.md
       - .gitattributes
       - .gitignore
+    tags-ignore:
+      - "**"
   pull_request:
+    branches:
+      - "**"
     paths-ignore:
       - CHANGELOG.md
       - README.md
@@ -17,6 +23,8 @@ on:
       - .github/CODE_OF_CONDUCT.md
       - .gitattributes
       - .gitignore
+    tags-ignore:
+      - "**"
 
 env:
   GO_VERSION: 1.17
@@ -44,6 +52,14 @@ jobs:
           set -euo pipefail
           go test -json -v ./... 2>&1 | tee /tmp/gotest.log | gotestfmt
 
+      - name: Upload test log
+        uses: actions/upload-artifact@v2
+        if: always()
+        with:
+          name: test-log-linux
+          path: /tmp/gotest.log
+          if-no-files-found: error
+
   test-windows:
     runs-on: windows-latest
     steps:
@@ -61,10 +77,21 @@ jobs:
       - name: Set up gotestfmt
         run: go install github.com/haveyoudebuggedit/gotestfmt/v2/cmd/gotestfmt@latest
 
+      - name: Store gotest.log path in env
+        run: Write-Output "GOTESTLOG_PATH=$env:TEMP/gotest.log" >> $env:GITHUB_ENV
+
       - name: Run tests
         run: |
-          set -euo pipefail
-          go test -json -v ./... 2>&1 | tee /tmp/gotest.log | gotestfmt
+          Set-StrictMode -Version 3.0
+          go test -json -v ./... 2>&1 | Tee-Object -Filepath ${{env.GOTESTLOG_PATH}} | gotestfmt
+
+      - name: Upload test log
+        uses: actions/upload-artifact@v2
+        if: always()
+        with:
+          name: test-log-windows
+          path: ${{env.GOTESTLOG_PATH}}
+          if-no-files-found: error
 
   cover-analysis-linux:
     runs-on: ubuntu-latest
