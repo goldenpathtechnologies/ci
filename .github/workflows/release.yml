@@ -1,4 +1,4 @@
-name: Build
+name: Release
 
 on:
   push:
@@ -16,9 +16,6 @@ env:
   TIMESTAMP_SERVER: http://timestamp.digicert.com/
 
 jobs:
-  # TODO: Consider adding a security and license scanning job to the build. Explore several options, but start here:
-  #  https://github.com/marketplace/actions/security-and-licence-scan
-
   build-linux:
     runs-on: ubuntu-latest
     steps:
