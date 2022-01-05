@@ -1,5 +1,7 @@
 # `ci` - Interactive `cd`
 
+[![codecov](https://codecov.io/gh/goldenpathtechnologies/ci/branch/main/graph/badge.svg?token=GEB8897GK7)](https://codecov.io/gh/goldenpathtechnologies/ci)
+
 `ci` is an interactive version of the familiar `cd` command. Easily traverse directories in the terminal without having to cycle between `cd` and `ls`.
 
 ## Demo
