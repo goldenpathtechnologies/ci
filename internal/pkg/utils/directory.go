@@ -73,8 +73,6 @@ func (*DefaultDirectoryCommands) ScanDirectory(
 	path string,
 	callback func(dirName string),
 ) error {
-	// TODO: Determine if godirwalk can/should be used instead of ioutil.ReadDir in ReadDirectory,
-	//  or vice-versa.
 	scanner, err := godirwalk.NewScanner(path)
 	if err != nil {
 		return err
@@ -88,6 +86,16 @@ func (*DefaultDirectoryCommands) ScanDirectory(
 
 		if entry.IsDir() {
 			callback(entry.Name())
+		} else if entry.IsSymlink() {
+			link, err := os.Readlink(filepath.Join(path, entry.Name()))
+			if err != nil {
+				return nil
+			}
+			
+			_, err = ioutil.ReadDir(link)
+			if err == nil {
+				callback(entry.Name())
+			}
 		}
 	}
 
