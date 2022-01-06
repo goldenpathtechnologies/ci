@@ -1,3 +1,10 @@
+## [1.0.0-dev.17](https://github.com/goldenpathtechnologies/ci/compare/v1.0.0-dev.16...v1.0.0-dev.17) (2022-01-06)
+
+
+### Bug Fixes
+
+* ensured symbolic links are navigable in the directory list ([d830ddd](https://github.com/goldenpathtechnologies/ci/commit/d830ddd4eaebb52bd39f3ea1b361ec5f90a490ee)), closes [#15](https://github.com/goldenpathtechnologies/ci/issues/15)
+
 ## [1.0.0-dev.16](https://github.com/goldenpathtechnologies/ci/compare/v1.0.0-dev.15...v1.0.0-dev.16) (2021-12-31)
 
 
