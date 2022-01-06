@@ -7,10 +7,12 @@ import (
 	"github.com/gdamore/tcell/v2"
 	"github.com/goldenpathtechnologies/ci/internal/pkg/utils"
 	tdUtils "github.com/goldenpathtechnologies/ci/testdata/utils"
+	"github.com/google/uuid"
 	"github.com/rivo/tview"
 	"io"
 	"io/fs"
 	"log"
+	"os"
 	"path/filepath"
 	"runtime"
 	"strconv"
@@ -1517,6 +1519,85 @@ func Test_DirectoryList_load_LoadsChildDirectoriesOfRootDirectory(t *testing.T) 
 		if result != expectedDirName {
 			t.Errorf("Expected the directory '%s' to be present in the list, but it was not", expectedDirName)
 		}
+	}
+}
+
+func Test_DirectoryList_load_LoadsSymbolicLinkDirectories(t *testing.T) {
+	screen := tcell.NewSimulationScreen("")
+	app := getAppWithDisabledExitHandlersAndOutputStreams(screen)
+
+	tempDir, err := os.MkdirTemp("", uuid.NewString())
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer func() {
+		err := os.RemoveAll(tempDir)
+		if err != nil {
+			t.Fatal(err)
+		}
+	}()
+
+	childTempDirs := map[string]string{
+		"testA": "",
+		"testB": "",
+		"testC": "",
+		"testD": "",
+	}
+	childTempDirs["testA"] = filepath.Join(tempDir, "testA")
+	childTempDirs["testB"] = filepath.Join(childTempDirs["testA"], "testB")
+	childTempDirs["testC"] = filepath.Join(childTempDirs["testB"], "testC")
+	childTempDirs["testD"] = filepath.Join(childTempDirs["testC"], "testD")
+
+	if err = os.MkdirAll(childTempDirs["testD"], fs.ModePerm); err != nil {
+		t.Fatal(err)
+	}
+
+	createSymLink := func(linkname string, linkpath string) {
+		tempSymLink := filepath.Join(tempDir, linkname)
+		if err = os.Symlink(linkpath, tempSymLink); err != nil {
+			if runtime.GOOS == "windows" && strings.Contains(err.Error(), "A required privilege is not held by the client") {
+				t.Skip("Test skipped due to insufficient privileges to run it")
+			} else {
+				t.Fatal(err)
+			}
+		}
+	}
+
+	createSymLink("testB", childTempDirs["testB"])
+	createSymLink("testC", childTempDirs["testC"])
+	createSymLink("testD", childTempDirs["testD"])
+
+	// Ensure that symbolic links to files do not end up in the directory list
+	tempFileName := "testfile.txt"
+	tempFileNamePath := filepath.Join(childTempDirs["testB"], tempFileName)
+	if testFile, err := os.Create(tempFileNamePath); err != nil {
+		t.Fatal(err)
+	} else if err = testFile.Close(); err != nil {
+		t.Fatal(err)
+	}
+	createSymLink(tempFileName, tempFileNamePath)
+
+	list, err := newDirectoryList(app, tview.NewTextView(), tview.NewInputField(), tview.NewPages(), CreateDetailsPane(), nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	list.currentDir = tempDir
+
+	list.load()
+
+	for expectedDirName := range childTempDirs {
+		setSelectedItem(list, expectedDirName)
+		result, _ := list.GetItemText(list.GetCurrentItem())
+
+		if result != expectedDirName {
+			t.Errorf("Expected the directory '%s' to be present in the list, but it was not", expectedDirName)
+		}
+	}
+
+	setSelectedItem(list, tempFileName)
+	result, _ := list.GetItemText(list.GetCurrentItem())
+	if result == tempFileName {
+		t.Errorf("Expected the file '%s' not to be present in the list, but it was", tempFileName)
 	}
 }
 
