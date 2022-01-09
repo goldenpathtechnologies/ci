@@ -75,3 +75,7 @@ func (t *TestScreenApp) Run(p tview.Primitive, autoStop bool, callback func()) {
 func (t *TestScreenApp) Stop() {
 	t.app.Stop()
 }
+
+func (t *TestScreenApp) GetFocus() tview.Primitive {
+	return t.app.GetFocus()
+}

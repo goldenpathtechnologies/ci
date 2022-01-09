@@ -22,7 +22,7 @@ type DirectoryList struct {
 	app        *App
 	pages      *tview.Pages
 	titleBox   *tview.TextView
-	filter     *tview.InputField
+	filter     *FilterForm
 	details    *DetailsView
 	dirUtil    utils.DirectoryController
 	currentDir string
@@ -33,7 +33,7 @@ type DirectoryList struct {
 func CreateDirectoryList(
 	app *App,
 	titleBox *tview.TextView,
-	filter *tview.InputField,
+	filter *FilterForm,
 	pages *tview.Pages,
 	details *DetailsView,
 ) *DirectoryList {
@@ -47,7 +47,7 @@ func CreateDirectoryList(
 	list.loadDetailsForCurrentDirectory()
 	list.details.SetInputCapture(list.getDetailsInputCaptureHandler())
 
-	list.filter.SetDoneFunc(list.getFilterEntryHandler())
+	list.filter.SetDoneHandler(list.getFilterEntryHandler())
 
 	list.
 		configureBorder().
@@ -60,7 +60,7 @@ func CreateDirectoryList(
 func newDirectoryList(
 	app *App,
 	titleBox *tview.TextView,
-	filter *tview.InputField,
+	filter *FilterForm,
 	pages *tview.Pages,
 	details *DetailsView,
 	directoryController utils.DirectoryController,
@@ -150,7 +150,7 @@ func (d *DirectoryList) getDetailsInputCaptureHandler() func(event *tcell.EventK
 func (d *DirectoryList) getFilterEntryHandler() func(key tcell.Key) {
 	return func(key tcell.Key) {
 		if key == tcell.KeyEsc {
-			d.filter.SetText("")
+			d.filter.Clear()
 		}
 
 		d.filterText = d.filter.GetText()
@@ -161,7 +161,7 @@ func (d *DirectoryList) getFilterEntryHandler() func(key tcell.Key) {
 			d.SetTitle(listUITitle)
 		}
 
-		d.filter.SetText("")
+		d.filter.Clear()
 		d.pages.HidePage("Filter")
 		d.app.SetFocus(d)
 		d.load()
