@@ -65,9 +65,11 @@ func (f *FilterForm) handleFilterAcceptance(textToCheck string, lastChar rune) b
 		return false
 	}
 
-	// TODO: Prevent glob characters from being accepted unless the manual glob filter
-	//  method is selected. This means that this function needs to be a member of the
-	//  FilterForm struct.
+	filterMethod, _ := f.filterMethod.GetCurrentOption()
+	globChars := "*?[]!"
+	if filterMethod != filterMethodGlobPattern && strings.ContainsRune(globChars, lastChar) {
+		return false
+	}
 
 	return len(textToCheck) <= maxFilterLength
 }
@@ -92,15 +94,14 @@ func (f *FilterForm) GetText() string {
 	}
 
 	currentOptionIndex, _ := f.filterMethod.GetCurrentOption()
-	globlessFilterText := strings.ReplaceAll(filterText, "*", "")
 
 	switch currentOptionIndex {
 	case filterMethodBeginsWith:
-		return globlessFilterText + "*"
+		return filterText + "*"
 	case filterMethodEndsWith:
-		return "*" + globlessFilterText
+		return "*" + filterText
 	case filterMethodContains:
-		return "*" + globlessFilterText + "*"
+		return "*" + filterText + "*"
 	case filterMethodGlobPattern:
 		fallthrough
 	default:

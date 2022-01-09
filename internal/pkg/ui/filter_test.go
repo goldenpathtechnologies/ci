@@ -6,7 +6,7 @@ import (
 	"testing"
 )
 
-func Test_FilterForm_handleFilterAcceptance_LastChar(t *testing.T) {
+func Test_FilterForm_handleFilterAcceptance_DoesNotAcceptSlashes(t *testing.T) {
 	filterForm := CreateFilterForm()
 	lastChars := []rune{'/', '\\'}
 
@@ -17,7 +17,7 @@ func Test_FilterForm_handleFilterAcceptance_LastChar(t *testing.T) {
 	}
 }
 
-func Test_FilterForm_handleFilterAcceptance_TextLength(t *testing.T) {
+func Test_FilterForm_handleFilterAcceptance_FilterTextDoesNotExceedMaximumLength(t *testing.T) {
 	filterForm := CreateFilterForm()
 	validText := "this-text-is-exactly32characters"
 
@@ -35,6 +35,30 @@ func Test_FilterForm_handleFilterAcceptance_TextLength(t *testing.T) {
 			"Expected text '%v' of length %v not to be accepted",
 			invalidText,
 			33)
+	}
+}
+
+func Test_FilterForm_handleFilterAcceptance_DoesNotAcceptGlobCharactersUnlessInManualGlobMode(t *testing.T) {
+	filterForm := CreateFilterForm()
+	globChars := []rune{'*', '?', '[', ']', '!'}
+
+	runNonGlobModeTest := func(filterMethod int) {
+		filterForm.filterMethod.SetCurrentOption(filterMethod)
+		for _, globChar := range globChars {
+			if filterForm.handleFilterAcceptance("", globChar) {
+				t.Errorf("Expected last char '%c' not to be accepted", globChar)
+			}
+		}
+	}
+	runNonGlobModeTest(filterMethodBeginsWith)
+	runNonGlobModeTest(filterMethodEndsWith)
+	runNonGlobModeTest(filterMethodContains)
+
+	filterForm.filterMethod.SetCurrentOption(filterMethodGlobPattern)
+	for _, globChar := range globChars {
+		if !filterForm.handleFilterAcceptance("", globChar) {
+			t.Errorf("Expected last char '%c' to be accepted", globChar)
+		}
 	}
 }
 
