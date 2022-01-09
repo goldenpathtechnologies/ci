@@ -232,3 +232,22 @@ func Test_FilterForm_handleFilterFormInput_RunsDoneHandlerWhenEnterIsPressedAndF
 		t.Error("Expected done function to be set, but it was not")
 	}
 }
+
+func Test_FilterForm_handleFilterFormInput_RunsDoneHandlerWhenEscIsPressedAndFilterTextFieldIsSelected(t *testing.T) {
+	screen := tcell.NewSimulationScreen("")
+	app := tview.NewApplication().SetScreen(screen)
+	filterForm := CreateFilterForm()
+	doneFuncCalled := false
+	doneFunc := func(key tcell.Key) {
+		doneFuncCalled = true
+	}
+	filterForm.SetDoneHandler(doneFunc)
+
+	app.SetRoot(filterForm, false)
+
+	filterForm.handleFilterFormInput(tcell.NewEventKey(tcell.KeyEsc, rune(tcell.KeyEsc), tcell.ModNone))
+
+	if !doneFuncCalled {
+		t.Error("Expected done function to be set, but it was not")
+	}
+}

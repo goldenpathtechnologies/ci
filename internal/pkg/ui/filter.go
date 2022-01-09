@@ -29,15 +29,22 @@ type FilterForm struct {
 
 func CreateFilterForm() *FilterForm {
 	filterText := tview.NewInputField().
-		SetLabel("Enter filter text: ").
+		SetLabel("Enter filter text:").
 		SetFieldWidth(30)
 
 	filterMethod := tview.NewDropDown().
-		SetLabel("Filter method").
+		SetLabel("Filter method:").
 		SetOptions(
 			[]string{"Begins with", "Ends with", "Contains", "Manual glob"},
 			func(text string, index int) {}).
-		SetCurrentOption(filterMethodBeginsWith)
+		SetCurrentOption(filterMethodBeginsWith).
+		SetListStyles(
+			tcell.Style{}.
+				Foreground(tcell.ColorBlack).
+				Background(tcell.ColorGreen),
+			tcell.Style{}.
+				Foreground(tcell.ColorBlack).
+				Background(tcell.ColorWhite))
 
 	form := tview.NewForm().
 		AddFormItem(filterText).
@@ -77,6 +84,8 @@ func (f *FilterForm) handleFilterAcceptance(textToCheck string, lastChar rune) b
 func (f *FilterForm) handleFilterFormInput(event *tcell.EventKey) *tcell.EventKey {
 	key := event.Key()
 	switch key {
+	case tcell.KeyEsc:
+		fallthrough
 	case tcell.KeyEnter:
 		if item, _ := f.GetFocusedItemIndex(); item == filterTextField {
 			f.doneHandler(key)
