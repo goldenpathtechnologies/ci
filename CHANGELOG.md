@@ -1,3 +1,13 @@
+## [1.0.0-dev.18](https://github.com/goldenpathtechnologies/ci/compare/v1.0.0-dev.17...v1.0.0-dev.18) (2022-01-10)
+
+
+### Features
+
+* disabled glob characters in filter input unless in manual glob entry mode ([7e38380](https://github.com/goldenpathtechnologies/ci/commit/7e383802e59b69b19fafcbb046fb0c9c184f9c8b))
+* **installation:** ensured that forceful exits of the application are indicated pleasantly ([55432ba](https://github.com/goldenpathtechnologies/ci/commit/55432ba18ad58fd5196b4d5156076c39c01b06b9))
+* introduced different filtering modes for directory list ([fccfa28](https://github.com/goldenpathtechnologies/ci/commit/fccfa285ae28c4a4cafbab0dea4becca1ddc52e4)), closes [#12](https://github.com/goldenpathtechnologies/ci/issues/12)
+* set styles for filter component and handled Esc key presses ([31eea84](https://github.com/goldenpathtechnologies/ci/commit/31eea84ed4c0f82b7512af8e1635ce5306649edd))
+
 ## [1.0.0-dev.17](https://github.com/goldenpathtechnologies/ci/compare/v1.0.0-dev.16...v1.0.0-dev.17) (2022-01-06)
 
 
