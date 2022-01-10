@@ -273,7 +273,7 @@ func getAppWithDisabledExitHandlersAndOutputStreams(screen tcell.SimulationScree
 	return app
 }
 
-func Test_DirectoryList_getDetailsInputCaptureHandler_SetsFocusToListWhenTabPressed(t *testing.T) {
+func Test_DirectoryList_handleDetailsInputCapture_SetsFocusToListWhenTabPressed(t *testing.T) {
 	screen := tcell.NewSimulationScreen("")
 	app := getAppWithDisabledExitHandlersAndOutputStreams(screen)
 	focus := CreateFilterForm()
@@ -283,9 +283,7 @@ func Test_DirectoryList_getDetailsInputCaptureHandler_SetsFocusToListWhenTabPres
 	}
 	app.SetFocus(focus)
 
-	inputHandler := list.getDetailsInputCaptureHandler()
-
-	inputHandler(tcell.NewEventKey(tcell.KeyTab, rune(tcell.KeyTab), tcell.ModNone))
+	list.handleDetailsInputCapture(tcell.NewEventKey(tcell.KeyTab, rune(tcell.KeyTab), tcell.ModNone))
 
 	expected := list
 	result := app.GetFocus()
@@ -295,7 +293,7 @@ func Test_DirectoryList_getDetailsInputCaptureHandler_SetsFocusToListWhenTabPres
 	}
 }
 
-func Test_DirectoryList_getDetailsInputCaptureHandler_AppExitsWhenShortcutKeyIsPressed(t *testing.T) {
+func Test_DirectoryList_handleDetailsInputCapture_AppExitsWhenShortcutKeyIsPressed(t *testing.T) {
 	screen := tcell.NewSimulationScreen("")
 	app := getAppWithDisabledExitHandlersAndOutputStreams(screen)
 	list, err := newDirectoryList(app, nil, nil, nil, nil, nil)
@@ -307,16 +305,14 @@ func Test_DirectoryList_getDetailsInputCaptureHandler_AppExitsWhenShortcutKeyIsP
 		exited = true
 	}
 
-	inputHandler := list.getDetailsInputCaptureHandler()
-
-	inputHandler(tcell.NewEventKey('q', 'q', tcell.ModNone))
+	list.handleDetailsInputCapture(tcell.NewEventKey('q', 'q', tcell.ModNone))
 
 	if !exited {
 		t.Error("Expected app to exit, but it did not")
 	}
 }
 
-func Test_DirectoryList_getDetailsInputCaptureHandler_DoesNotReturnEventForHandledKeyPresses(t *testing.T) {
+func Test_DirectoryList_handleDetailsInputCapture_DoesNotReturnEventForHandledKeyPresses(t *testing.T) {
 	screen := tcell.NewSimulationScreen("")
 	app := getAppWithDisabledExitHandlersAndOutputStreams(screen)
 	list, err := newDirectoryList(app, nil, nil, nil, nil, nil)
@@ -327,8 +323,6 @@ func Test_DirectoryList_getDetailsInputCaptureHandler_DoesNotReturnEventForHandl
 		// Do nothing for test
 	}
 
-	inputHandler := list.getDetailsInputCaptureHandler()
-
 	handledKeyPresses := map[tcell.Key]rune{
 		tcell.KeyEscape: rune(tcell.KeyEscape),
 		tcell.KeyEnter:  rune(tcell.KeyEnter),
@@ -337,7 +331,7 @@ func Test_DirectoryList_getDetailsInputCaptureHandler_DoesNotReturnEventForHandl
 	}
 
 	for i := range handledKeyPresses {
-		result := inputHandler(tcell.NewEventKey(i, handledKeyPresses[i], tcell.ModNone))
+		result := list.handleDetailsInputCapture(tcell.NewEventKey(i, handledKeyPresses[i], tcell.ModNone))
 
 		if result != nil {
 			t.Errorf("Did not expect the tcell.EventKey '%v' from the key '%c'",
@@ -347,7 +341,7 @@ func Test_DirectoryList_getDetailsInputCaptureHandler_DoesNotReturnEventForHandl
 	}
 }
 
-func Test_DirectoryList_getFilterEntryHandler_SetsListTitleWhenFilterEntered(t *testing.T) {
+func Test_DirectoryList_handleFilterEntry_SetsListTitleWhenFilterEntered(t *testing.T) {
 	screen := tcell.NewSimulationScreen("")
 	filter := CreateFilterForm()
 	app := getAppWithDisabledExitHandlersAndOutputStreams(screen)
@@ -356,15 +350,13 @@ func Test_DirectoryList_getFilterEntryHandler_SetsListTitleWhenFilterEntered(t *
 		t.Fatal(err)
 	}
 
-	filterHandler := list.getFilterEntryHandler()
-	filter.SetDoneHandler(filterHandler)
 	filter.filterMethod.SetCurrentOption(filterMethodGlobPattern)
 
 	filterText := "bananas"
 	expectedListTitle := fmt.Sprintf("%v - Filter: %v", listUITitle, filterText)
 
 	filter.SetText(filterText)
-	filterHandler(tcell.KeyEnter)
+	list.handleFilterEntry(tcell.KeyEnter)
 
 	result := list.GetTitle()
 
@@ -373,7 +365,7 @@ func Test_DirectoryList_getFilterEntryHandler_SetsListTitleWhenFilterEntered(t *
 	}
 }
 
-func Test_DirectoryList_getFilterEntryHandler_ResetsListTitleToDefaultWhenFilterIsEmpty(t *testing.T) {
+func Test_DirectoryList_handleFilterEntry_ResetsListTitleToDefaultWhenFilterIsEmpty(t *testing.T) {
 	screen := tcell.NewSimulationScreen("")
 	filter := CreateFilterForm()
 	app := getAppWithDisabledExitHandlersAndOutputStreams(screen)
@@ -382,14 +374,11 @@ func Test_DirectoryList_getFilterEntryHandler_ResetsListTitleToDefaultWhenFilter
 		t.Fatal(err)
 	}
 
-	filterHandler := list.getFilterEntryHandler()
-	filter.SetDoneHandler(filterHandler)
-
 	filterText := ""
 	expectedListTitle := listUITitle
 
 	filter.SetText(filterText)
-	filterHandler(tcell.KeyEnter)
+	list.handleFilterEntry(tcell.KeyEnter)
 
 	result := list.GetTitle()
 
@@ -398,7 +387,7 @@ func Test_DirectoryList_getFilterEntryHandler_ResetsListTitleToDefaultWhenFilter
 	}
 }
 
-func Test_DirectoryList_getFilterEntryHandler_SetsAppFocusToListWhenFilterEntered(t *testing.T) {
+func Test_DirectoryList_handleFilterEntry_SetsAppFocusToListWhenFilterEntered(t *testing.T) {
 	screen := tcell.NewSimulationScreen("")
 	filter := CreateFilterForm()
 	app := getAppWithDisabledExitHandlersAndOutputStreams(screen)
@@ -408,10 +397,7 @@ func Test_DirectoryList_getFilterEntryHandler_SetsAppFocusToListWhenFilterEntere
 	}
 	app.SetFocus(filter)
 
-	filterHandler := list.getFilterEntryHandler()
-	filter.SetDoneHandler(filterHandler)
-
-	filterHandler(tcell.KeyEnter)
+	list.handleFilterEntry(tcell.KeyEnter)
 
 	expectedFocus := list
 	result := app.GetFocus()
@@ -421,7 +407,7 @@ func Test_DirectoryList_getFilterEntryHandler_SetsAppFocusToListWhenFilterEntere
 	}
 }
 
-func Test_DirectoryList_getFilterEntryHandler_PerformsFilterWhenListReloaded(t *testing.T) {
+func Test_DirectoryList_handleFilterEntry_PerformsFilterWhenListReloaded(t *testing.T) {
 	seedDirectories := getSampleExampleSeedDirectories()
 
 	mockFileSystem := tdUtils.NewMockFileSystem(seedDirectories, 1, 5)
@@ -434,8 +420,6 @@ func Test_DirectoryList_getFilterEntryHandler_PerformsFilterWhenListReloaded(t *
 		t.Fatal(err)
 	}
 
-	filterHandler := list.getFilterEntryHandler()
-	filter.SetDoneHandler(filterHandler)
 	filter.SetText("example2")
 
 	expectedFail := fmt.Sprintf(
@@ -445,7 +429,7 @@ func Test_DirectoryList_getFilterEntryHandler_PerformsFilterWhenListReloaded(t *
 		utils.OsPathSeparator,
 		utils.OsPathSeparator)
 
-	filterHandler(tcell.KeyEnter)
+	list.handleFilterEntry(tcell.KeyEnter)
 
 	foundFilteredItem := false
 	for i := 0; i < list.GetItemCount(); i++ {
@@ -520,7 +504,7 @@ func getSampleExampleSeedDirectories() []*tdUtils.MockFileNode {
 	}
 }
 
-func Test_DirectoryList_getFilterEntryHandler_ClearsFilterTextWhenFilterEntered(t *testing.T) {
+func Test_DirectoryList_handleFilterEntry_ClearsFilterTextWhenFilterEntered(t *testing.T) {
 	screen := tcell.NewSimulationScreen("")
 	filter := CreateFilterForm()
 	app := getAppWithDisabledExitHandlersAndOutputStreams(screen)
@@ -529,14 +513,11 @@ func Test_DirectoryList_getFilterEntryHandler_ClearsFilterTextWhenFilterEntered(
 		t.Fatal(err)
 	}
 
-	filterHandler := list.getFilterEntryHandler()
-	filter.SetDoneHandler(filterHandler)
-
 	filterText := "bananas"
 	expectedFilterText := ""
 
 	filter.SetText(filterText)
-	filterHandler(tcell.KeyEnter)
+	list.handleFilterEntry(tcell.KeyEnter)
 
 	result := filter.GetText()
 
@@ -546,7 +527,7 @@ func Test_DirectoryList_getFilterEntryHandler_ClearsFilterTextWhenFilterEntered(
 	}
 }
 
-func Test_DirectoryList_getFilterEntryHandler_HidesFilterPaneAfterEntry(t *testing.T) {
+func Test_DirectoryList_handleFilterEntry_HidesFilterPaneAfterEntry(t *testing.T) {
 	screen := tcell.NewSimulationScreen("")
 	filter := CreateFilterForm()
 	app := getAppWithDisabledExitHandlersAndOutputStreams(screen)
@@ -560,16 +541,13 @@ func Test_DirectoryList_getFilterEntryHandler_HidesFilterPaneAfterEntry(t *testi
 
 	app.SetFocus(filter)
 
-	filterHandler := list.getFilterEntryHandler()
-	filter.SetDoneHandler(filterHandler)
-
 	frontPage, _ := pages.GetFrontPage()
 
 	if frontPage != "Filter" {
 		t.Error("This test requires that the 'Filter' page is the front page before the filter handler is called")
 	}
 
-	filterHandler(tcell.KeyEnter)
+	list.handleFilterEntry(tcell.KeyEnter)
 
 	frontPage, _ = pages.GetFrontPage()
 
@@ -578,7 +556,7 @@ func Test_DirectoryList_getFilterEntryHandler_HidesFilterPaneAfterEntry(t *testi
 	}
 }
 
-func Test_DirectoryList_getFilterEntryHandler_DoesNotApplyFilterIfEscIsPressed(t *testing.T) {
+func Test_DirectoryList_handleFilterEntry_DoesNotApplyFilterIfEscIsPressed(t *testing.T) {
 	seedDirectories := getSampleExampleSeedDirectories()
 
 	mockFileSystem := tdUtils.NewMockFileSystem(seedDirectories, 1, 5)
@@ -591,11 +569,9 @@ func Test_DirectoryList_getFilterEntryHandler_DoesNotApplyFilterIfEscIsPressed(t
 		t.Fatal(err)
 	}
 
-	filterHandler := list.getFilterEntryHandler()
-	filter.SetDoneHandler(filterHandler)
 	filter.SetText("example2")
 
-	filterHandler(tcell.KeyEscape)
+	list.handleFilterEntry(tcell.KeyEscape)
 
 	var result string
 	for i := 0; i < list.GetItemCount(); i++ {
@@ -614,7 +590,7 @@ func Test_DirectoryList_getFilterEntryHandler_DoesNotApplyFilterIfEscIsPressed(t
 	}
 }
 
-func Test_DirectoryList_getScrollPositionHandler_SetsVerticalOffsetToMinimumWhenFirstItemSelected(t *testing.T) {
+func Test_DirectoryList_handleScrollPosition_SetsVerticalOffsetToMinimumWhenFirstItemSelected(t *testing.T) {
 	var seedDirectories []*tdUtils.MockFileNode
 	seedDirNamePart := "test"
 	seedDirCount := 20
@@ -634,8 +610,6 @@ func Test_DirectoryList_getScrollPositionHandler_SetsVerticalOffsetToMinimumWhen
 	listHeight := 10
 	list.SetRect(0, 0, listWidth, listHeight)
 
-	scrollPosHandler := list.getScrollPositionHandler()
-
 	if _, err = mockFileSystem.Cd("/"); err != nil {
 		t.Fatal(err)
 	}
@@ -644,7 +618,7 @@ func Test_DirectoryList_getScrollPositionHandler_SetsVerticalOffsetToMinimumWhen
 	expectedVPosition := 0
 	list.SetCurrentItem(expectedVPosition)
 	list.SetOffset(1, 0)
-	vPosition, _ := scrollPosHandler()
+	vPosition, _ := list.handleScrollPosition()
 
 	if vPosition != expectedVPosition {
 		t.Errorf("Expected vertical scroll position to be %v, got '%v' instead",
@@ -652,7 +626,7 @@ func Test_DirectoryList_getScrollPositionHandler_SetsVerticalOffsetToMinimumWhen
 	}
 }
 
-func Test_DirectoryList_getScrollPositionHandler_SetsVerticalOffsetToMaximumWhenLastItemSelected(t *testing.T) {
+func Test_DirectoryList_handleScrollPosition_SetsVerticalOffsetToMaximumWhenLastItemSelected(t *testing.T) {
 	var seedDirectories []*tdUtils.MockFileNode
 	seedDirNamePart := "test"
 	seedDirCount := 20
@@ -673,8 +647,6 @@ func Test_DirectoryList_getScrollPositionHandler_SetsVerticalOffsetToMaximumWhen
 	list.SetRect(0, 0, listWidth, listHeight)
 	_, _, _, listPageHeight := list.GetInnerRect()
 
-	scrollPosHandler := list.getScrollPositionHandler()
-
 	if _, err = mockFileSystem.Cd("/"); err != nil {
 		t.Fatal(err)
 	}
@@ -684,7 +656,7 @@ func Test_DirectoryList_getScrollPositionHandler_SetsVerticalOffsetToMaximumWhen
 	expectedVPosition := itemCount - listPageHeight
 	list.SetCurrentItem(itemCount - 1)
 	list.SetOffset(listHeight, 0)
-	vPosition, _ := scrollPosHandler()
+	vPosition, _ := list.handleScrollPosition()
 
 	if vPosition != expectedVPosition {
 		t.Errorf("Expected vertical scroll position to be %v, got '%v' instead",
@@ -692,7 +664,7 @@ func Test_DirectoryList_getScrollPositionHandler_SetsVerticalOffsetToMaximumWhen
 	}
 }
 
-func Test_DirectoryList_getScrollPositionHandler_SetsScrollPositionAsListOffsetWhenNeitherFirstNorLastItemSelected(t *testing.T) {
+func Test_DirectoryList_handleScrollPosition_SetsScrollPositionAsListOffsetWhenNeitherFirstNorLastItemSelected(t *testing.T) {
 	var seedDirectories []*tdUtils.MockFileNode
 	seedDirNamePart := "test"
 	seedDirCount := 20
@@ -712,8 +684,6 @@ func Test_DirectoryList_getScrollPositionHandler_SetsScrollPositionAsListOffsetW
 	listHeight := 10
 	list.SetRect(0, 0, listWidth, listHeight)
 
-	scrollPosHandler := list.getScrollPositionHandler()
-
 	if _, err = mockFileSystem.Cd("/"); err != nil {
 		t.Fatal(err)
 	}
@@ -722,7 +692,7 @@ func Test_DirectoryList_getScrollPositionHandler_SetsScrollPositionAsListOffsetW
 	expectedVPosition := 1
 	list.SetCurrentItem(5)
 	list.SetOffset(expectedVPosition, 0)
-	vPosition, _ := scrollPosHandler()
+	vPosition, _ := list.handleScrollPosition()
 
 	if vPosition != expectedVPosition {
 		t.Errorf("Expected vertical scroll position to be %v, got '%v' instead",
@@ -730,7 +700,7 @@ func Test_DirectoryList_getScrollPositionHandler_SetsScrollPositionAsListOffsetW
 	}
 }
 
-func Test_DirectoryList_getInputCaptureHandler_LeftArrowKeyNavigatesToPreviousDirectory(t *testing.T) {
+func Test_DirectoryList_handleInputCapture_LeftArrowKeyNavigatesToPreviousDirectory(t *testing.T) {
 	seedDirectories := getHierarchicalSeedDirectories()
 	mockFileSystem := tdUtils.NewMockFileSystem(seedDirectories, 4, 5)
 	dirCtrl := getDirectoryControllerWithMockCommands(mockFileSystem)
@@ -747,9 +717,7 @@ func Test_DirectoryList_getInputCaptureHandler_LeftArrowKeyNavigatesToPreviousDi
 	}
 	list.load()
 
-	inputHandler := list.getInputCaptureHandler()
-
-	inputHandler(tcell.NewEventKey(tcell.KeyLeft, rune(tcell.KeyLeft), tcell.ModNone))
+	list.handleInputCapture(tcell.NewEventKey(tcell.KeyLeft, rune(tcell.KeyLeft), tcell.ModNone))
 
 	expectedCurrentDir := tdUtils.NormalizePath("/testA")
 
@@ -795,7 +763,7 @@ func getHierarchicalSeedDirectories() []*tdUtils.MockFileNode {
 	}
 }
 
-func Test_DirectoryList_getInputCaptureHandler_RightArrowKeyNavigatesToNextDirectory(t *testing.T) {
+func Test_DirectoryList_handleInputCapture_RightArrowKeyNavigatesToNextDirectory(t *testing.T) {
 	seedDirectories := getHierarchicalSeedDirectories()
 	mockFileSystem := tdUtils.NewMockFileSystem(seedDirectories, 4, 5)
 	dirCtrl := getDirectoryControllerWithMockCommands(mockFileSystem)
@@ -812,11 +780,9 @@ func Test_DirectoryList_getInputCaptureHandler_RightArrowKeyNavigatesToNextDirec
 	}
 	list.load()
 
-	inputHandler := list.getInputCaptureHandler()
-
 	setSelectedItem(list, "testB")
 
-	inputHandler(tcell.NewEventKey(tcell.KeyRight, rune(tcell.KeyRight), tcell.ModNone))
+	list.handleInputCapture(tcell.NewEventKey(tcell.KeyRight, rune(tcell.KeyRight), tcell.ModNone))
 
 	expectedCurrentDir := tdUtils.NormalizePath("/testA/testB")
 
@@ -836,7 +802,7 @@ func setSelectedItem(list *DirectoryList, itemText string) {
 	}
 }
 
-func Test_DirectoryList_getInputCaptureHandler_UpArrowKeyDisplaysDetailsForPreviousItem(t *testing.T) {
+func Test_DirectoryList_handleInputCapture_UpArrowKeyDisplaysDetailsForPreviousItem(t *testing.T) {
 	var seedDirectories []*tdUtils.MockFileNode
 	seedDirNamePart := "test"
 	seedDirCount := 3
@@ -862,8 +828,7 @@ func Test_DirectoryList_getInputCaptureHandler_UpArrowKeyDisplaysDetailsForPrevi
 
 	setSelectedItem(list, "test2")
 
-	inputHandler := list.getInputCaptureHandler()
-	inputHandler(tcell.NewEventKey(tcell.KeyUp, rune(tcell.KeyUp), tcell.ModNone))
+	list.handleInputCapture(tcell.NewEventKey(tcell.KeyUp, rune(tcell.KeyUp), tcell.ModNone))
 
 	result := details.GetText(false)
 
@@ -874,7 +839,7 @@ func Test_DirectoryList_getInputCaptureHandler_UpArrowKeyDisplaysDetailsForPrevi
 	}
 }
 
-func Test_DirectoryList_getInputCaptureHandler_DownArrowKeyDisplaysDetailsForPreviousItem(t *testing.T) {
+func Test_DirectoryList_handleInputCapture_DownArrowKeyDisplaysDetailsForPreviousItem(t *testing.T) {
 	var seedDirectories []*tdUtils.MockFileNode
 	seedDirNamePart := "test"
 	seedDirCount := 3
@@ -900,8 +865,7 @@ func Test_DirectoryList_getInputCaptureHandler_DownArrowKeyDisplaysDetailsForPre
 
 	setSelectedItem(list, "test0")
 
-	inputHandler := list.getInputCaptureHandler()
-	inputHandler(tcell.NewEventKey(tcell.KeyDown, rune(tcell.KeyDown), tcell.ModNone))
+	list.handleInputCapture(tcell.NewEventKey(tcell.KeyDown, rune(tcell.KeyDown), tcell.ModNone))
 
 	result := details.GetText(false)
 
@@ -912,7 +876,7 @@ func Test_DirectoryList_getInputCaptureHandler_DownArrowKeyDisplaysDetailsForPre
 	}
 }
 
-func Test_DirectoryList_getInputCaptureHandler_TabKeySetsFocusToDetailsPane(t *testing.T) {
+func Test_DirectoryList_handleInputCapture_TabKeySetsFocusToDetailsPane(t *testing.T) {
 	screen := tcell.NewSimulationScreen("")
 	app := getAppWithDisabledExitHandlersAndOutputStreams(screen)
 	details := CreateDetailsPane()
@@ -923,8 +887,7 @@ func Test_DirectoryList_getInputCaptureHandler_TabKeySetsFocusToDetailsPane(t *t
 
 	app.SetFocus(list)
 
-	inputHandler := list.getInputCaptureHandler()
-	inputHandler(tcell.NewEventKey(tcell.KeyTab, rune(tcell.KeyTab), tcell.ModNone))
+	list.handleInputCapture(tcell.NewEventKey(tcell.KeyTab, rune(tcell.KeyTab), tcell.ModNone))
 
 	result := app.GetFocus()
 

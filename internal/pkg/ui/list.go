@@ -45,9 +45,9 @@ func CreateDirectoryList(
 	list.titleBox.SetText(list.currentDir)
 
 	list.loadDetailsForCurrentDirectory()
-	list.details.SetInputCapture(list.getDetailsInputCaptureHandler())
+	list.details.SetInputCapture(list.handleDetailsInputCapture)
 
-	list.filter.SetDoneHandler(list.getFilterEntryHandler())
+	list.filter.SetDoneHandler(list.handleFilterEntry)
 
 	list.
 		configureBorder().
@@ -128,44 +128,40 @@ func (d *DirectoryList) getDetailsText(directory string) string {
 	return detailsText
 }
 
-func (d *DirectoryList) getDetailsInputCaptureHandler() func(event *tcell.EventKey) *tcell.EventKey {
-	return func(event *tcell.EventKey) *tcell.EventKey {
-		switch event.Key() {
-		case tcell.KeyEscape:
-			fallthrough
-		case tcell.KeyEnter:
-			fallthrough
-		case tcell.KeyTab:
-			d.app.SetFocus(d)
-			return nil
-		case 'q':
-			d.app.PrintAndExit(".")
-			return nil
-		}
-
-		return event
+func (d *DirectoryList) handleDetailsInputCapture(event *tcell.EventKey) *tcell.EventKey {
+	switch event.Key() {
+	case tcell.KeyEscape:
+		fallthrough
+	case tcell.KeyEnter:
+		fallthrough
+	case tcell.KeyTab:
+		d.app.SetFocus(d)
+		return nil
+	case 'q':
+		d.app.PrintAndExit(".")
+		return nil
 	}
+
+	return event
 }
 
-func (d *DirectoryList) getFilterEntryHandler() func(key tcell.Key) {
-	return func(key tcell.Key) {
-		if key == tcell.KeyEsc {
-			d.filter.Clear()
-		}
-
-		d.filterText = d.filter.GetText()
-
-		if len(d.filterText) > 0 {
-			d.SetTitle(fmt.Sprintf("%v - Filter: %v", listUITitle, d.filterText))
-		} else {
-			d.SetTitle(listUITitle)
-		}
-
+func (d *DirectoryList) handleFilterEntry(key tcell.Key) {
+	if key == tcell.KeyEsc {
 		d.filter.Clear()
-		d.pages.HidePage("Filter")
-		d.app.SetFocus(d)
-		d.load()
 	}
+
+	d.filterText = d.filter.GetText()
+
+	if len(d.filterText) > 0 {
+		d.SetTitle(fmt.Sprintf("%v - Filter: %v", listUITitle, d.filterText))
+	} else {
+		d.SetTitle(listUITitle)
+	}
+
+	d.filter.Clear()
+	d.pages.HidePage("Filter")
+	d.app.SetFocus(d)
+	d.load()
 }
 
 func (d *DirectoryList) configureBorder() *DirectoryList {
@@ -174,69 +170,63 @@ func (d *DirectoryList) configureBorder() *DirectoryList {
 		SetBorderPadding(1, 1, 0, 1).
 		SetDrawFunc(GetScrollBarDrawFunc(
 			d,
-			d.getScrollAreaHandler(),
-			d.getScrollPositionHandler()))
+			d.handleScrollArea,
+			d.handleScrollPosition))
 
 	return d
 }
 
-func (d *DirectoryList) getScrollAreaHandler() func() (width, height int) {
-	return func() (width, height int) {
-		_, _, listWidth, _ := d.GetInnerRect()
-		listHeight := d.GetItemCount()
+func (d *DirectoryList) handleScrollArea() (width, height int) {
+	_, _, listWidth, _ := d.GetInnerRect()
+	listHeight := d.GetItemCount()
 
-		return listWidth, listHeight
-	}
+	return listWidth, listHeight
 }
 
-func (d *DirectoryList) getScrollPositionHandler() func() (vScroll, hScroll int) {
-	return func() (vScroll, hScroll int) {
-		selectedItem := d.GetCurrentItem()
-		itemCount := d.GetItemCount()
-		_, _, _, pageHeight := d.GetInnerRect()
+func (d *DirectoryList) handleScrollPosition() (vScroll, hScroll int) {
+	selectedItem := d.GetCurrentItem()
+	itemCount := d.GetItemCount()
+	_, _, _, pageHeight := d.GetInnerRect()
 
-		v, h := d.GetOffset()
+	v, h := d.GetOffset()
 
-		if selectedItem == 0 {
-			v = 0
-		}
-
-		if selectedItem == itemCount-1 {
-			v = itemCount - pageHeight
-		}
-
-		return v, h
+	if selectedItem == 0 {
+		v = 0
 	}
+
+	if selectedItem == itemCount-1 {
+		v = itemCount - pageHeight
+	}
+
+	return v, h
 }
 
 func (d *DirectoryList) configureInputEvents() *DirectoryList {
-	d.SetInputCapture(d.getInputCaptureHandler())
+	d.SetInputCapture(d.handleInputCapture)
 
 	return d
 }
 
-func (d *DirectoryList) getInputCaptureHandler() func(event *tcell.EventKey) *tcell.EventKey {
-	return func(event *tcell.EventKey) *tcell.EventKey {
-		switch event.Key() {
-		case tcell.KeyLeft:
-			d.handleLeftKeyEvent()
-			return nil
-		case tcell.KeyRight:
-			d.handleRightKeyEvent()
-			return nil
-		case tcell.KeyUp:
-			d.setPreviousDetailsText()
-			return event
-		case tcell.KeyDown:
-			d.setNextDetailsText()
-			return event
-		case tcell.KeyTab:
-			d.app.SetFocus(d.details)
-			return nil
-		}
-
+func (d *DirectoryList) handleInputCapture(event *tcell.EventKey) *tcell.EventKey {
+	switch event.Key() {
+	case tcell.KeyLeft:
+		d.handleLeftKeyEvent()
+		return nil
+	case tcell.KeyRight:
+		d.handleRightKeyEvent()
+		return nil
+	case tcell.KeyUp:
+		d.setPreviousDetailsText()
 		return event
+	case tcell.KeyDown:
+		d.setNextDetailsText()
+		return event
+	case tcell.KeyTab:
+		d.app.SetFocus(d.details)
+		return nil
 	}
+
+	return event
 }
 
 func (d *DirectoryList) handleLeftKeyEvent() {
