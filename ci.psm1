@@ -7,11 +7,7 @@ function Invoke-Ci {
     } else {
         $output = & $ciExe $args
 
-        # TODO: Null check $output. It returns null on Ctrl+C. Output a message saying the
-        #  app was forcefully exited, or something along those lines. Do the same for the
-        #  corresponding Bash script.
-
-        if ($?) {
+        if ($? -and $null -ne $output) {
             if ((Get-Item $output) -is [System.IO.DirectoryInfo]) {
                 Set-Location -Path $output.ToString()
             } else {
@@ -19,6 +15,10 @@ function Invoke-Ci {
 
                 throw
             }
+        } elseif ($null -eq $output) {
+            Write-Host "Program forcefully exited"
+            
+            return
         } else {
             $output
 
