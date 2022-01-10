@@ -28,9 +28,7 @@ func runScrollAreaTest(
 	expectedHeight int,
 	description string,
 ) {
-	handler := getScrollAreaHandler(view)
-
-	width, height := handler()
+	width, height := view.handleScrollArea()
 
 	if width != expectedWidth {
 		t.Errorf(
@@ -54,8 +52,6 @@ func Test_DetailsView_GetScrollPositionHandler(t *testing.T) {
 	view := newDetailsView().SetText(testText)
 	view.SetRect(0, 0, 10, 10)
 
-	handler := getScrollPositionHandler(view)
-
 	scrollData := []struct {
 		x int
 		y int
@@ -68,7 +64,7 @@ func Test_DetailsView_GetScrollPositionHandler(t *testing.T) {
 
 	for _, pos := range scrollData {
 		view.ScrollTo(pos.x, pos.y)
-		x, y := handler()
+		x, y := view.handleScrollPosition()
 		if x != pos.x || y != pos.y {
 			t.Errorf(
 				"Expected scroll position to be (%d, %d), got (%d, %d) instead",

@@ -32,8 +32,8 @@ func CreateDetailsPane() *DetailsView {
 		SetBorderPadding(1, 1, 1, 1).
 		SetDrawFunc(GetScrollBarDrawFunc(
 			details,
-			getScrollAreaHandler(details),
-			getScrollPositionHandler(details)))
+			details.handleScrollArea,
+			details.handleScrollPosition))
 
 	return details
 }
@@ -120,16 +120,12 @@ func (d *DetailsView) GetText(stripAllTags bool) string {
 	return text
 }
 
-func getScrollAreaHandler(view *DetailsView) func() (width, height int) {
-	return func() (width, height int) {
-		return view.LongestLine, view.LineCount
-	}
+func (d *DetailsView) handleScrollArea() (width, height int) {
+	return d.LongestLine, d.LineCount
 }
 
-func getScrollPositionHandler(view *DetailsView) func() (vScroll, hScroll int) {
-	return func() (vScroll, hScroll int) {
-		return view.GetScrollOffset()
-	}
+func (d *DetailsView) handleScrollPosition() (vScroll, hScroll int) {
+	return d.GetScrollOffset()
 }
 
 func (d *DetailsView) SetWordWrap(wrapOnWords bool) *DetailsView {

@@ -34,6 +34,10 @@ ci() {
       # shellcheck disable=SC2164
       cd "$output"
       return
+    elif [ "$lastCode" == 0 ] && [ -z "$output" ]
+    then
+      echo "Program forcefully exited"
+      return "$lastCode"
     else
       echo "$output"
       return "$lastCode"

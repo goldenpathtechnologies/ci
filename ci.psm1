@@ -7,7 +7,7 @@ function Invoke-Ci {
     } else {
         $output = & $ciExe $args
 
-        if ($?) {
+        if ($? -and $null -ne $output) {
             if ((Get-Item $output) -is [System.IO.DirectoryInfo]) {
                 Set-Location -Path $output.ToString()
             } else {
@@ -15,6 +15,10 @@ function Invoke-Ci {
 
                 throw
             }
+        } elseif ($null -eq $output) {
+            Write-Host "Program forcefully exited"
+            
+            return
         } else {
             $output
 
