@@ -52,22 +52,6 @@ func (m *MockInfoWriter) Flush() (string, error) {
 	return m.flush()
 }
 
-func Test_DirectoryList_newDirectoryList_SetsCurrentDirectoryCorrectly(t *testing.T) {
-	dir, err := filepath.Abs(".")
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	list, err := newDirectoryList(nil, nil, nil, nil, nil, nil)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	if list.currentDir != dir {
-		t.Errorf("Expected the current directory to be '%s', got '%s' instead", dir, list.currentDir)
-	}
-}
-
 func Test_DirectoryList_getDetailsText_ReturnsDirectoryDetails(t *testing.T) {
 	var files []fs.FileInfo
 
@@ -85,10 +69,7 @@ func Test_DirectoryList_getDetailsText_ReturnsDirectoryDetails(t *testing.T) {
 		},
 	}
 
-	list, err := newDirectoryList(nil, nil, nil, nil, nil, dirCtrl)
-	if err != nil {
-		t.Fatal(err)
-	}
+	list := CreateDirectoryList(nil, nil, nil, nil, nil, dirCtrl, nil)
 
 	detailsText := list.getDetailsText(".")
 
@@ -115,10 +96,7 @@ func Test_DirectoryList_getDetailsText_ReturnsUnprivilegedMessageWhenDirectoryIn
 		},
 	}
 
-	list, err := newDirectoryList(nil, nil, nil, nil, nil, dirCtrl)
-	if err != nil {
-		t.Fatal(err)
-	}
+	list := CreateDirectoryList(nil, nil, nil, nil, nil, dirCtrl, nil)
 
 	result := list.getDetailsText(".")
 	expected := "[red]Unable to read directory details. You may have insufficient privileges.[white]"
@@ -165,10 +143,7 @@ func Test_DirectoryList_getDetailsText_HandlesUnexpectedErrors(t *testing.T) {
 		// Do nothing for test
 	}
 
-	list, err := newDirectoryList(app, nil, nil, nil, nil, dirCtrl)
-	if err != nil {
-		t.Fatal(err)
-	}
+	list := CreateDirectoryList(app, nil, nil, nil, nil, dirCtrl, nil)
 
 	// TODO: When the App struct implements a logging flag, get rid of this statement
 	//  and expect error output from the default errorStream instead. Currently, the
@@ -196,10 +171,7 @@ func Test_DirectoryList_getDetailsText_DoesNotReturnOutputFromPreviousCall(t *te
 	app := getAppWithDisabledExitHandlersAndOutputStreams(screen)
 	details := CreateDetailsPane()
 
-	list, err := newDirectoryList(app, tview.NewTextView(), CreateFilterForm(), tview.NewPages(), details, dirCtrl)
-	if err != nil {
-		t.Fatal(err)
-	}
+	list := CreateDirectoryList(app, tview.NewTextView(), CreateFilterForm(), tview.NewPages(), details, dirCtrl, nil)
 
 	result0 := list.getDetailsText("test0")
 	result1 := list.getDetailsText("test1")
@@ -277,10 +249,7 @@ func Test_DirectoryList_handleDetailsInputCapture_SetsFocusToListWhenTabPressed(
 	screen := tcell.NewSimulationScreen("")
 	app := getAppWithDisabledExitHandlersAndOutputStreams(screen)
 	focus := CreateFilterForm()
-	list, err := newDirectoryList(app, nil, focus, nil, nil, nil)
-	if err != nil {
-		t.Fatal(err)
-	}
+	list := CreateDirectoryList(app, nil, focus, nil, nil, nil, nil)
 	app.SetFocus(focus)
 
 	list.handleDetailsInputCapture(tcell.NewEventKey(tcell.KeyTab, rune(tcell.KeyTab), tcell.ModNone))
@@ -296,10 +265,7 @@ func Test_DirectoryList_handleDetailsInputCapture_SetsFocusToListWhenTabPressed(
 func Test_DirectoryList_handleDetailsInputCapture_AppExitsWhenShortcutKeyIsPressed(t *testing.T) {
 	screen := tcell.NewSimulationScreen("")
 	app := getAppWithDisabledExitHandlersAndOutputStreams(screen)
-	list, err := newDirectoryList(app, nil, nil, nil, nil, nil)
-	if err != nil {
-		t.Fatal(err)
-	}
+	list := CreateDirectoryList(app, nil, nil, nil, nil, nil, nil)
 	exited := false
 	app.handleNormalExit = func() {
 		exited = true
@@ -315,10 +281,7 @@ func Test_DirectoryList_handleDetailsInputCapture_AppExitsWhenShortcutKeyIsPress
 func Test_DirectoryList_handleDetailsInputCapture_DoesNotReturnEventForHandledKeyPresses(t *testing.T) {
 	screen := tcell.NewSimulationScreen("")
 	app := getAppWithDisabledExitHandlersAndOutputStreams(screen)
-	list, err := newDirectoryList(app, nil, nil, nil, nil, nil)
-	if err != nil {
-		t.Fatal(err)
-	}
+	list := CreateDirectoryList(app, nil, nil, nil, nil, nil, nil)
 	app.handleNormalExit = func() {
 		// Do nothing for test
 	}
@@ -345,10 +308,9 @@ func Test_DirectoryList_handleFilterEntry_SetsListTitleWhenFilterEntered(t *test
 	screen := tcell.NewSimulationScreen("")
 	filter := CreateFilterForm()
 	app := getAppWithDisabledExitHandlersAndOutputStreams(screen)
-	list, err := newDirectoryList(app, tview.NewTextView(), filter, tview.NewPages(), CreateDetailsPane(), nil)
-	if err != nil {
-		t.Fatal(err)
-	}
+	mockFileSystem := tdUtils.NewMockFileSystem(nil, 2, 5)
+	dirCtrl := getDirectoryControllerWithMockCommands(mockFileSystem)
+	list := CreateDirectoryList(app, tview.NewTextView(), filter, tview.NewPages(), CreateDetailsPane(), dirCtrl, nil)
 
 	filter.filterMethod.SetCurrentOption(filterMethodGlobPattern)
 
@@ -369,10 +331,9 @@ func Test_DirectoryList_handleFilterEntry_ResetsListTitleToDefaultWhenFilterIsEm
 	screen := tcell.NewSimulationScreen("")
 	filter := CreateFilterForm()
 	app := getAppWithDisabledExitHandlersAndOutputStreams(screen)
-	list, err := newDirectoryList(app, tview.NewTextView(), filter, tview.NewPages(), CreateDetailsPane(), nil)
-	if err != nil {
-		t.Fatal(err)
-	}
+	mockFileSystem := tdUtils.NewMockFileSystem(nil, 2, 5)
+	dirCtrl := getDirectoryControllerWithMockCommands(mockFileSystem)
+	list := CreateDirectoryList(app, tview.NewTextView(), filter, tview.NewPages(), CreateDetailsPane(), dirCtrl, nil)
 
 	filterText := ""
 	expectedListTitle := listUITitle
@@ -391,10 +352,9 @@ func Test_DirectoryList_handleFilterEntry_SetsAppFocusToListWhenFilterEntered(t 
 	screen := tcell.NewSimulationScreen("")
 	filter := CreateFilterForm()
 	app := getAppWithDisabledExitHandlersAndOutputStreams(screen)
-	list, err := newDirectoryList(app, tview.NewTextView(), filter, tview.NewPages(), CreateDetailsPane(), nil)
-	if err != nil {
-		t.Fatal(err)
-	}
+	mockFileSystem := tdUtils.NewMockFileSystem(nil, 2, 5)
+	dirCtrl := getDirectoryControllerWithMockCommands(mockFileSystem)
+	list := CreateDirectoryList(app, tview.NewTextView(), filter, tview.NewPages(), CreateDetailsPane(), dirCtrl, nil)
 	app.SetFocus(filter)
 
 	list.handleFilterEntry(tcell.KeyEnter)
@@ -415,10 +375,7 @@ func Test_DirectoryList_handleFilterEntry_PerformsFilterWhenListReloaded(t *test
 	screen := tcell.NewSimulationScreen("")
 	filter := CreateFilterForm()
 	app := getAppWithDisabledExitHandlersAndOutputStreams(screen)
-	list, err := newDirectoryList(app, tview.NewTextView(), filter, tview.NewPages(), CreateDetailsPane(), dirCtrl)
-	if err != nil {
-		t.Fatal(err)
-	}
+	list := CreateDirectoryList(app, tview.NewTextView(), filter, tview.NewPages(), CreateDetailsPane(), dirCtrl, nil)
 
 	filter.SetText("example2")
 
@@ -508,10 +465,9 @@ func Test_DirectoryList_handleFilterEntry_ClearsFilterTextWhenFilterEntered(t *t
 	screen := tcell.NewSimulationScreen("")
 	filter := CreateFilterForm()
 	app := getAppWithDisabledExitHandlersAndOutputStreams(screen)
-	list, err := newDirectoryList(app, tview.NewTextView(), filter, tview.NewPages(), CreateDetailsPane(), nil)
-	if err != nil {
-		t.Fatal(err)
-	}
+	mockFileSystem := tdUtils.NewMockFileSystem(nil, 2, 5)
+	dirCtrl := getDirectoryControllerWithMockCommands(mockFileSystem)
+	list := CreateDirectoryList(app, tview.NewTextView(), filter, tview.NewPages(), CreateDetailsPane(), dirCtrl, nil)
 
 	filterText := "bananas"
 	expectedFilterText := ""
@@ -532,10 +488,10 @@ func Test_DirectoryList_handleFilterEntry_HidesFilterPaneAfterEntry(t *testing.T
 	filter := CreateFilterForm()
 	app := getAppWithDisabledExitHandlersAndOutputStreams(screen)
 	pages := tview.NewPages()
-	list, err := newDirectoryList(app, tview.NewTextView(), filter, pages, CreateDetailsPane(), nil)
-	if err != nil {
-		t.Fatal(err)
-	}
+	mockFileSystem := tdUtils.NewMockFileSystem(nil, 2, 5)
+	dirCtrl := getDirectoryControllerWithMockCommands(mockFileSystem)
+	list := CreateDirectoryList(app, tview.NewTextView(), filter, pages, CreateDetailsPane(), dirCtrl, nil)
+
 	pages.AddPage("List", list, false, true)
 	pages.AddPage("Filter", filter, false, true)
 
@@ -564,10 +520,7 @@ func Test_DirectoryList_handleFilterEntry_DoesNotApplyFilterIfEscIsPressed(t *te
 	screen := tcell.NewSimulationScreen("")
 	filter := CreateFilterForm()
 	app := getAppWithDisabledExitHandlersAndOutputStreams(screen)
-	list, err := newDirectoryList(app, tview.NewTextView(), filter, tview.NewPages(), CreateDetailsPane(), dirCtrl)
-	if err != nil {
-		t.Fatal(err)
-	}
+	list := CreateDirectoryList(app, tview.NewTextView(), filter, tview.NewPages(), CreateDetailsPane(), dirCtrl, nil)
 
 	filter.SetText("example2")
 
@@ -601,16 +554,13 @@ func Test_DirectoryList_handleScrollPosition_SetsVerticalOffsetToMinimumWhenFirs
 	screen := tcell.NewSimulationScreen("")
 	app := getAppWithDisabledExitHandlersAndOutputStreams(screen)
 
-	list, err := newDirectoryList(app, tview.NewTextView(), CreateFilterForm(), tview.NewPages(), CreateDetailsPane(), dirCtrl)
-	if err != nil {
-		t.Fatal(err)
-	}
+	list := CreateDirectoryList(app, tview.NewTextView(), CreateFilterForm(), tview.NewPages(), CreateDetailsPane(), dirCtrl, nil)
 
 	listWidth := 20
 	listHeight := 10
 	list.SetRect(0, 0, listWidth, listHeight)
 
-	if _, err = mockFileSystem.Cd("/"); err != nil {
+	if _, err := mockFileSystem.Cd("/"); err != nil {
 		t.Fatal(err)
 	}
 	list.load()
@@ -637,17 +587,14 @@ func Test_DirectoryList_handleScrollPosition_SetsVerticalOffsetToMaximumWhenLast
 	screen := tcell.NewSimulationScreen("")
 	app := getAppWithDisabledExitHandlersAndOutputStreams(screen)
 
-	list, err := newDirectoryList(app, tview.NewTextView(), CreateFilterForm(), tview.NewPages(), CreateDetailsPane(), dirCtrl)
-	if err != nil {
-		t.Fatal(err)
-	}
+	list := CreateDirectoryList(app, tview.NewTextView(), CreateFilterForm(), tview.NewPages(), CreateDetailsPane(), dirCtrl, nil)
 
 	listWidth := 20
 	listHeight := 10
 	list.SetRect(0, 0, listWidth, listHeight)
 	_, _, _, listPageHeight := list.GetInnerRect()
 
-	if _, err = mockFileSystem.Cd("/"); err != nil {
+	if _, err := mockFileSystem.Cd("/"); err != nil {
 		t.Fatal(err)
 	}
 	list.load()
@@ -675,16 +622,13 @@ func Test_DirectoryList_handleScrollPosition_SetsScrollPositionAsListOffsetWhenN
 	screen := tcell.NewSimulationScreen("")
 	app := getAppWithDisabledExitHandlersAndOutputStreams(screen)
 
-	list, err := newDirectoryList(app, tview.NewTextView(), CreateFilterForm(), tview.NewPages(), CreateDetailsPane(), dirCtrl)
-	if err != nil {
-		t.Fatal(err)
-	}
+	list := CreateDirectoryList(app, tview.NewTextView(), CreateFilterForm(), tview.NewPages(), CreateDetailsPane(), dirCtrl, nil)
 
 	listWidth := 20
 	listHeight := 10
 	list.SetRect(0, 0, listWidth, listHeight)
 
-	if _, err = mockFileSystem.Cd("/"); err != nil {
+	if _, err := mockFileSystem.Cd("/"); err != nil {
 		t.Fatal(err)
 	}
 	list.load()
@@ -711,8 +655,8 @@ func Test_DirectoryList_handleInputCapture_LeftArrowKeyNavigatesToPreviousDirect
 		t.Fatal(err)
 	}
 
-	list, err := newDirectoryList(app, tview.NewTextView(), CreateFilterForm(), tview.NewPages(), CreateDetailsPane(), dirCtrl)
-	if err != nil {
+	list := CreateDirectoryList(app, tview.NewTextView(), CreateFilterForm(), tview.NewPages(), CreateDetailsPane(), dirCtrl, nil)
+	if err := initializeCurrentDirectoryForTest(list); err != nil {
 		t.Fatal(err)
 	}
 	list.load()
@@ -724,6 +668,15 @@ func Test_DirectoryList_handleInputCapture_LeftArrowKeyNavigatesToPreviousDirect
 	if list.currentDir != expectedCurrentDir {
 		t.Errorf("Expected the current directory to be '%s', got '%s' instead", expectedCurrentDir, list.currentDir)
 	}
+}
+
+// initializeCurrentDirectoryForTest sets the current directory for the DirectoryList without having to call DirectoryList.Init().
+// This ensures that we run tests with the minimum necessary setup.
+func initializeCurrentDirectoryForTest(list *DirectoryList) error {
+	var err error
+	list.currentDir, err = list.dirUtil.GetInitialDirectory()
+
+	return err
 }
 
 func getHierarchicalSeedDirectories() []*tdUtils.MockFileNode {
@@ -774,8 +727,8 @@ func Test_DirectoryList_handleInputCapture_RightArrowKeyNavigatesToNextDirectory
 		t.Fatal(err)
 	}
 
-	list, err := newDirectoryList(app, tview.NewTextView(), CreateFilterForm(), tview.NewPages(), CreateDetailsPane(), dirCtrl)
-	if err != nil {
+	list := CreateDirectoryList(app, tview.NewTextView(), CreateFilterForm(), tview.NewPages(), CreateDetailsPane(), dirCtrl, nil)
+	if err := initializeCurrentDirectoryForTest(list); err != nil {
 		t.Fatal(err)
 	}
 	list.load()
@@ -812,10 +765,7 @@ func Test_DirectoryList_handleInputCapture_UpArrowKeyDisplaysDetailsForPreviousI
 	screen := tcell.NewSimulationScreen("")
 	app := getAppWithDisabledExitHandlersAndOutputStreams(screen)
 	details := CreateDetailsPane()
-	list, err := newDirectoryList(app, tview.NewTextView(), CreateFilterForm(), tview.NewPages(), details, dirCtrl)
-	if err != nil {
-		t.Fatal(err)
-	}
+	list := CreateDirectoryList(app, tview.NewTextView(), CreateFilterForm(), tview.NewPages(), details, dirCtrl, nil)
 
 	expectedDetailsText := map[string]string{}
 
@@ -849,10 +799,7 @@ func Test_DirectoryList_handleInputCapture_DownArrowKeyDisplaysDetailsForPreviou
 	screen := tcell.NewSimulationScreen("")
 	app := getAppWithDisabledExitHandlersAndOutputStreams(screen)
 	details := CreateDetailsPane()
-	list, err := newDirectoryList(app, tview.NewTextView(), CreateFilterForm(), tview.NewPages(), details, dirCtrl)
-	if err != nil {
-		t.Fatal(err)
-	}
+	list := CreateDirectoryList(app, tview.NewTextView(), CreateFilterForm(), tview.NewPages(), details, dirCtrl, nil)
 
 	expectedDetailsText := map[string]string{}
 
@@ -880,10 +827,7 @@ func Test_DirectoryList_handleInputCapture_TabKeySetsFocusToDetailsPane(t *testi
 	screen := tcell.NewSimulationScreen("")
 	app := getAppWithDisabledExitHandlersAndOutputStreams(screen)
 	details := CreateDetailsPane()
-	list, err := newDirectoryList(app, tview.NewTextView(), CreateFilterForm(), tview.NewPages(), details, nil)
-	if err != nil {
-		t.Fatal(err)
-	}
+	list := CreateDirectoryList(app, tview.NewTextView(), CreateFilterForm(), tview.NewPages(), details, nil, nil)
 
 	app.SetFocus(list)
 
@@ -907,8 +851,8 @@ func Test_DirectoryList_handleLeftKeyEvent_SetsCurrentDirectoryToOneLevelUpFromP
 		t.Fatal(err)
 	}
 
-	list, err := newDirectoryList(app, tview.NewTextView(), CreateFilterForm(), tview.NewPages(), CreateDetailsPane(), dirCtrl)
-	if err != nil {
+	list := CreateDirectoryList(app, tview.NewTextView(), CreateFilterForm(), tview.NewPages(), CreateDetailsPane(), dirCtrl, nil)
+	if err := initializeCurrentDirectoryForTest(list); err != nil {
 		t.Fatal(err)
 	}
 	list.load()
@@ -934,8 +878,8 @@ func Test_DirectoryList_handleLeftKeyEvent_SetsDirectoryListTitleWhenNavigating(
 		t.Fatal(err)
 	}
 
-	list, err := newDirectoryList(app, tview.NewTextView(), CreateFilterForm(), tview.NewPages(), CreateDetailsPane(), dirCtrl)
-	if err != nil {
+	list := CreateDirectoryList(app, tview.NewTextView(), CreateFilterForm(), tview.NewPages(), CreateDetailsPane(), dirCtrl, nil)
+	if err := initializeCurrentDirectoryForTest(list); err != nil {
 		t.Fatal(err)
 	}
 	list.load()
@@ -963,10 +907,7 @@ func Test_DirectoryList_handleLeftKeyEvent_DoesNotNavigateWhenAtRootDirectory(t 
 		t.Fatal(err)
 	}
 
-	list, err := newDirectoryList(app, tview.NewTextView(), CreateFilterForm(), tview.NewPages(), details, dirCtrl)
-	if err != nil {
-		t.Fatal(err)
-	}
+	list := CreateDirectoryList(app, tview.NewTextView(), CreateFilterForm(), tview.NewPages(), details, dirCtrl, nil)
 	list.load()
 	list.loadDetailsForCurrentDirectory()
 
@@ -999,8 +940,8 @@ func Test_DirectoryList_handleLeftKeyEvent_ClearsFilterWhenNavigating(t *testing
 		t.Fatal(err)
 	}
 
-	list, err := newDirectoryList(app, tview.NewTextView(), CreateFilterForm(), tview.NewPages(), CreateDetailsPane(), dirCtrl)
-	if err != nil {
+	list := CreateDirectoryList(app, tview.NewTextView(), CreateFilterForm(), tview.NewPages(), CreateDetailsPane(), dirCtrl, nil)
+	if err := initializeCurrentDirectoryForTest(list); err != nil {
 		t.Fatal(err)
 	}
 	list.load()
@@ -1043,8 +984,8 @@ func Test_DirectoryList_handleLeftKeyEvent_LoadsListForParentDirectory(t *testin
 		t.Fatal(err)
 	}
 
-	list, err := newDirectoryList(app, tview.NewTextView(), CreateFilterForm(), tview.NewPages(), CreateDetailsPane(), dirCtrl)
-	if err != nil {
+	list := CreateDirectoryList(app, tview.NewTextView(), CreateFilterForm(), tview.NewPages(), CreateDetailsPane(), dirCtrl, nil)
+	if err := initializeCurrentDirectoryForTest(list); err != nil {
 		t.Fatal(err)
 	}
 	list.load()
@@ -1086,8 +1027,8 @@ func Test_DirectoryList_handleLeftKeyEvent_LoadsListForRootDirectory(t *testing.
 	}
 
 	runTest := func(prependDriveLetter bool) {
-		list, err := newDirectoryList(app, tview.NewTextView(), CreateFilterForm(), tview.NewPages(), CreateDetailsPane(), dirCtrl)
-		if err != nil {
+		list := CreateDirectoryList(app, tview.NewTextView(), CreateFilterForm(), tview.NewPages(), CreateDetailsPane(), dirCtrl, nil)
+		if err := initializeCurrentDirectoryForTest(list); err != nil {
 			t.Fatal(err)
 		}
 		list.load()
@@ -1125,8 +1066,8 @@ func Test_DirectoryList_handleLeftKeyEvent_ListsContentsOfDirectoryInDetailsPane
 		t.Fatal(err)
 	}
 
-	list, err := newDirectoryList(app, tview.NewTextView(), CreateFilterForm(), tview.NewPages(), details, dirCtrl)
-	if err != nil {
+	list := CreateDirectoryList(app, tview.NewTextView(), CreateFilterForm(), tview.NewPages(), details, dirCtrl, nil)
+	if err := initializeCurrentDirectoryForTest(list); err != nil {
 		t.Fatal(err)
 	}
 	list.load()
@@ -1154,8 +1095,8 @@ func Test_DirectoryList_handleRightKeyEvent_SetsCurrentDirectoryToOneLevelDownFr
 		t.Fatal(err)
 	}
 
-	list, err := newDirectoryList(app, tview.NewTextView(), CreateFilterForm(), tview.NewPages(), CreateDetailsPane(), dirCtrl)
-	if err != nil {
+	list := CreateDirectoryList(app, tview.NewTextView(), CreateFilterForm(), tview.NewPages(), CreateDetailsPane(), dirCtrl, nil)
+	if err := initializeCurrentDirectoryForTest(list); err != nil {
 		t.Fatal(err)
 	}
 	list.load()
@@ -1178,10 +1119,7 @@ func Test_DirectoryList_handleRightKeyEvent_DoesNotNavigateIfListItemIsAMenuItem
 	screen := tcell.NewSimulationScreen("")
 	app := getAppWithDisabledExitHandlersAndOutputStreams(screen)
 
-	list, err := newDirectoryList(app, tview.NewTextView(), CreateFilterForm(), tview.NewPages(), CreateDetailsPane(), dirCtrl)
-	if err != nil {
-		t.Fatal(err)
-	}
+	list := CreateDirectoryList(app, tview.NewTextView(), CreateFilterForm(), tview.NewPages(), CreateDetailsPane(), dirCtrl, nil)
 	list.load()
 
 	setSelectedItem(list, listUIEnterDir)
@@ -1209,10 +1147,7 @@ func Test_DirectoryList_handleRightKeyEvent_ClearsFilterWhenNavigating(t *testin
 		t.Fatal(err)
 	}
 
-	list, err := newDirectoryList(app, tview.NewTextView(), CreateFilterForm(), tview.NewPages(), CreateDetailsPane(), dirCtrl)
-	if err != nil {
-		t.Fatal(err)
-	}
+	list := CreateDirectoryList(app, tview.NewTextView(), CreateFilterForm(), tview.NewPages(), CreateDetailsPane(), dirCtrl, nil)
 	list.load()
 	list.filterText = "This should not appear"
 
@@ -1239,10 +1174,7 @@ func Test_DirectoryList_handleRightKeyEvent_DoesNotNavigateIfDirectoryIsInaccess
 		t.Fatal(err)
 	}
 
-	list, err := newDirectoryList(app, tview.NewTextView(), CreateFilterForm(), tview.NewPages(), CreateDetailsPane(), dirCtrl)
-	if err != nil {
-		t.Fatal(err)
-	}
+	list := CreateDirectoryList(app, tview.NewTextView(), CreateFilterForm(), tview.NewPages(), CreateDetailsPane(), dirCtrl, nil)
 	list.load()
 
 	setSelectedItem(list, "testB")
@@ -1288,10 +1220,7 @@ func Test_DirectoryList_handleRightKeyEvent_SetsDirectoryListTitleWhenNavigating
 		t.Fatal(err)
 	}
 
-	list, err := newDirectoryList(app, tview.NewTextView(), CreateFilterForm(), tview.NewPages(), CreateDetailsPane(), dirCtrl)
-	if err != nil {
-		t.Fatal(err)
-	}
+	list := CreateDirectoryList(app, tview.NewTextView(), CreateFilterForm(), tview.NewPages(), CreateDetailsPane(), dirCtrl, nil)
 	list.load()
 	list.SetTitle("This should not appear")
 
@@ -1334,10 +1263,7 @@ func Test_DirectoryList_handleRightKeyEvent_LoadsListForChildDirectory(t *testin
 		t.Fatal(err)
 	}
 
-	list, err := newDirectoryList(app, tview.NewTextView(), CreateFilterForm(), tview.NewPages(), CreateDetailsPane(), dirCtrl)
-	if err != nil {
-		t.Fatal(err)
-	}
+	list := CreateDirectoryList(app, tview.NewTextView(), CreateFilterForm(), tview.NewPages(), CreateDetailsPane(), dirCtrl, nil)
 	list.load()
 
 	setSelectedItem(list, "testB")
@@ -1366,8 +1292,8 @@ func Test_DirectoryList_handleRightKeyEvent_SetsCurrentDirectoryCorrectlyFromRoo
 		t.Fatal(err)
 	}
 
-	list, err := newDirectoryList(app, tview.NewTextView(), CreateFilterForm(), tview.NewPages(), CreateDetailsPane(), dirCtrl)
-	if err != nil {
+	list := CreateDirectoryList(app, tview.NewTextView(), CreateFilterForm(), tview.NewPages(), CreateDetailsPane(), dirCtrl, nil)
+	if err := initializeCurrentDirectoryForTest(list); err != nil {
 		t.Fatal(err)
 	}
 	list.load()
@@ -1407,10 +1333,7 @@ func Test_DirectoryList_load_LoadsChildDirectoriesOfCurrentDirectory(t *testing.
 		}
 	}
 
-	list, err := newDirectoryList(app, tview.NewTextView(), CreateFilterForm(), tview.NewPages(), CreateDetailsPane(), dirCtrl)
-	if err != nil {
-		t.Fatal(err)
-	}
+	list := CreateDirectoryList(app, tview.NewTextView(), CreateFilterForm(), tview.NewPages(), CreateDetailsPane(), dirCtrl, nil)
 
 	list.load()
 
@@ -1437,8 +1360,8 @@ func Test_DirectoryList_load_SetsAppTitleBoxTextToCurrentDirectoryPath(t *testin
 		t.Fatal(err)
 	}
 
-	list, err := newDirectoryList(app, title, CreateFilterForm(), tview.NewPages(), CreateDetailsPane(), dirCtrl)
-	if err != nil {
+	list := CreateDirectoryList(app, title, CreateFilterForm(), tview.NewPages(), CreateDetailsPane(), dirCtrl, nil)
+	if err := initializeCurrentDirectoryForTest(list); err != nil {
 		t.Fatal(err)
 	}
 
@@ -1457,10 +1380,7 @@ func Test_DirectoryList_load_LoadsChildDirectoriesOfRootDirectory(t *testing.T) 
 	screen := tcell.NewSimulationScreen("")
 	app := getAppWithDisabledExitHandlersAndOutputStreams(screen)
 
-	list, err := newDirectoryList(app, tview.NewTextView(), CreateFilterForm(), tview.NewPages(), CreateDetailsPane(), dirCtrl)
-	if err != nil {
-		t.Fatal(err)
-	}
+	list := CreateDirectoryList(app, tview.NewTextView(), CreateFilterForm(), tview.NewPages(), CreateDetailsPane(), dirCtrl, nil)
 
 	files, err := mockFileSystem.Ls(".")
 	if err != nil {
@@ -1541,12 +1461,15 @@ func Test_DirectoryList_load_LoadsSymbolicLinkDirectories(t *testing.T) {
 	}
 	createSymLink(tempFileName, tempFileNamePath)
 
-	list, err := newDirectoryList(app, tview.NewTextView(), CreateFilterForm(), tview.NewPages(), CreateDetailsPane(), nil)
-	if err != nil {
-		t.Fatal(err)
-	}
+	list := CreateDirectoryList(
+		app,
+		tview.NewTextView(),
+		CreateFilterForm(),
+		tview.NewPages(),
+		CreateDetailsPane(),
+		utils.NewDefaultDirectoryController(),
+		nil)
 	list.currentDir = tempDir
-
 	list.load()
 
 	for expectedDirName := range childTempDirs {
@@ -1568,10 +1491,7 @@ func Test_DirectoryList_load_LoadsSymbolicLinkDirectories(t *testing.T) {
 func Test_DirectoryList_addNavigableItem_AddsListItemWhenFilterTextIsEmpty(t *testing.T) {
 	screen := tcell.NewSimulationScreen("")
 	app := getAppWithDisabledExitHandlersAndOutputStreams(screen)
-	list, err := newDirectoryList(app, tview.NewTextView(), CreateFilterForm(), tview.NewPages(), CreateDetailsPane(), nil)
-	if err != nil {
-		t.Fatal(err)
-	}
+	list := CreateDirectoryList(app, tview.NewTextView(), CreateFilterForm(), tview.NewPages(), CreateDetailsPane(), nil, nil)
 
 	expectedItem := "bananas"
 	list.addNavigableItem(expectedItem)
@@ -1594,10 +1514,7 @@ func Test_DirectoryList_addNavigableItem_AddsListItemWhenFilterTextIsEmpty(t *te
 func Test_DirectoryList_addNavigableItem_AddsListItemWhenFilterTextMatchesDirectoryName(t *testing.T) {
 	screen := tcell.NewSimulationScreen("")
 	app := getAppWithDisabledExitHandlersAndOutputStreams(screen)
-	list, err := newDirectoryList(app, tview.NewTextView(), CreateFilterForm(), tview.NewPages(), CreateDetailsPane(), nil)
-	if err != nil {
-		t.Fatal(err)
-	}
+	list := CreateDirectoryList(app, tview.NewTextView(), CreateFilterForm(), tview.NewPages(), CreateDetailsPane(), nil, nil)
 	list.filterText = "bananas"
 
 	expectedItem := "bananas"
@@ -1621,10 +1538,7 @@ func Test_DirectoryList_addNavigableItem_AddsListItemWhenFilterTextMatchesDirect
 func Test_DirectoryList_addNavigableItem_AddsListItemWhenFilterTextMatchesGlobPattern(t *testing.T) {
 	screen := tcell.NewSimulationScreen("")
 	app := getAppWithDisabledExitHandlersAndOutputStreams(screen)
-	list, err := newDirectoryList(app, tview.NewTextView(), CreateFilterForm(), tview.NewPages(), CreateDetailsPane(), nil)
-	if err != nil {
-		t.Fatal(err)
-	}
+	list := CreateDirectoryList(app, tview.NewTextView(), CreateFilterForm(), tview.NewPages(), CreateDetailsPane(), nil, nil)
 
 	runTest := func(filter, expected string) {
 		list.filterText = filter
@@ -1658,10 +1572,8 @@ func Test_DirectoryList_getNavigableItemSelectionHandler_GeneratesFullPathToDire
 	screen := tcell.NewSimulationScreen("")
 	app := getAppWithDisabledExitHandlersAndOutputStreams(screen)
 	app.outputStream = &out
-	list, err := newDirectoryList(app, tview.NewTextView(), CreateFilterForm(), tview.NewPages(), CreateDetailsPane(), nil)
-	if err != nil {
-		t.Fatal(err)
-	}
+	list := CreateDirectoryList(app, tview.NewTextView(), CreateFilterForm(), tview.NewPages(), CreateDetailsPane(), nil, nil)
+
 	currentDir := tdUtils.NormalizePath("/oranges/apples")
 	dirName := "bananas"
 	list.currentDir = currentDir
@@ -1689,15 +1601,11 @@ func Test_DirectoryList_setDetailsText_ScrollsTextToTop(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	list, err := newDirectoryList(app, tview.NewTextView(), CreateFilterForm(), tview.NewPages(), details, dirCtrl)
-	if err != nil {
-		t.Fatal(err)
-	}
+	list := CreateDirectoryList(app, tview.NewTextView(), CreateFilterForm(), tview.NewPages(), details, dirCtrl, nil)
 
 	list.setDetailsText("testC")
 
 	resultX, resultY := details.GetScrollOffset()
-
 	if resultX != 0 || resultY != 0 {
 		t.Errorf(
 			"Expected the details pane scroll position to be reset, got the following coordinates instead: (%v, %v)",
@@ -1712,10 +1620,7 @@ func Test_DirectoryList_setDetailsText_SetsTextToCurrentDirectoryItemsWhenDefaul
 	app := getAppWithDisabledExitHandlersAndOutputStreams(screen)
 	details := CreateDetailsPane()
 
-	list, err := newDirectoryList(app, tview.NewTextView(), CreateFilterForm(), tview.NewPages(), details, dirCtrl)
-	if err != nil {
-		t.Fatal(err)
-	}
+	list := CreateDirectoryList(app, tview.NewTextView(), CreateFilterForm(), tview.NewPages(), details, dirCtrl, nil)
 
 	expectedDetailsText := list.getDetailsText(".")
 
@@ -1743,10 +1648,7 @@ func Test_DirectoryList_setDetailsText_SetsDetailsOfDirectoryListItem(t *testing
 	app := getAppWithDisabledExitHandlersAndOutputStreams(screen)
 	details := CreateDetailsPane()
 
-	list, err := newDirectoryList(app, tview.NewTextView(), CreateFilterForm(), tview.NewPages(), details, dirCtrl)
-	if err != nil {
-		t.Fatal(err)
-	}
+	list := CreateDirectoryList(app, tview.NewTextView(), CreateFilterForm(), tview.NewPages(), details, dirCtrl, nil)
 
 	expectedDetailsText := map[string]string{}
 
@@ -1782,14 +1684,7 @@ func Test_DirectoryList_setDetailsText_SetsDetailsOfDirectoryListItem(t *testing
 }
 
 func Test_DirectoryList_getNextItemIndex_GetsIndexOfNextListItemWhenNavigatingUp(t *testing.T) {
-	var (
-		list *DirectoryList
-		err  error
-	)
-
-	if list, err = newDirectoryList(nil, nil, nil, nil, nil, nil); err != nil {
-		t.Fatal(err)
-	}
+	list := CreateDirectoryList(nil, nil, nil, nil, nil, nil, nil)
 
 	for i := 0; i < 5; i++ {
 		list.AddItem("Test"+strconv.Itoa(i), "", 0, nil)
@@ -1814,14 +1709,7 @@ func Test_DirectoryList_getNextItemIndex_GetsIndexOfNextListItemWhenNavigatingUp
 }
 
 func Test_DirectoryList_getNextItemIndex_GetsIndexOfNextListItemWhenNavigatingDown(t *testing.T) {
-	var (
-		list *DirectoryList
-		err  error
-	)
-
-	if list, err = newDirectoryList(nil, nil, nil, nil, nil, nil); err != nil {
-		t.Fatal(err)
-	}
+	list := CreateDirectoryList(nil, nil, nil, nil, nil, nil, nil)
 
 	for i := 0; i < 5; i++ {
 		list.AddItem("Test"+strconv.Itoa(i), "", 0, nil)
@@ -1844,3 +1732,25 @@ func Test_DirectoryList_getNextItemIndex_GetsIndexOfNextListItemWhenNavigatingDo
 		t.Errorf("Expected the selected item index to be %v, got %v instead", expected, result)
 	}
 }
+
+func Test_DirectoryList_Init_SetsCurrentDirectoryCorrectly(t *testing.T) {
+	seedDirectories := getHierarchicalSeedDirectories()
+	mockFileSystem := tdUtils.NewMockFileSystem(seedDirectories, 2, 10)
+	dirCtrl := getDirectoryControllerWithMockCommands(mockFileSystem)
+
+	expectedDir := tdUtils.NormalizePath("/testA/testB")
+	if _, err := mockFileSystem.Cd(expectedDir); err != nil {
+		t.Fatal(err)
+	}
+
+	screen := tcell.NewSimulationScreen("")
+	app := getAppWithDisabledExitHandlersAndOutputStreams(screen)
+	list := CreateDirectoryList(app, tview.NewTextView(), CreateFilterForm(), tview.NewPages(), CreateDetailsPane(), dirCtrl, nil)
+
+	list.Init()
+
+	if list.currentDir != expectedDir {
+		t.Errorf("Expected the current directory to be '%s', got '%s' instead", expectedDir, list.currentDir)
+	}
+}
+

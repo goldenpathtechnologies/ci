@@ -3,6 +3,7 @@ package ui
 import (
 	"github.com/gdamore/tcell/v2"
 	"github.com/goldenpathtechnologies/ci/internal/pkg/flags"
+	"github.com/goldenpathtechnologies/ci/internal/pkg/utils"
 	"github.com/rivo/tview"
 )
 
@@ -18,11 +19,21 @@ func Run(app *App, options *flags.AppOptions) error {
 	setApplicationStyles()
 
 	pages := tview.NewPages()
-
 	filter := CreateFilterForm()
 	details := CreateDetailsPane()
 	titleBox := CreateTitleBox()
-	list := CreateDirectoryList(app, titleBox, filter, pages, details)
+
+	directoryController := utils.NewDefaultDirectoryController()
+
+	list := CreateDirectoryList(
+		app,
+		titleBox,
+		filter,
+		pages,
+		details,
+		directoryController,
+		options).
+		Init()
 
 	flex := tview.NewFlex().SetDirection(tview.FlexRow).
 		AddItem(titleBox, 5, 0, false).

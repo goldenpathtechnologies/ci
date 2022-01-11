@@ -3,6 +3,7 @@ package ui
 import (
 	"fmt"
 	"github.com/gdamore/tcell/v2"
+	"github.com/goldenpathtechnologies/ci/internal/pkg/flags"
 	"github.com/goldenpathtechnologies/ci/internal/pkg/utils"
 	"github.com/rivo/tview"
 	"path/filepath"
@@ -20,6 +21,7 @@ const (
 type DirectoryList struct {
 	*tview.List
 	app        *App
+	appOptions *flags.AppOptions
 	pages      *tview.Pages
 	titleBox   *tview.TextView
 	filter     *FilterForm
@@ -36,52 +38,12 @@ func CreateDirectoryList(
 	filter *FilterForm,
 	pages *tview.Pages,
 	details *DetailsView,
-) *DirectoryList {
-
-	list, err := newDirectoryList(app, titleBox, filter, pages, details, nil)
-	app.HandleError(err, true)
-
-	list.titleBox.Clear()
-	list.titleBox.SetText(list.currentDir)
-
-	list.loadDetailsForCurrentDirectory()
-	list.details.SetInputCapture(list.handleDetailsInputCapture)
-
-	list.filter.SetDoneHandler(list.handleFilterEntry)
-
-	list.
-		configureBorder().
-		configureInputEvents().
-		load()
-
-	return list
-}
-
-func newDirectoryList(
-	app *App,
-	titleBox *tview.TextView,
-	filter *FilterForm,
-	pages *tview.Pages,
-	details *DetailsView,
 	directoryController utils.DirectoryController,
-) (*DirectoryList, error) {
-	var (
-		currentDir string
-		err        error
-	)
-
+	appOptions *flags.AppOptions,
+) *DirectoryList {
 	list := tview.NewList().
 		ShowSecondaryText(false).
 		SetSelectedTextColor(tcell.ColorBlack)
-
-	var dirUtil utils.DirectoryController
-	if directoryController == nil {
-		dirUtil = utils.NewDefaultDirectoryController()
-	} else {
-		dirUtil = directoryController
-	}
-
-	currentDir, err = dirUtil.GetInitialDirectory()
 
 	menuItems := map[string]string{
 		listUIQuit:     listUIQuit,
@@ -93,14 +55,33 @@ func newDirectoryList(
 	return &DirectoryList{
 		List:       list,
 		app:        app,
+		appOptions: appOptions,
 		pages:      pages,
 		titleBox:   titleBox,
 		filter:     filter,
 		details:    details,
-		dirUtil:    dirUtil,
-		currentDir: currentDir,
+		dirUtil:    directoryController,
 		menuItems:  menuItems,
-	}, err
+	}
+}
+
+func (d *DirectoryList) Init() *DirectoryList {
+	var err error
+
+	d.currentDir, err = d.dirUtil.GetInitialDirectory()
+	d.app.HandleError(err, true)
+
+	d.titleBox.Clear()
+	d.titleBox.SetText(d.currentDir)
+
+	d.loadDetailsForCurrentDirectory()
+	d.details.SetInputCapture(d.handleDetailsInputCapture)
+
+	d.filter.SetDoneHandler(d.handleFilterEntry)
+
+	d.configureBorder().configureInputEvents().load()
+
+	return d
 }
 
 func (d *DirectoryList) loadDetailsForCurrentDirectory() {
@@ -258,16 +239,18 @@ func (d *DirectoryList) load() {
 		d.app.HandleError(err, true)
 	}
 
-	d.AddItem(listUIQuit, "Press to exit", 'q', func() {
-		d.app.PrintAndExit(".")
-	})
-
-	// TODO: Implement in-app help.
-	d.AddItem(listUIHelp, "Get help with this program", 'h', func() {})
-
 	d.AddItem(listUIFilter, "Filter directories by text", 'f', func() {
 		d.pages.ShowPage("Filter")
 		d.app.SetFocus(d.filter)
+	})
+
+	// TODO: Implement in-app help.
+	d.AddItem(listUIHelp, "Get help with this program", 'h', func() {
+		d.details.SetText("Help text")
+	})
+
+	d.AddItem(listUIQuit, "Press to exit", 'q', func() {
+		d.app.PrintAndExit(".")
 	})
 
 	d.titleBox.Clear()
@@ -344,6 +327,9 @@ func (d *DirectoryList) setDetailsText(dirName string) {
 		d.details.SetText(d.getDetailsText(d.currentDir + utils.OsPathSeparator + dirName))
 	} else if dirName == listUIEnterDir {
 		d.details.SetText(d.getDetailsText(d.currentDir))
+	} else if dirName == listUIHelp {
+		// TODO: Call a function to generate help text
+		d.details.SetText("Help text")
 	}
 	d.details.ScrollToBeginning()
 }
