@@ -244,9 +244,9 @@ func (d *DirectoryList) load() {
 		d.app.SetFocus(d.filter)
 	})
 
-	// TODO: Implement in-app help.
 	d.AddItem(listUIHelp, "Get help with this program", 'h', func() {
-		d.details.SetText("Help text")
+		d.details.SetText(utils.GetInAppHelpText(d.appOptions))
+		d.details.ScrollToBeginning()
 	})
 
 	d.AddItem(listUIQuit, "Press to exit", 'q', func() {
@@ -328,8 +328,7 @@ func (d *DirectoryList) setDetailsText(dirName string) {
 	} else if dirName == listUIEnterDir {
 		d.details.SetText(d.getDetailsText(d.currentDir))
 	} else if dirName == listUIHelp {
-		// TODO: Call a function to generate help text
-		d.details.SetText("Help text")
+		d.details.SetText(utils.GetInAppHelpText(d.appOptions))
 	}
 	d.details.ScrollToBeginning()
 }

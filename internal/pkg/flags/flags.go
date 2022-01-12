@@ -24,6 +24,7 @@ type AppOptions struct {
 	BuildVersion       string
 	BuildDate          string
 	BuildOwner         string
+	// TODO: Add field for repository, 'SourceCode', 'SourceRepo', 'CodeRepo', or 'Repository'
 }
 
 const (
