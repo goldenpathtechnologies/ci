@@ -355,3 +355,7 @@ func Test_DetailsView_calculateLineStats(t *testing.T) {
 		}
 	})
 }
+
+func Test_DetailsView_Clear_SetsTitleToDefaultValue(t *testing.T) {
+	t.Error("Unimplemted test")
+}

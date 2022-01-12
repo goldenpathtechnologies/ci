@@ -11,11 +11,12 @@ import (
 )
 
 const (
-	listUITitle    = "Directory List"
-	listUIQuit     = "<Quit>"
-	listUIHelp     = "<Help>"
-	listUIFilter   = "<Filter>"
-	listUIEnterDir = "<Enter directory>"
+	listTitle           = "Directory List"
+	listItemQuit        = "<Quit>"
+	listItemHelp        = "<Help>"
+	listItemFilter      = "<Filter>"
+	listItemEnterDir    = "<Enter directory>"
+	detailsHelpTitle    = "Help"
 )
 
 type DirectoryList struct {
@@ -46,10 +47,10 @@ func CreateDirectoryList(
 		SetSelectedTextColor(tcell.ColorBlack)
 
 	menuItems := map[string]string{
-		listUIQuit:     listUIQuit,
-		listUIHelp:     listUIHelp,
-		listUIFilter:   listUIFilter,
-		listUIEnterDir: listUIEnterDir,
+		listItemQuit:     listItemQuit,
+		listItemHelp:     listItemHelp,
+		listItemFilter:   listItemFilter,
+		listItemEnterDir: listItemEnterDir,
 	}
 
 	return &DirectoryList{
@@ -134,9 +135,9 @@ func (d *DirectoryList) handleFilterEntry(key tcell.Key) {
 	d.filterText = d.filter.GetText()
 
 	if len(d.filterText) > 0 {
-		d.SetTitle(fmt.Sprintf("%v - Filter: %v", listUITitle, d.filterText))
+		d.SetTitle(fmt.Sprintf("%v - Filter: %v", listTitle, d.filterText))
 	} else {
-		d.SetTitle(listUITitle)
+		d.SetTitle(listTitle)
 	}
 
 	d.filter.Clear()
@@ -147,7 +148,7 @@ func (d *DirectoryList) handleFilterEntry(key tcell.Key) {
 
 func (d *DirectoryList) configureBorder() *DirectoryList {
 	d.SetBorder(true).
-		SetTitle(listUITitle).
+		SetTitle(listTitle).
 		SetBorderPadding(1, 1, 0, 1).
 		SetDrawFunc(GetScrollBarDrawFunc(
 			d,
@@ -214,7 +215,7 @@ func (d *DirectoryList) handleLeftKeyEvent() {
 	paths := strings.Split(strings.TrimRight(d.currentDir, utils.OsPathSeparator), utils.OsPathSeparator)
 	if len(paths) > 1 {
 		d.filterText = ""
-		d.SetTitle(listUITitle)
+		d.SetTitle(listTitle)
 		paths = paths[:len(paths)-1]
 		if len(paths) == 1 && (paths[0] == "" || strings.Contains(paths[0], ":")) {
 			d.currentDir, _ = d.dirUtil.GetAbsolutePath(utils.OsPathSeparator)
@@ -229,7 +230,7 @@ func (d *DirectoryList) handleLeftKeyEvent() {
 func (d *DirectoryList) load() {
 	d.Clear()
 
-	d.AddItem(listUIEnterDir, "", 'e', func() {
+	d.AddItem(listItemEnterDir, "", 'e', func() {
 		d.app.PrintAndExit(d.currentDir)
 	})
 
@@ -239,17 +240,17 @@ func (d *DirectoryList) load() {
 		d.app.HandleError(err, true)
 	}
 
-	d.AddItem(listUIFilter, "Filter directories by text", 'f', func() {
+	d.AddItem(listItemFilter, "Filter directories by text", 'f', func() {
 		d.pages.ShowPage("Filter")
 		d.app.SetFocus(d.filter)
 	})
 
-	d.AddItem(listUIHelp, "Get help with this program", 'h', func() {
-		d.details.SetText(utils.GetInAppHelpText(d.appOptions))
+	d.AddItem(listItemHelp, "Get help with this program", 'h', func() {
+		d.details.SetText(GetHelpText(d.appOptions))
 		d.details.ScrollToBeginning()
 	})
 
-	d.AddItem(listUIQuit, "Press to exit", 'q', func() {
+	d.AddItem(listItemQuit, "Press to exit", 'q', func() {
 		d.app.PrintAndExit(".")
 	})
 
@@ -278,7 +279,7 @@ func (d *DirectoryList) handleRightKeyEvent() {
 
 	if !d.isMenuItem(selectedItem) {
 		d.filterText = ""
-		d.SetTitle(listUITitle)
+		d.SetTitle(listTitle)
 		pathCount := len(strings.Split(strings.TrimRight(d.currentDir, utils.OsPathSeparator), utils.OsPathSeparator))
 		var pathSeparator string
 		if pathCount > 1 {
@@ -325,10 +326,10 @@ func (d *DirectoryList) setDetailsText(dirName string) {
 	d.details.Clear()
 	if !d.isMenuItem(dirName) {
 		d.details.SetText(d.getDetailsText(d.currentDir + utils.OsPathSeparator + dirName))
-	} else if dirName == listUIEnterDir {
+	} else if dirName == listItemEnterDir {
 		d.details.SetText(d.getDetailsText(d.currentDir))
-	} else if dirName == listUIHelp {
-		d.details.SetText(utils.GetInAppHelpText(d.appOptions))
+	} else if dirName == listItemHelp {
+		d.details.SetText(GetHelpText(d.appOptions))
 	}
 	d.details.ScrollToBeginning()
 }

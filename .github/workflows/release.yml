@@ -7,7 +7,8 @@ on:
       - "v[0-9]+.[0-9]+.[0-9]+-[a-zA-Z]+.[0-9]+"
 
 env:
-  BUILD_OWNER: "Golden Path Technologies Inc."
+  BUILD_OWNER1: "Golden Path Technologies Inc."
+  BUILD_OWNER2: "Daryl G. Wright <daryl@goldenpath.ca>"
   APP_NAME: ci
   GO_VERSION: 1.17
   RELEASE_ARTIFACT_NAME: artifact
@@ -39,7 +40,7 @@ jobs:
       - name: Build
         run: |
           go build -gcflags="all=-N -l" -ldflags \
-          "-X 'main.BuildVersion=${{env.BUILD_VERSION}}' -X 'main.BuildDate=${{env.BUILD_DATE}}' -X 'main.BuildOwner=${{env.BUILD_OWNER}}'" \
+          "-X 'main.BuildVersion=${{env.BUILD_VERSION}}' -X 'main.BuildDate=${{env.BUILD_DATE}}' -X 'main.BuildOwner1=${{env.BUILD_OWNER1}}' -X 'main.BuildOwner2=${{env.BUILD_OWNER2}}'" \
           -tags forceposix \
           -o ./build/${{env.APP_NAME}}/bin/${{env.APP_NAME}}
 
@@ -57,9 +58,6 @@ jobs:
         with:
           name: ${{env.RELEASE_ARTIFACT_NAME}}
           path: ./build/${{env.APP_NAME}}_linux-v${{env.BUILD_VERSION}}.tar.gz
-
-#      - name: Test
-#        run: go test -v ./...
 
   build-windows:
     runs-on: windows-latest
@@ -87,7 +85,7 @@ jobs:
       - name: Build
         run: |
           go build -gcflags="all=-N -l" -ldflags `
-          "-X 'main.BuildVersion=${{env.BUILD_VERSION}}' -X 'main.BuildDate=${{env.BUILD_DATE}}' -X 'main.BuildOwner=${{env.BUILD_OWNER}}'" `
+          "-X 'main.BuildVersion=${{env.BUILD_VERSION}}' -X 'main.BuildDate=${{env.BUILD_DATE}}' -X 'main.BuildOwner1=${{env.BUILD_OWNER1}}' -X 'main.BuildOwner2=${{env.BUILD_OWNER2}}'" `
           -tags forceposix `
           -o ./build/${{env.APP_NAME}}/bin/${{env.APP_NAME}}.exe
 
@@ -139,9 +137,6 @@ jobs:
         with:
           name: ${{env.RELEASE_ARTIFACT_NAME}}
           path: ./build/${{env.APP_NAME}}_windows-v${{env.BUILD_VERSION}}.zip
-
-#      - name: Test
-#        run: go test -v ./...
 
   release:
     runs-on: ubuntu-latest

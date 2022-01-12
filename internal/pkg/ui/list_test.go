@@ -315,7 +315,7 @@ func Test_DirectoryList_handleFilterEntry_SetsListTitleWhenFilterEntered(t *test
 	filter.filterMethod.SetCurrentOption(filterMethodGlobPattern)
 
 	filterText := "bananas"
-	expectedListTitle := fmt.Sprintf("%v - Filter: %v", listUITitle, filterText)
+	expectedListTitle := fmt.Sprintf("%v - Filter: %v", listTitle, filterText)
 
 	filter.SetText(filterText)
 	list.handleFilterEntry(tcell.KeyEnter)
@@ -336,7 +336,7 @@ func Test_DirectoryList_handleFilterEntry_ResetsListTitleToDefaultWhenFilterIsEm
 	list := CreateDirectoryList(app, tview.NewTextView(), filter, tview.NewPages(), CreateDetailsPane(), dirCtrl, nil)
 
 	filterText := ""
-	expectedListTitle := listUITitle
+	expectedListTitle := listTitle
 
 	filter.SetText(filterText)
 	list.handleFilterEntry(tcell.KeyEnter)
@@ -887,7 +887,7 @@ func Test_DirectoryList_handleLeftKeyEvent_SetsDirectoryListTitleWhenNavigating(
 
 	list.handleLeftKeyEvent()
 
-	expectedTitle := listUITitle
+	expectedTitle := listTitle
 	result := list.GetTitle()
 
 	if result != expectedTitle {
@@ -1122,7 +1122,7 @@ func Test_DirectoryList_handleRightKeyEvent_DoesNotNavigateIfListItemIsAMenuItem
 	list := CreateDirectoryList(app, tview.NewTextView(), CreateFilterForm(), tview.NewPages(), CreateDetailsPane(), dirCtrl, nil)
 	list.load()
 
-	setSelectedItem(list, listUIEnterDir)
+	setSelectedItem(list, listItemEnterDir)
 
 	expectedCurrentDir := list.currentDir
 
@@ -1228,7 +1228,7 @@ func Test_DirectoryList_handleRightKeyEvent_SetsDirectoryListTitleWhenNavigating
 
 	list.handleRightKeyEvent()
 
-	expectedTitle := listUITitle
+	expectedTitle := listTitle
 	result := list.GetTitle()
 
 	if result != expectedTitle {
@@ -1624,7 +1624,7 @@ func Test_DirectoryList_setDetailsText_SetsTextToCurrentDirectoryItemsWhenDefaul
 
 	expectedDetailsText := list.getDetailsText(".")
 
-	list.setDetailsText(listUIEnterDir)
+	list.setDetailsText(listItemEnterDir)
 
 	result := details.GetText(false)
 
@@ -1681,6 +1681,14 @@ func Test_DirectoryList_setDetailsText_SetsDetailsOfDirectoryListItem(t *testing
 	if !testsExecuted {
 		t.Error("No tests were run, test data may be invalid")
 	}
+}
+
+func Test_DirectoryList_setDetailsText_SetsDetailsPaneTitleWhenHelpItemSelected(t *testing.T) {
+	t.Error("Unimplemented test")
+}
+
+func Test_DirectoryList_setDetailsText_SetsDetailsPaneTitleWhenHelpItemNotSelected(t *testing.T) {
+	t.Error("Unimplemented test")
 }
 
 func Test_DirectoryList_getNextItemIndex_GetsIndexOfNextListItemWhenNavigatingUp(t *testing.T) {

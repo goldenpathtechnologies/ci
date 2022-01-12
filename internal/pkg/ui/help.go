@@ -1,4 +1,4 @@
-package utils
+package ui
 
 import (
 	"fmt"
@@ -7,7 +7,7 @@ import (
 	"time"
 )
 
-func GetInAppHelpText(options *flags.AppOptions) string {
+func GetHelpText(options *flags.AppOptions) string {
 	var (
 		copyrightYear int
 		buildDate     time.Time
@@ -50,13 +50,13 @@ func GetInAppHelpText(options *flags.AppOptions) string {
 
 
 [green]%s[white]
+Version: %s
+Build date: %s
+Repository: %s
+
 Copyright © %v
 %s
-
-Version: %s
-Build date: %v
-Repository: https://github.com/goldenpathtechnologies/ci
-Created by: Daryl G. Wright <daryl@goldenpath.ca>
+%s
 
 
 This program is MIT licensed.`,
@@ -83,10 +83,12 @@ This program is MIT licensed.`,
 		"SPACE",
 		"UP/DOWN",
 		options.AppName,
-		copyrightYear,
-		options.BuildOwner,
 		options.BuildVersion,
-		buildDate.Format(time.RFC3339))
+		buildDate.Format(time.RFC3339),
+		options.Repository,
+		copyrightYear,
+		options.BuildOwner1,
+		options.BuildOwner2)
 
 	return helpText
 }

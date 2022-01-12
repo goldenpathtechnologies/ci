@@ -18,7 +18,9 @@ var (
 	AppName      = "ci"
 	BuildVersion string
 	BuildDate    string
-	BuildOwner   string
+	BuildOwner1  string
+	BuildOwner2  string
+	Repository   = "https://github.com/goldenpathtechnologies/ci"
 )
 
 func main() {
@@ -30,7 +32,9 @@ func main() {
 			AppName:      AppName,
 			BuildVersion: BuildVersion,
 			BuildDate:    BuildDate,
-			BuildOwner:   BuildOwner,
+			BuildOwner1:  BuildOwner1,
+			BuildOwner2:  BuildOwner2,
+			Repository:   Repository,
 		}
 		err error
 	)
