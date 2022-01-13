@@ -20,7 +20,7 @@ func Run(app *App, options *flags.AppOptions) error {
 
 	pages := tview.NewPages()
 	filter := CreateFilterForm()
-	details := CreateDetailsPane()
+	details := CreateDetailsView()
 	titleBox := CreateTitleBox()
 
 	directoryController := utils.NewDefaultDirectoryController()

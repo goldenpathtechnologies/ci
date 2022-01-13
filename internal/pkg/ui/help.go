@@ -14,6 +14,10 @@ func GetHelpText(options *flags.AppOptions) string {
 		err           error
 	)
 
+	if options == nil {
+		return ""
+	}
+
 	if buildDate, err = time.Parse(time.RFC3339, options.BuildDate); err != nil {
 		buildDate = time.Now()
 	}
@@ -29,10 +33,10 @@ func GetHelpText(options *flags.AppOptions) string {
 [green]%s[white]     Select last item on next page
 [green]%s[white]    Enter selected directory/Select option
 [green]%s[white]      Select the details pane
-[green]%s[white]        Enter current directory
+[green]%s[white]        Exit and navigate to current directory
 [green]%s[white]        Open filter dialog
 [green]%s[white]        Show this help text
-[green]%s[white]        Exit this application without navigating
+[green]%s[white]        Exit without navigating
 
 [yellow]Details/Help[white]
 [green]%s[white]   Scroll text

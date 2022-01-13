@@ -5,17 +5,26 @@ import (
 	"testing"
 )
 
+const (
+	borderModifier = 2
+	paddingModifier = 2
+)
+
+func setRectWithBorderAndPaddingEnabled(d *DetailsView, width, height int) {
+	d.SetRect(0, 0, width+borderModifier+paddingModifier, height+borderModifier+paddingModifier)
+}
+
 func Test_DetailsView_GetScrollAreaHandler(t *testing.T) {
 	td.RunTextTestCases(func(data td.TextData, name string) {
-		view := newDetailsView().SetText(data.Text)
+		view := CreateDetailsView().SetText(data.Text)
 		runScrollAreaTest(t, view, data.LongestLine, data.LineCount, name)
 	})
 }
 
 func Test_DetailsView_GetScrollAreaHandler_WithWrap(t *testing.T) {
 	td.RunTextTestCases(func(data td.TextData, name string) {
-		view := newDetailsView().SetText(data.Text).SetWrap(true)
-		view.SetRect(0, 0, data.LongestWrappedLine, data.LineCount)
+		view := CreateDetailsView().SetText(data.Text).SetWrap(true)
+		setRectWithBorderAndPaddingEnabled(view, data.LongestWrappedLine, data.LineCount)
 
 		runScrollAreaTest(t, view, data.LongestWrappedLine, data.WrappedLineCount, name)
 	})
@@ -49,8 +58,12 @@ func runScrollAreaTest(
 
 func Test_DetailsView_GetScrollPositionHandler(t *testing.T) {
 	testText := td.TestText["LoremIpsum"].Text
-	view := newDetailsView().SetText(testText)
-	view.SetRect(0, 0, 10, 10)
+	view := CreateDetailsView().SetText(testText)
+	// Note: tview.TextView.ScrollTo() simply applies x and y position values and
+	//  does not check to ensure that these positions are within the bounds of the
+	//  Primitive. This is, unfortunately, why we don't need to set the bounds of
+	//  the DetailsView in this test.
+	//setRectWithBorderAndPaddingEnabled(view, 10, 10)
 
 	scrollData := []struct {
 		x int
@@ -73,8 +86,8 @@ func Test_DetailsView_GetScrollPositionHandler(t *testing.T) {
 	}
 }
 
-func Test_DetailsView_CreateDetailsPane(t *testing.T) {
-	var d interface{} = CreateDetailsPane()
+func Test_DetailsView_CreateDetailsView(t *testing.T) {
+	var d interface{} = CreateDetailsView()
 
 	_, isDetailsView := d.(*DetailsView)
 
@@ -85,7 +98,7 @@ func Test_DetailsView_CreateDetailsPane(t *testing.T) {
 
 func Test_DetailsView_GetText(t *testing.T) {
 	td.RunTextTestCases(func(data td.TextData, name string) {
-		view := newDetailsView()
+		view := CreateDetailsView()
 		view.TextView.SetText(data.Text)
 		result := view.GetText(true)
 		runTextAccessTest(t, result, data.StrippedText, name)
@@ -94,7 +107,7 @@ func Test_DetailsView_GetText(t *testing.T) {
 
 func Test_DetailsView_GetText_NoTagStripping(t *testing.T) {
 	td.RunTextTestCases(func(data td.TextData, name string) {
-		view := newDetailsView()
+		view := CreateDetailsView()
 		view.TextView.SetText(data.Text)
 		result := view.GetText(false)
 		runTextAccessTest(t, result, data.Text, name)
@@ -103,7 +116,7 @@ func Test_DetailsView_GetText_NoTagStripping(t *testing.T) {
 
 func Test_DetailsView_SetText(t *testing.T) {
 	td.RunTextTestCases(func(data td.TextData, name string) {
-		view := newDetailsView().SetText(data.Text)
+		view := CreateDetailsView().SetText(data.Text)
 		result := view.GetText(true)
 
 		runTextAccessTest(t, result, data.StrippedText, name)
@@ -112,7 +125,7 @@ func Test_DetailsView_SetText(t *testing.T) {
 
 func Test_DetailsView_SetText_ReturnsDetailsView(t *testing.T) {
 	td.RunTextTestCases(func(data td.TextData, name string) {
-		view := newDetailsView()
+		view := CreateDetailsView()
 		viewAfterSet := view.SetText(data.Text)
 
 		runReturnsDetailsViewTest(t, viewAfterSet, view, name)
@@ -150,7 +163,7 @@ func runTextAccessTest(t *testing.T, result, expected string, description string
 
 func Test_DetailsView_SetText_LongestLine(t *testing.T) {
 	td.RunTextTestCases(func(data td.TextData, name string) {
-		view := newDetailsView()
+		view := CreateDetailsView()
 		view.SetText(data.Text)
 
 		runLineStatsTest(t, "LongestLine", view.LongestLine, data.LongestLine, name)
@@ -170,7 +183,7 @@ func runLineStatsTest(t *testing.T, name string, result, expected int, descripti
 
 func Test_DetailsView_SetText_LineCount(t *testing.T) {
 	td.RunTextTestCases(func(data td.TextData, name string) {
-		view := newDetailsView()
+		view := CreateDetailsView()
 		view.SetText(data.Text)
 
 		runLineStatsTest(t, "LineCount", view.LineCount, data.LineCount, name)
@@ -178,7 +191,7 @@ func Test_DetailsView_SetText_LineCount(t *testing.T) {
 }
 
 func Test_DetailsView_SetWrap(t *testing.T) {
-	view := newDetailsView()
+	view := CreateDetailsView()
 	if view.HasWrap {
 		t.Errorf("Expected HasWrap to be 'false', got 'true' instead")
 	}
@@ -190,7 +203,7 @@ func Test_DetailsView_SetWrap(t *testing.T) {
 }
 
 func Test_DetailsView_SetWrap_ReturnsDetailsView(t *testing.T) {
-	view := newDetailsView()
+	view := CreateDetailsView()
 	viewAfterWrap := view.SetWrap(true)
 
 	runReturnsDetailsViewTest(t, viewAfterWrap, view, "")
@@ -198,8 +211,10 @@ func Test_DetailsView_SetWrap_ReturnsDetailsView(t *testing.T) {
 
 func Test_DetailsView_SetWrap_LongestLine(t *testing.T) {
 	td.RunTextTestCases(func(data td.TextData, name string) {
-		view := newDetailsView()
-		view.SetText(data.Text).SetRect(0, 0, data.LongestWrappedLine, 5)
+		view := CreateDetailsView()
+		view.SetText(data.Text)
+		setRectWithBorderAndPaddingEnabled(view, data.LongestWrappedLine, 5)
+
 		view.SetWrap(true)
 
 		runLineStatsTest(t, "LongestLine", view.LongestLine, data.LongestWrappedLine, name)
@@ -208,8 +223,11 @@ func Test_DetailsView_SetWrap_LongestLine(t *testing.T) {
 
 func Test_DetailsView_SetWrap_LineCount(t *testing.T) {
 	td.RunTextTestCases(func(data td.TextData, name string) {
-		view := newDetailsView()
-		view.SetText(data.Text).SetRect(0, 0, data.LongestWrappedLine, 5)
+		view := CreateDetailsView()
+		view.SetText(data.Text)
+		setRectWithBorderAndPaddingEnabled(view, data.LongestWrappedLine, 5)
+
+
 		view.SetWrap(true)
 
 		runLineStatsTest(t, "LineCount", view.LineCount, data.WrappedLineCount, name)
@@ -217,7 +235,7 @@ func Test_DetailsView_SetWrap_LineCount(t *testing.T) {
 }
 
 func Test_DetailsView_SetWordWrap(t *testing.T) {
-	view := newDetailsView()
+	view := CreateDetailsView()
 	if view.HasWordWrap {
 		t.Errorf("Expected HasWordWrap to be 'false', got 'true' instead")
 	}
@@ -230,8 +248,10 @@ func Test_DetailsView_SetWordWrap(t *testing.T) {
 
 func Test_DetailsView_SetWordWrap_LongestLine(t *testing.T) {
 	td.RunTextTestCases(func(data td.TextData, name string) {
-		view := newDetailsView()
-		view.SetText(data.Text).SetWrap(true).SetRect(0, 0, data.LongestWrappedLine, 5)
+		view := CreateDetailsView()
+		view.SetText(data.Text).SetWrap(true)
+		setRectWithBorderAndPaddingEnabled(view, data.LongestWrappedLine, 5)
+
 		view.SetWordWrap(true)
 
 		runLineStatsTest(t, "LongestLine", view.LongestLine, data.LongestWordWrappedLine, name)
@@ -240,8 +260,10 @@ func Test_DetailsView_SetWordWrap_LongestLine(t *testing.T) {
 
 func Test_DetailsView_SetWordWrap_LineCount(t *testing.T) {
 	td.RunTextTestCases(func(data td.TextData, name string) {
-		view := newDetailsView()
-		view.SetText(data.Text).SetWrap(true).SetRect(0, 0, data.LongestWrappedLine, 5)
+		view := CreateDetailsView()
+		view.SetText(data.Text).SetWrap(true)
+		setRectWithBorderAndPaddingEnabled(view, data.LongestWrappedLine, 5)
+
 		view.SetWordWrap(true)
 
 		runLineStatsTest(t, "LineCount", view.LineCount, data.WordWrappedLineCount, name)
@@ -249,15 +271,18 @@ func Test_DetailsView_SetWordWrap_LineCount(t *testing.T) {
 }
 
 func Test_DetailsView_SetWordWrap_ReturnsDetailsView(t *testing.T) {
-	view := newDetailsView()
+	view := CreateDetailsView()
 	viewAfterWordWrap := view.SetWordWrap(true)
 
 	runReturnsDetailsViewTest(t, viewAfterWordWrap, view, "")
 }
 
-func Test_DetailsView_SetRect(t *testing.T) {
-	view := newDetailsView()
-	view.SetRect(1, 2, 3, 4)
+func Test_DetailsView_SetRect_SetsSizeWithoutBorderAndPadding(t *testing.T) {
+	view := CreateDetailsView()
+	view.
+		SetBorder(false).
+		SetBorderPadding(0, 0, 0, 0).
+		SetRect(1, 2, 3, 4)
 
 	x, y, width, height := view.TextView.GetRect()
 	if !(x == 1 && y == 2 && width == 3 && height == 4) {
@@ -274,13 +299,34 @@ func Test_DetailsView_SetRect(t *testing.T) {
 	}
 }
 
+func Test_DetailsView_SetRect_SetsSizeWithDefaultBorderAndPadding(t *testing.T) {
+	view := CreateDetailsView()
+	expectedDimension := 20
+	view.SetRect(0, 0, expectedDimension, expectedDimension)
+
+	_, _, width, height := view.TextView.GetRect()
+	if !(width == expectedDimension && height == expectedDimension) {
+		t.Errorf(
+			"Expected Rect to have dimensions (0, 0, %d, %d), got (0, 0, %d, %d) instead",
+			expectedDimension, expectedDimension, width, height)
+	}
+
+	_, _, width, height = view.TextView.GetInnerRect()
+	expectedDimension = expectedDimension - borderModifier - paddingModifier
+	if !(width == expectedDimension && height == expectedDimension) {
+		t.Errorf(
+			"Expected InnerRect to have dimensions (0, 0, %d, %d), got (0, 0, %d, %d) instead",
+			expectedDimension, expectedDimension, width, height)
+	}
+}
+
 func Test_DetailsView_SetRect_LongestLine(t *testing.T) {
 	td.RunTextTestCases(func(data td.TextData, name string) {
-		view := newDetailsView()
+		view := CreateDetailsView()
 		view.
 			SetText(data.Text).
-			SetWrap(true).
-			SetRect(0, 0, data.ViewWidth, 5)
+			SetWrap(true)
+		setRectWithBorderAndPaddingEnabled(view, data.ViewWidth, 5)
 
 		runLineStatsTest(t, "LongestLine", view.LongestLine, data.LongestWrappedLine, name)
 	})
@@ -288,11 +334,11 @@ func Test_DetailsView_SetRect_LongestLine(t *testing.T) {
 
 func Test_DetailsView_SetRect_LineCount(t *testing.T) {
 	td.RunTextTestCases(func(data td.TextData, name string) {
-		view := newDetailsView()
+		view := CreateDetailsView()
 		view.
 			SetText(data.Text).
-			SetWrap(true).
-			SetRect(0, 0, data.ViewWidth, 5)
+			SetWrap(true)
+		setRectWithBorderAndPaddingEnabled(view, data.ViewWidth, 5)
 
 		runLineStatsTest(t, "LineCount", view.LineCount, data.WrappedLineCount, name)
 	})
@@ -300,10 +346,10 @@ func Test_DetailsView_SetRect_LineCount(t *testing.T) {
 
 func Test_DetailsView_SetRect_TextResize(t *testing.T) {
 	td.RunTextTestCases(func(data td.TextData, name string) {
-		view := newDetailsView().SetText(data.Text)
+		view := CreateDetailsView().SetText(data.Text)
 		textBeforeResize := view.GetText(false)
 
-		view.SetRect(0, 0, 5, 5)
+		setRectWithBorderAndPaddingEnabled(view, 5, 5)
 		textAfterResize := view.GetText(false)
 
 		if textBeforeResize != textAfterResize {
@@ -315,7 +361,7 @@ func Test_DetailsView_SetRect_TextResize(t *testing.T) {
 }
 
 func Test_DetailsView_calculateLineStats(t *testing.T) {
-	view := newDetailsView()
+	view := CreateDetailsView()
 	td.RunTextTestCases(func(data td.TextData, name string) {
 		// Stripping tags if present since the function under test assumes verbatim text
 		text := view.SetText(data.Text).GetText(true)
@@ -357,5 +403,32 @@ func Test_DetailsView_calculateLineStats(t *testing.T) {
 }
 
 func Test_DetailsView_Clear_SetsTitleToDefaultValue(t *testing.T) {
-	t.Error("Unimplemted test")
+	view := CreateDetailsView()
+	view.SetTitle("")
+
+	view.Clear()
+
+	if view.GetTitle() != "Details" {
+		t.Error("Expected the title to be reset to 'Details' but it was not")
+	}
+}
+
+func Test_DetailsView_CreateDetailsView_SetsBorderAndPadding(t *testing.T) {
+	view := CreateDetailsView()
+
+	dimension := 10
+	view.SetRect(0, 0, dimension, dimension)
+
+	_, _, width, height := view.GetInnerRect()
+
+	expectedDimension := dimension-borderModifier-paddingModifier
+
+	if width != expectedDimension || height != expectedDimension {
+		t.Errorf(
+			"Expected the inner dimensions of the details view to be (%v, %v), got (%v, %v) instead",
+			expectedDimension,
+			expectedDimension,
+			width,
+			height)
+	}
 }

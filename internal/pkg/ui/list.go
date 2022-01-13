@@ -245,10 +245,11 @@ func (d *DirectoryList) load() {
 		d.app.SetFocus(d.filter)
 	})
 
-	d.AddItem(listItemHelp, "Get help with this program", 'h', func() {
-		d.details.SetText(GetHelpText(d.appOptions))
-		d.details.ScrollToBeginning()
-	})
+	d.AddItem(
+		listItemHelp,
+		"Get help with this program",
+		'h',
+		d.handleHelpSelection)
 
 	d.AddItem(listItemQuit, "Press to exit", 'q', func() {
 		d.app.PrintAndExit(".")
@@ -272,6 +273,10 @@ func (d *DirectoryList) getNavigableItemSelectionHandler(dirName string) func() 
 		path := d.currentDir + utils.OsPathSeparator + dirName
 		d.app.PrintAndExit(path)
 	}
+}
+
+func (d *DirectoryList) handleHelpSelection() {
+	d.setDetailsText(listItemHelp)
 }
 
 func (d *DirectoryList) handleRightKeyEvent() {
@@ -330,6 +335,7 @@ func (d *DirectoryList) setDetailsText(dirName string) {
 		d.details.SetText(d.getDetailsText(d.currentDir))
 	} else if dirName == listItemHelp {
 		d.details.SetText(GetHelpText(d.appOptions))
+		d.details.SetTitle(detailsHelpTitle)
 	}
 	d.details.ScrollToBeginning()
 }
