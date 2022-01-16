@@ -3,12 +3,13 @@ package utils
 import (
 	"bytes"
 	"fmt"
-	"github.com/karrick/godirwalk"
 	"io"
 	"io/fs"
 	"io/ioutil"
 	"os"
 	"path/filepath"
+	"sort"
+	"strings"
 	"text/tabwriter"
 )
 
@@ -61,40 +62,76 @@ type DirectoryCommands interface {
 
 type DefaultDirectoryCommands struct{}
 
-func (*DefaultDirectoryCommands) ReadDirectory(dirname string) ([]fs.FileInfo, error) {
-	return ioutil.ReadDir(dirname)
+func (d *DefaultDirectoryCommands) ReadDirectory(dirname string) ([]fs.FileInfo, error) {
+	items, err := ioutil.ReadDir(dirname)
+	if err != nil {
+		return nil, fmt.Errorf(
+			"DefaultDirectoryCommands.ReadDirectory, unable to read directory: %w",
+			err)
+	}
+	sort.Slice(items, d.getFileInfoSliceSortHandler(items))
+
+	return items, nil
+}
+
+func (*DefaultDirectoryCommands) getFileInfoSliceSortHandler(items []fs.FileInfo) func (i, j int) bool {
+	return func(i, j int) bool {
+		compareI := items[i].Name()
+		compareJ := items[j].Name()
+
+		// Sort files with empty names to the end of the list (unlikely outside test environments)
+		if len(compareI) == 0 {
+			return false
+		}
+		if len(compareJ) == 0 {
+			return true
+		}
+
+		runeI := rune(compareI[0])
+		runeJ := rune(compareJ[0])
+
+		// Sort files beginning with an underscore after dotfiles but before everything else
+		if runeI == '_' && runeJ == '.' {
+			return false
+		} else if runeI == '_' && runeJ != '_' {
+			return true
+		} else if runeJ == '_' && runeI == '.' {
+			return true
+		} else if runeJ == '_' && runeI != '_' {
+			return false
+		}
+
+		return strings.ToLower(compareI) < strings.ToLower(compareJ)
+	}
 }
 
 func (*DefaultDirectoryCommands) GetAbsolutePath(path string) (string, error) {
 	return filepath.Abs(path)
 }
 
-func (*DefaultDirectoryCommands) ScanDirectory(
+func (d *DefaultDirectoryCommands) ScanDirectory(
 	path string,
 	callback func(dirName string),
 ) error {
-	scanner, err := godirwalk.NewScanner(path)
+	files, err := d.ReadDirectory(path)
+
 	if err != nil {
 		return err
 	}
 
-	for scanner.Scan() {
-		entry, err := scanner.Dirent()
-		if err != nil {
-			return err
-		}
-
-		if entry.IsDir() {
-			callback(entry.Name())
-		} else if entry.IsSymlink() {
-			link, err := os.Readlink(filepath.Join(path, entry.Name()))
+	for _, file := range files {
+		isSymLink := file.Mode() & fs.ModeSymlink != 0
+		if file.IsDir() {
+			callback(file.Name())
+		} else if isSymLink {
+			link, err := os.Readlink(filepath.Join(path, file.Name()))
 			if err != nil {
 				return nil
 			}
-			
+
 			_, err = ioutil.ReadDir(link)
 			if err == nil {
-				callback(entry.Name())
+				callback(file.Name())
 			}
 		}
 	}
@@ -136,7 +173,6 @@ func (d *DefaultDirectoryController) DirectoryIsAccessible(dir string) bool {
 }
 
 func (d *DefaultDirectoryController) GetDirectoryInfo(dir string) (string, error) {
-	// TODO: Ensure that the directory items are sorted in case-insensitive alphabetical order.
 	files, err := d.Commands.ReadDirectory(dir)
 	if err != nil {
 		return "", &DirectoryError{

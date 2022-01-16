@@ -2,13 +2,15 @@ package utils
 
 import (
 	"errors"
-	"github.com/goldenpathtechnologies/ci/internal/pkg/utils"
 	"github.com/google/uuid"
 	"io/fs"
 	"math/rand"
+	"os"
 	"strings"
 	"time"
 )
+
+const osPathSeparator = string(os.PathSeparator)
 
 type MockFile struct {
 	FileName    string
@@ -85,7 +87,7 @@ func (m *MockFileSystem) Cd(dirName string) (fs.FileInfo, error) {
 	dirName = NormalizePath(dirName)
 
 	switch dirName {
-	case utils.OsPathSeparator:
+	case osPathSeparator:
 		m.currentDir = m.rootNode
 		return m.currentDir.File, nil
 	case ".":
@@ -101,8 +103,8 @@ func (m *MockFileSystem) Cd(dirName string) (fs.FileInfo, error) {
 	}
 
 	var dirNamePart []string
-	if strings.ContainsAny(dirName, utils.OsPathSeparator) {
-		dirNamePart = strings.SplitN(strings.TrimRight(dirName, utils.OsPathSeparator), utils.OsPathSeparator, 2)
+	if strings.ContainsAny(dirName, osPathSeparator) {
+		dirNamePart = strings.SplitN(strings.TrimRight(dirName, osPathSeparator), osPathSeparator, 2)
 
 		if len(dirNamePart) > 1 && dirNamePart[0] == "" {
 			m.currentDir = m.rootNode
@@ -131,10 +133,10 @@ func (m *MockFileSystem) Cd(dirName string) (fs.FileInfo, error) {
 }
 
 func NormalizePath(path string) string {
-	if utils.OsPathSeparator == "/" && strings.ContainsAny(path, "\\") {
-		return strings.ReplaceAll(path, "\\", utils.OsPathSeparator)
-	} else if utils.OsPathSeparator == "\\" && strings.ContainsAny(path, "/") {
-		return strings.ReplaceAll(path, "/", utils.OsPathSeparator)
+	if osPathSeparator == "/" && strings.ContainsAny(path, "\\") {
+		return strings.ReplaceAll(path, "\\", osPathSeparator)
+	} else if osPathSeparator == "\\" && strings.ContainsAny(path, "/") {
+		return strings.ReplaceAll(path, "/", osPathSeparator)
 	} else {
 		return path
 	}
@@ -150,7 +152,7 @@ func (m *MockFileSystem) Ls(dirName string) ([]fs.FileInfo, error) {
 	dirName = NormalizePath(dirName)
 
 	switch dirName {
-	case utils.OsPathSeparator:
+	case osPathSeparator:
 		node = m.rootNode
 	case "..":
 		node = m.currentDir.Parent
@@ -159,12 +161,12 @@ func (m *MockFileSystem) Ls(dirName string) ([]fs.FileInfo, error) {
 	case "":
 		node = m.currentDir
 	default:
-		if strings.HasPrefix(dirName, utils.OsPathSeparator) {
+		if strings.HasPrefix(dirName, osPathSeparator) {
 			node = m.rootNode
 		} else {
 			node = m.currentDir
 		}
-		nodeNames := strings.Split(strings.Trim(dirName, utils.OsPathSeparator), utils.OsPathSeparator)
+		nodeNames := strings.Split(strings.Trim(dirName, osPathSeparator), osPathSeparator)
 		for _, name := range nodeNames {
 			var err error
 			if node, err = findNode(name, node.Children); err != nil {
@@ -198,7 +200,7 @@ func (m *MockFileSystem) ReadLink(linkName string) (string, error) {
 	linkName = NormalizePath(linkName)
 
 	switch linkName {
-	case utils.OsPathSeparator:
+	case osPathSeparator:
 		node = m.rootNode
 	case ".":
 		node = m.currentDir
@@ -217,7 +219,7 @@ func (m *MockFileSystem) ReadLink(linkName string) (string, error) {
 	}
 
 	for ok := true; ok; ok = node.Parent != nil {
-		path = strings.Trim(node.Parent.File.Name(), utils.OsPathSeparator) + utils.OsPathSeparator + path
+		path = strings.Trim(node.Parent.File.Name(), osPathSeparator) + osPathSeparator + path
 		node = node.Parent
 	}
 
@@ -226,7 +228,7 @@ func (m *MockFileSystem) ReadLink(linkName string) (string, error) {
 
 func NewMockFileSystem(seed []*MockFileNode, depth, maxItemsPerDir int) *MockFileSystem {
 	rootDir := MockFile{
-		FileName:    utils.OsPathSeparator,
+		FileName:    osPathSeparator,
 		FileSize:    0,
 		FileMode:    fs.ModeDir | fs.ModePerm,
 		FileModTime: time.Now(),

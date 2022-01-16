@@ -79,7 +79,6 @@ Special thanks goes to these resources and tools, without which `ci` would not h
 - [JetBrains GoLand](https://www.jetbrains.com/go/)
 - [`tview`](https://github.com/rivo/tview)
 - [Tcell](https://github.com/gdamore/tcell)
-- [`godirwalk`](https://github.com/karrick/godirwalk)
 - [go-flags](https://github.com/jessevdk/go-flags)
 - [semantic-release](https://github.com/semantic-release/semantic-release)
 - [commitizen](https://github.com/commitizen-tools/commitizen)

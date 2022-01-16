@@ -1436,9 +1436,9 @@ func Test_DirectoryList_load_LoadsSymbolicLinkDirectories(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	createSymLink := func(linkname string, linkpath string) {
+	createSymLink := func(linkname string, canonPath string) {
 		tempSymLink := filepath.Join(tempDir, linkname)
-		if err = os.Symlink(linkpath, tempSymLink); err != nil {
+		if err = os.Symlink(canonPath, tempSymLink); err != nil {
 			if runtime.GOOS == "windows" && strings.Contains(err.Error(), "A required privilege is not held by the client") {
 				t.Skip("Test skipped due to insufficient privileges to run it")
 			} else {
