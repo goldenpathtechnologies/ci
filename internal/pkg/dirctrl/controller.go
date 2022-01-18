@@ -1,113 +1,18 @@
-package utils
+package dirctrl
 
 import (
-	"bytes"
 	"fmt"
-	"github.com/karrick/godirwalk"
-	"io"
-	"io/fs"
-	"io/ioutil"
 	"os"
-	"path/filepath"
-	"text/tabwriter"
 )
 
 const OsPathSeparator = string(os.PathSeparator)
-
-const (
-	DirUnexpectedError = iota + 1
-	DirUnprivilegedError
-)
-
-type DirectoryError struct {
-	Err       error
-	ErrorCode int
-}
-
-func (d *DirectoryError) Error() string {
-	return d.Err.Error()
-}
-
-type InfoWriter interface {
-	io.Writer
-	Flush() (string, error)
-}
-
-type DefaultInfoWriter struct {
-	buffer    bytes.Buffer
-	tabWriter *tabwriter.Writer
-}
-
-func (d *DefaultInfoWriter) Write(p []byte) (n int, err error) {
-	return d.tabWriter.Write(p)
-}
-
-func (d *DefaultInfoWriter) Flush() (string, error) {
-	err := d.tabWriter.Flush()
-	output := d.buffer.String()
-	d.buffer.Reset()
-	return output, err
-}
-
-type DirectoryScanner interface {
-	ScanDirectory(path string, callback func(dirName string)) error
-}
-
-type DirectoryCommands interface {
-	ReadDirectory(dirname string) ([]fs.FileInfo, error)
-	GetAbsolutePath(path string) (string, error)
-	DirectoryScanner
-}
-
-type DefaultDirectoryCommands struct{}
-
-func (*DefaultDirectoryCommands) ReadDirectory(dirname string) ([]fs.FileInfo, error) {
-	return ioutil.ReadDir(dirname)
-}
-
-func (*DefaultDirectoryCommands) GetAbsolutePath(path string) (string, error) {
-	return filepath.Abs(path)
-}
-
-func (*DefaultDirectoryCommands) ScanDirectory(
-	path string,
-	callback func(dirName string),
-) error {
-	scanner, err := godirwalk.NewScanner(path)
-	if err != nil {
-		return err
-	}
-
-	for scanner.Scan() {
-		entry, err := scanner.Dirent()
-		if err != nil {
-			return err
-		}
-
-		if entry.IsDir() {
-			callback(entry.Name())
-		} else if entry.IsSymlink() {
-			link, err := os.Readlink(filepath.Join(path, entry.Name()))
-			if err != nil {
-				return nil
-			}
-			
-			_, err = ioutil.ReadDir(link)
-			if err == nil {
-				callback(entry.Name())
-			}
-		}
-	}
-
-	return nil
-}
 
 type DirectoryController interface {
 	GetInitialDirectory() (string, error)
 	DirectoryIsAccessible(dir string) bool
 	GetDirectoryInfo(dir string) (string, error)
 	GetAbsolutePath(dir string) (string, error)
-	DirectoryScanner
+	ScanDirectory(path string, callback func(dirName string)) error
 }
 
 type DefaultDirectoryController struct {
@@ -116,11 +21,8 @@ type DefaultDirectoryController struct {
 }
 
 func NewDefaultDirectoryController() *DefaultDirectoryController {
-	infoWriter := &DefaultInfoWriter{}
-	infoWriter.tabWriter = tabwriter.NewWriter(&infoWriter.buffer, 1, 2, 2, ' ', 0)
-
 	return &DefaultDirectoryController{
-		Writer:   infoWriter,
+		Writer:   NewDefaultInfoWriter(),
 		Commands: &DefaultDirectoryCommands{},
 	}
 }
@@ -136,7 +38,6 @@ func (d *DefaultDirectoryController) DirectoryIsAccessible(dir string) bool {
 }
 
 func (d *DefaultDirectoryController) GetDirectoryInfo(dir string) (string, error) {
-	// TODO: Ensure that the directory items are sorted in case-insensitive alphabetical order.
 	files, err := d.Commands.ReadDirectory(dir)
 	if err != nil {
 		return "", &DirectoryError{

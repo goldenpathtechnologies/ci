@@ -23,7 +23,9 @@ type AppOptions struct {
 	AppName            string
 	BuildVersion       string
 	BuildDate          string
-	BuildOwner         string
+	BuildOwner1        string
+	BuildOwner2        string
+	Repository         string
 }
 
 const (
@@ -120,20 +122,24 @@ func handleVersionInformation(options *AppOptions) error {
 			return err
 		}
 
-		versionFormat := `%v
-Copyright © %v
-%v
+		versionFormat := `%s
+Version: %s
+Build date: %s
+Repository: %s
 
-Version: %v
-Build date: %v
+Copyright © %v
+%s
+%s
 `
 		versionString := fmt.Sprintf(
 			versionFormat,
 			options.AppName,
-			buildDate.Year(),
-			options.BuildOwner,
 			options.BuildVersion,
-			buildDate.Format(time.RFC3339))
+			buildDate.Format(time.RFC3339),
+			options.Repository,
+			buildDate.Year(),
+			options.BuildOwner1,
+			options.BuildOwner2)
 
 		if _, err = os.Stdout.WriteString(versionString); err != nil {
 			log.Fatal(err)

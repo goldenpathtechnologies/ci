@@ -6,6 +6,8 @@ import (
 	"unicode/utf8"
 )
 
+const detailsViewTitle = "Details"
+
 // DetailsView is a wrapper for tview.TextView with better support for scrolling
 // content. Overridden functions of this struct must be called before any inherited
 // functions from tview.TextView.
@@ -22,12 +24,18 @@ type lineStats struct {
 	count   int
 }
 
-func CreateDetailsPane() *DetailsView {
-	details := newDetailsView()
+func CreateDetailsView() *DetailsView {
+	details := &DetailsView{
+		TextView:    tview.NewTextView().SetDynamicColors(true),
+		LongestLine: 0,
+		LineCount:   0,
+		HasWrap:     false,
+		HasWordWrap: false,
+	}
 
 	details.
 		SetWrap(false).
-		SetTitle("Details").
+		SetTitle(detailsViewTitle).
 		SetBorder(true).
 		SetBorderPadding(1, 1, 1, 1).
 		SetDrawFunc(GetScrollBarDrawFunc(
@@ -38,24 +46,13 @@ func CreateDetailsPane() *DetailsView {
 	return details
 }
 
-// newDetailsView returns a new DetailsView
-func newDetailsView() *DetailsView {
-	return &DetailsView{
-		TextView:    tview.NewTextView().SetDynamicColors(true),
-		LongestLine: 0,
-		LineCount:   0,
-		HasWrap:     false,
-		HasWordWrap: false,
-	}
-}
-
 func (d *DetailsView) SetWrap(wrap bool) *DetailsView {
 	d.HasWrap = wrap
 	d.TextView.SetWrap(wrap)
-	return refreshLineStats(d)
+	return d.refreshLineStats()
 }
 
-func refreshLineStats(d *DetailsView) *DetailsView {
+func (d *DetailsView) refreshLineStats() *DetailsView {
 	_, _, viewWidth, _ := d.TextView.GetInnerRect()
 	lineData := calculateLineStats(d.GetText(true), viewWidth, d.HasWrap, d.HasWordWrap)
 	d.LongestLine = lineData.longest
@@ -133,15 +130,22 @@ func (d *DetailsView) SetWordWrap(wrapOnWords bool) *DetailsView {
 	//  boundary pattern, https://github.com/rivo/tview/blob/2a6de950f73bdc70658f7e754d4b5593f15c8408/util.go#L27
 	d.HasWordWrap = wrapOnWords
 	d.TextView.SetWordWrap(wrapOnWords)
-	return refreshLineStats(d)
+	return d.refreshLineStats()
 }
 
 func (d *DetailsView) SetText(text string) *DetailsView {
 	d.TextView.SetText(text)
-	return refreshLineStats(d)
+	return d.refreshLineStats()
 }
 
 func (d *DetailsView) SetRect(x, y, width, height int) {
 	d.TextView.SetRect(x, y, width, height)
-	refreshLineStats(d)
+	d.refreshLineStats()
+}
+
+func (d *DetailsView) Clear() *DetailsView {
+	d.TextView.Clear()
+	d.SetTitle(detailsViewTitle)
+
+	return d
 }

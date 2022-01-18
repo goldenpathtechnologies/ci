@@ -91,6 +91,16 @@ func (f *FilterForm) handleFilterFormInput(event *tcell.EventKey) *tcell.EventKe
 			f.doneHandler(key)
 			return nil
 		}
+		//else if item == filterMethodField {
+		//	f.filterMethod.InputHandler()(event, func(p tview.Primitive) {
+		// TODO: Collapse dropdown on Enter or Esc and call doneHandler with the key. This
+		//  will ensure that the dropdown auto-collapses when the filter is entered. This
+		//  will also eliminate the need to TAB back to the filterTextField to enter the filter.
+		//  Uncomment this code block and remove this text. Write tests for this as well.
+		//	})
+		//	f.doneHandler(key)
+		//	return nil
+		//}
 	}
 
 	return event
