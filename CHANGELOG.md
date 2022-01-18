@@ -1,3 +1,17 @@
+## [1.0.0-dev.19](https://github.com/goldenpathtechnologies/ci/compare/v1.0.0-dev.18...v1.0.0-dev.19) (2022-01-18)
+
+
+### Features
+
+* **help:** added a second build owner field and a repository field to help text ([60dd857](https://github.com/goldenpathtechnologies/ci/commit/60dd857a5983419a17e7ad0c69726052a20b5f9a))
+* **help:** changed title of details view to 'Help' when the help text is displayed ([bbef895](https://github.com/goldenpathtechnologies/ci/commit/bbef895ef73af5eea639bb285aaf5a25abee10d2))
+* **help:** created help text that displays in the details pane ([adb4ec5](https://github.com/goldenpathtechnologies/ci/commit/adb4ec54d09838e70d580eeaaf5d15af672d29d3)), closes [#11](https://github.com/goldenpathtechnologies/ci/issues/11)
+
+
+### Bug Fixes
+
+* ensured consistent directory and file sorting across components and platforms ([10627b6](https://github.com/goldenpathtechnologies/ci/commit/10627b6c5f41b6d2a2427d9f1e42fba007662d0b)), closes [#24](https://github.com/goldenpathtechnologies/ci/issues/24)
+
 ## [1.0.0-dev.18](https://github.com/goldenpathtechnologies/ci/compare/v1.0.0-dev.17...v1.0.0-dev.18) (2022-01-10)
 
 
