@@ -2,8 +2,8 @@ package ui
 
 import (
 	"github.com/gdamore/tcell/v2"
+	"github.com/goldenpathtechnologies/ci/internal/pkg/dirctrl"
 	"github.com/goldenpathtechnologies/ci/internal/pkg/flags"
-	"github.com/goldenpathtechnologies/ci/internal/pkg/utils/dirctrl"
 	"github.com/rivo/tview"
 )
 

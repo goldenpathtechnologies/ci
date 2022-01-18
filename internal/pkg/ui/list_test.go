@@ -5,7 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/gdamore/tcell/v2"
-	"github.com/goldenpathtechnologies/ci/internal/pkg/utils/dirctrl"
+	"github.com/goldenpathtechnologies/ci/internal/pkg/dirctrl"
 	"github.com/goldenpathtechnologies/ci/testdata/mock"
 	"github.com/google/uuid"
 	"github.com/rivo/tview"
