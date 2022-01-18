@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"github.com/gdamore/tcell/v2"
 	"github.com/goldenpathtechnologies/ci/internal/pkg/flags"
-	"github.com/goldenpathtechnologies/ci/internal/pkg/utils"
+	"github.com/goldenpathtechnologies/ci/internal/pkg/utils/dirctrl"
 	"github.com/rivo/tview"
 	"path/filepath"
 	"strings"
@@ -27,7 +27,7 @@ type DirectoryList struct {
 	titleBox   *tview.TextView
 	filter     *FilterForm
 	details    *DetailsView
-	dirUtil    utils.DirectoryController
+	dirUtil    dirctrl.DirectoryController
 	currentDir string
 	filterText string
 	menuItems  map[string]string
@@ -39,7 +39,7 @@ func CreateDirectoryList(
 	filter *FilterForm,
 	pages *tview.Pages,
 	details *DetailsView,
-	directoryController utils.DirectoryController,
+	directoryController dirctrl.DirectoryController,
 	appOptions *flags.AppOptions,
 ) *DirectoryList {
 	list := tview.NewList().
@@ -99,8 +99,8 @@ func (d *DirectoryList) getDetailsText(directory string) string {
 	)
 
 	if detailsText, err = d.dirUtil.GetDirectoryInfo(directory); err != nil {
-		dErr, isDirError := err.(*utils.DirectoryError)
-		if isDirError && dErr.ErrorCode == utils.DirUnprivilegedError {
+		dErr, isDirError := err.(*dirctrl.DirectoryError)
+		if isDirError && dErr.ErrorCode == dirctrl.DirUnprivilegedError {
 			detailsText = "[red]Unable to read directory details. You may have insufficient privileges.[white]"
 		} else {
 			d.app.HandleError(err, true)
@@ -212,15 +212,15 @@ func (d *DirectoryList) handleInputCapture(event *tcell.EventKey) *tcell.EventKe
 }
 
 func (d *DirectoryList) handleLeftKeyEvent() {
-	paths := strings.Split(strings.TrimRight(d.currentDir, utils.OsPathSeparator), utils.OsPathSeparator)
+	paths := strings.Split(strings.TrimRight(d.currentDir, dirctrl.OsPathSeparator), dirctrl.OsPathSeparator)
 	if len(paths) > 1 {
 		d.filterText = ""
 		d.SetTitle(listTitle)
 		paths = paths[:len(paths)-1]
 		if len(paths) == 1 && (paths[0] == "" || strings.Contains(paths[0], ":")) {
-			d.currentDir, _ = d.dirUtil.GetAbsolutePath(utils.OsPathSeparator)
+			d.currentDir, _ = d.dirUtil.GetAbsolutePath(dirctrl.OsPathSeparator)
 		} else {
-			d.currentDir = strings.Join(paths, utils.OsPathSeparator)
+			d.currentDir = strings.Join(paths, dirctrl.OsPathSeparator)
 		}
 		d.load()
 		d.loadDetailsForCurrentDirectory()
@@ -270,7 +270,7 @@ func (d *DirectoryList) addNavigableItem(dirName string) {
 
 func (d *DirectoryList) getNavigableItemSelectionHandler(dirName string) func() {
 	return func() {
-		path := d.currentDir + utils.OsPathSeparator + dirName
+		path := d.currentDir + dirctrl.OsPathSeparator + dirName
 		d.app.PrintAndExit(path)
 	}
 }
@@ -285,10 +285,10 @@ func (d *DirectoryList) handleRightKeyEvent() {
 	if !d.isMenuItem(selectedItem) {
 		d.filterText = ""
 		d.SetTitle(listTitle)
-		pathCount := len(strings.Split(strings.TrimRight(d.currentDir, utils.OsPathSeparator), utils.OsPathSeparator))
+		pathCount := len(strings.Split(strings.TrimRight(d.currentDir, dirctrl.OsPathSeparator), dirctrl.OsPathSeparator))
 		var pathSeparator string
 		if pathCount > 1 {
-			pathSeparator = utils.OsPathSeparator
+			pathSeparator = dirctrl.OsPathSeparator
 		} else {
 			pathSeparator = ""
 		}
@@ -330,7 +330,7 @@ func (d *DirectoryList) getNextItemIndex(isIncrementing bool) int {
 func (d *DirectoryList) setDetailsText(dirName string) {
 	d.details.Clear()
 	if !d.isMenuItem(dirName) {
-		d.details.SetText(d.getDetailsText(d.currentDir + utils.OsPathSeparator + dirName))
+		d.details.SetText(d.getDetailsText(d.currentDir + dirctrl.OsPathSeparator + dirName))
 	} else if dirName == listItemEnterDir {
 		d.details.SetText(d.getDetailsText(d.currentDir))
 	} else if dirName == listItemHelp {

@@ -3,7 +3,7 @@ package ui
 import (
 	"github.com/gdamore/tcell/v2"
 	"github.com/goldenpathtechnologies/ci/internal/pkg/flags"
-	"github.com/goldenpathtechnologies/ci/internal/pkg/utils"
+	"github.com/goldenpathtechnologies/ci/internal/pkg/utils/dirctrl"
 	"github.com/rivo/tview"
 )
 
@@ -23,7 +23,7 @@ func Run(app *App, options *flags.AppOptions) error {
 	details := CreateDetailsView()
 	titleBox := CreateTitleBox()
 
-	directoryController := utils.NewDefaultDirectoryController()
+	directoryController := dirctrl.NewDefaultDirectoryController()
 
 	list := CreateDirectoryList(
 		app,
