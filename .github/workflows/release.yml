@@ -47,13 +47,16 @@ jobs:
       - name: Verify built executable
         run: ./build/${{env.APP_NAME}}/bin/${{env.APP_NAME}} -v
 
-      - name: Copy files to build artifact package
-        run: cp ./{${{env.APP_NAME}}.sh,install.sh,uninstall.sh,LICENSE,CHANGELOG.md} ./build/${{env.APP_NAME}}/
+      - name: Copy files to release package
+        run: cp ./{install.sh,uninstall.sh,LICENSE,CHANGELOG.md} ./build/${{env.APP_NAME}}/
 
-      - name: Create build artifact package tarball
+      - name: Copy scripts to release package
+        run: mkdir -p ./build/${{env.APP_NAME}}/scripts && cp ./${{env.APP_NAME}}.sh ./build/${{env.APP_NAME}}/scripts
+
+      - name: Create release package tarball
         run: tar -czvf ./build/${{env.APP_NAME}}_linux-v${{env.BUILD_VERSION}}.tar.gz ./build/${{env.APP_NAME}}
 
-      - name: Upload build artifact package
+      - name: Upload release package
         uses: actions/upload-artifact@v2
         with:
           name: ${{env.RELEASE_ARTIFACT_NAME}}
@@ -127,7 +130,10 @@ jobs:
           }
 
       - name: Copy files to release package
-        run: Copy-Item ./${{env.APP_NAME}}.psm1,./${{env.APP_NAME}}.psd1,./install.ps1,./uninstall.ps1,./LICENSE,./CHANGELOG.md -Destination ./build/${{env.APP_NAME}}/
+        run: Copy-Item ./install.ps1,./uninstall.ps1,./LICENSE,./CHANGELOG.md -Destination ./build/${{env.APP_NAME}}/
+
+      - name: Copy scripts to release package
+        run: Copy-Item ./scripts/${{env.APP_NAME}}.psm1,./scripts/${{env.APP_NAME}}.psd1 ./build/${{env.APP_NAME}}/scripts/
 
       - name: Create relase package zip file
         run: Get-ChildItem -Path ./build/${{env.APP_NAME}}/ | Compress-Archive -DestinationPath ./build/${{env.APP_NAME}}_windows-v${{env.BUILD_VERSION}}.zip

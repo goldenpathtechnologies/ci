@@ -115,18 +115,6 @@ jobs:
       - name: Run coverage
         run: go test -race -coverprofile=coverage.out -covermode=atomic ./...
 
-      - name: Generate Codecov configuration
-        run: |
-          cat << EOF > codecov.yml
-          coverage:
-            range: "80...100"
-            status:
-              project:
-                default:
-                  target: 80%
-                  threshold: 5%
-          EOF
-
       - name: Validate Codecov configuration
         run: cat codecov.yml | curl --data-binary @- https://codecov.io/validate
 
