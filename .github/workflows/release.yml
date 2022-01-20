@@ -47,11 +47,13 @@ jobs:
       - name: Verify built executable
         run: ./build/${{env.APP_NAME}}/bin/${{env.APP_NAME}} -v
 
+      # TODO: Remove .log file created in verification step, or ensure it isn't created unless using the ui
+
       - name: Copy files to release package
-        run: cp ./{install.sh,uninstall.sh,LICENSE,CHANGELOG.md} ./build/${{env.APP_NAME}}/
+        run: cp ./{scripts/install.sh,scripts/uninstall.sh,LICENSE,CHANGELOG.md} ./build/${{env.APP_NAME}}/
 
       - name: Copy scripts to release package
-        run: mkdir -p ./build/${{env.APP_NAME}}/scripts && cp ./${{env.APP_NAME}}.sh ./build/${{env.APP_NAME}}/scripts
+        run: mkdir -p ./build/${{env.APP_NAME}}/scripts && cp ./scripts/${{env.APP_NAME}}.sh ./build/${{env.APP_NAME}}/scripts
 
       - name: Create release package tarball
         run: tar -czvf ./build/${{env.APP_NAME}}_linux-v${{env.BUILD_VERSION}}.tar.gz ./build/${{env.APP_NAME}}
@@ -95,13 +97,15 @@ jobs:
       - name: Verify built executable
         run: ./build/${{env.APP_NAME}}/bin/${{env.APP_NAME}}.exe -v
 
+      # TODO: Remove .log file created in verification step, or ensure it isn't created unless using the ui
+
       - name: Update version in PowerShell module manifest file
         run: |
           if (("${{env.BUILD_VERSION}}" -replace "\d+\.\d+\.\d+", "" -replace "-${{env.DEV_PRERELEASE_NAME}}\.\d+", "").Length -eq 0) {
             $pattern = "(?:(\d+)\.(\d+)\.(\d+))(?:(?:-[a-zA-Z]+\.)(\d+)){0,1}"
             $data = $(Write-Output "${{env.BUILD_VERSION}}" | Select-String -Pattern $pattern).Matches.groups
             $moduleVersion = "{0:d}.{1:d}.{2:d}.{3:d}" -f [int]$data[1].value,[int]$data[2].value,[int]$data[3].value,[int]$data[4].value
-            (Get-Content ./${{env.APP_NAME}}.psd1) -replace "ModuleVersion = '0.0.0'","ModuleVersion = '$moduleVersion'" | Set-Content ./${{env.APP_NAME}}.psd1
+            (Get-Content ./scripts/${{env.APP_NAME}}.psd1) -replace "ModuleVersion = '0.0.0'","ModuleVersion = '$moduleVersion'" | Set-Content ./scripts/${{env.APP_NAME}}.psd1
           } else {
             Write-Output "Module manifest not updated. This build is not for a production release nor development prerelease."
           }
@@ -123,17 +127,19 @@ jobs:
       - name: Digitally sign PowerShell scripts and module files
         run: |
           $codeSigningCert = Get-ChildItem Cert:/CurrentUser/My -CodeSigningCert | Select-Object -First 1
-          $psFiles = Get-ChildItem -Path . -Exclude .git,.github,.idea,bin,build -Filter "*.ps*" -Recurse -ErrorAction Stop
+          $psFiles = Get-ChildItem -Path ./scripts -Filter "*.ps*" -Recurse -ErrorAction Stop
           $psFiles | ForEach-Object {
             Write-Output "Signing '$($_.Name)' with certificate '$($codeSigningCert.Thumbprint)'"
             $null = Set-AuthenticodeSignature -Certificate $codeSigningCert -FilePath $_.FullName -TimestampServer ${{env.TIMESTAMP_SERVER}}
           }
 
       - name: Copy files to release package
-        run: Copy-Item ./install.ps1,./uninstall.ps1,./LICENSE,./CHANGELOG.md -Destination ./build/${{env.APP_NAME}}/
+        run: Copy-Item ./scripts/install.ps1,./scripts/uninstall.ps1,./LICENSE,./CHANGELOG.md -Destination ./build/${{env.APP_NAME}}/
 
       - name: Copy scripts to release package
-        run: Copy-Item ./scripts/${{env.APP_NAME}}.psm1,./scripts/${{env.APP_NAME}}.psd1 ./build/${{env.APP_NAME}}/scripts/
+        run: |
+          New-Item -Path ./build/${{env.APP_NAME}}/scripts -ItemType "directory" -Force
+          Copy-Item ./scripts/${{env.APP_NAME}}.psm1,./scripts/${{env.APP_NAME}}.psd1 ./build/${{env.APP_NAME}}/scripts/
 
       - name: Create relase package zip file
         run: Get-ChildItem -Path ./build/${{env.APP_NAME}}/ | Compress-Archive -DestinationPath ./build/${{env.APP_NAME}}_windows-v${{env.BUILD_VERSION}}.zip
