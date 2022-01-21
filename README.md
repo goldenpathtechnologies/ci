@@ -5,7 +5,7 @@
 `ci` is an interactive version of the familiar `cd` command. Easily traverse directories in the terminal without having to cycle between `cd` and `ls`.
 
 ## Demo
-*TBD*
+![Demo](.github/assets/demo.gif)
 
 ## Installation
 
