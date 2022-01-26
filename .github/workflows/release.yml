@@ -39,7 +39,7 @@ jobs:
 
       - name: Build
         run: |
-          go build -gcflags="all=-N -l" -ldflags \
+          go build -ldflags \
           "-X 'main.BuildVersion=${{env.BUILD_VERSION}}' -X 'main.BuildDate=${{env.BUILD_DATE}}' -X 'main.BuildOwner1=${{env.BUILD_OWNER1}}' -X 'main.BuildOwner2=${{env.BUILD_OWNER2}}'" \
           -tags forceposix \
           -o ./build/${{env.APP_NAME}}/bin/${{env.APP_NAME}}
@@ -89,7 +89,7 @@ jobs:
 
       - name: Build
         run: |
-          go build -gcflags="all=-N -l" -ldflags `
+          go build -ldflags `
           "-X 'main.BuildVersion=${{env.BUILD_VERSION}}' -X 'main.BuildDate=${{env.BUILD_DATE}}' -X 'main.BuildOwner1=${{env.BUILD_OWNER1}}' -X 'main.BuildOwner2=${{env.BUILD_OWNER2}}'" `
           -tags forceposix `
           -o ./build/${{env.APP_NAME}}/bin/${{env.APP_NAME}}.exe

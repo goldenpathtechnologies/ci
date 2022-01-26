@@ -8,7 +8,7 @@ on:
       - CHANGELOG.md
       - README.md
       - LICENSE
-      - .github/CODE_OF_CONDUCT.md
+      - CODE_OF_CONDUCT.md
       - .gitattributes
       - .gitignore
     tags-ignore:
@@ -25,7 +25,7 @@ on:
       - CHANGELOG.md
       - README.md
       - LICENSE
-      - .github/CODE_OF_CONDUCT.md
+      - CODE_OF_CONDUCT.md
       - .gitattributes
       - .gitignore
     tags-ignore:
