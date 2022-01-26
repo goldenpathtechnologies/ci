@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"github.com/gdamore/tcell/v2"
 	"github.com/goldenpathtechnologies/ci/internal/pkg/dirctrl"
-	"github.com/goldenpathtechnologies/ci/internal/pkg/flags"
+	"github.com/goldenpathtechnologies/ci/internal/pkg/options"
 	"github.com/rivo/tview"
 	"path/filepath"
 	"strings"
@@ -22,7 +22,7 @@ const (
 type DirectoryList struct {
 	*tview.List
 	app        *App
-	appOptions *flags.AppOptions
+	appOptions *options.AppOptions
 	pages      *tview.Pages
 	titleBox   *tview.TextView
 	filter     *FilterForm
@@ -40,7 +40,7 @@ func CreateDirectoryList(
 	pages *tview.Pages,
 	details *DetailsView,
 	directoryController dirctrl.DirectoryController,
-	appOptions *flags.AppOptions,
+	appOptions *options.AppOptions,
 ) *DirectoryList {
 	list := tview.NewList().
 		ShowSecondaryText(false).

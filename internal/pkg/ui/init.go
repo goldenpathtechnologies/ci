@@ -3,7 +3,7 @@ package ui
 import (
 	"github.com/gdamore/tcell/v2"
 	"github.com/goldenpathtechnologies/ci/internal/pkg/dirctrl"
-	"github.com/goldenpathtechnologies/ci/internal/pkg/flags"
+	"github.com/goldenpathtechnologies/ci/internal/pkg/options"
 	"github.com/rivo/tview"
 )
 
@@ -15,7 +15,7 @@ func setApplicationStyles() {
 	tview.Styles.PrimitiveBackgroundColor = tcell.ColorDefault
 }
 
-func Run(app *App, options *flags.AppOptions) error {
+func Run(app *App, appOptions *options.AppOptions) error {
 	setApplicationStyles()
 
 	pages := tview.NewPages()
@@ -32,7 +32,7 @@ func Run(app *App, options *flags.AppOptions) error {
 		pages,
 		details,
 		directoryController,
-		options).
+		appOptions).
 		Init()
 
 	flex := tview.NewFlex().SetDirection(tview.FlexRow).
