@@ -2,11 +2,9 @@ package dirctrl
 
 import (
 	"fmt"
-	"os"
 )
 
-const OsPathSeparator = string(os.PathSeparator)
-
+// DirectoryController specifies the abstracted filesystem functions that ci uses.
 type DirectoryController interface {
 	GetInitialDirectory() (string, error)
 	DirectoryIsAccessible(dir string) bool
@@ -15,11 +13,15 @@ type DirectoryController interface {
 	ScanDirectory(path string, callback func(dirName string)) error
 }
 
+// DefaultDirectoryController contains a collection of methods that execute various
+// commands on the filesystem.
 type DefaultDirectoryController struct {
 	Writer   InfoWriter
 	Commands DirectoryCommands
 }
 
+// NewDefaultDirectoryController creates a new instance of DefaultDirectoryController with
+// initialized methods.
 func NewDefaultDirectoryController() *DefaultDirectoryController {
 	return &DefaultDirectoryController{
 		Writer:   NewDefaultInfoWriter(),
@@ -27,18 +29,21 @@ func NewDefaultDirectoryController() *DefaultDirectoryController {
 	}
 }
 
+// GetInitialDirectory returns the path that ci was run from.
 func (d *DefaultDirectoryController) GetInitialDirectory() (string, error) {
 	return d.Commands.GetAbsolutePath(".")
 }
 
-func (d *DefaultDirectoryController) DirectoryIsAccessible(dir string) bool {
-	_, err := d.Commands.ReadDirectory(dir)
+// DirectoryIsAccessible determines if a directory is accessible to the current user.
+func (d *DefaultDirectoryController) DirectoryIsAccessible(directory string) bool {
+	_, err := d.Commands.ReadDirectory(directory)
 
 	return err == nil
 }
 
-func (d *DefaultDirectoryController) GetDirectoryInfo(dir string) (string, error) {
-	files, err := d.Commands.ReadDirectory(dir)
+// GetDirectoryInfo returns a formatted list of files in the specified directory.
+func (d *DefaultDirectoryController) GetDirectoryInfo(directory string) (string, error) {
+	files, err := d.Commands.ReadDirectory(directory)
 	if err != nil {
 		return "", &DirectoryError{
 			Err:       err,
@@ -88,10 +93,13 @@ func (d *DefaultDirectoryController) GetDirectoryInfo(dir string) (string, error
 	return output, nil
 }
 
-func (d *DefaultDirectoryController) GetAbsolutePath(dir string) (string, error) {
-	return d.Commands.GetAbsolutePath(dir)
+// GetAbsolutePath gets the full path of the specified directory.
+func (d *DefaultDirectoryController) GetAbsolutePath(directory string) (string, error) {
+	return d.Commands.GetAbsolutePath(directory)
 }
 
+// ScanDirectory iterates over each file in the path and executes a callback that is
+// provided the name of that file.
 func (d *DefaultDirectoryController) ScanDirectory(path string, callback func(dirName string)) error {
 	return d.Commands.ScanDirectory(path, callback)
 }

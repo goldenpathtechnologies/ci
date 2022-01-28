@@ -1,11 +1,12 @@
 # `ci` - Interactive `cd`
 
 [![codecov](https://codecov.io/gh/goldenpathtechnologies/ci/branch/main/graph/badge.svg?token=GEB8897GK7)](https://codecov.io/gh/goldenpathtechnologies/ci)
+[![Conventional Commits](https://img.shields.io/badge/Conventional%20Commits-1.0.0-yellow.svg)](https://conventionalcommits.org)
 
 `ci` is an interactive version of the familiar `cd` command. Easily traverse directories in the terminal without having to cycle between `cd` and `ls`.
 
 ## Demo
-*TBD*
+![Demo](.github/assets/demo.gif)
 
 ## Installation
 
@@ -68,11 +69,10 @@ See the [open issues](https://github.com/goldenpathtechnologies/ci/issues) and g
 ## Contributing
 There are several ways you can contribute to `ci`. You can do so by:
 
-- Creating new issues if you find any defects, or if there is a feature you would like to see developed.
-- Forking the project and creating pull requests. Please see the [contributing guide (TBD)](https://github.com/GoldenPathTechnologies/ci/TBD) for more information.
-- Donating to help fund project maintenance, the creation of additional solutions like `ci`, and to support an independent developer. (TBD)
-- Spreading the word. The more people know about `ci`, the better!
-- Dowloading, installing, and giving `ci` a GitHub star if you really like it.
+- Creating new issues if you find any defects, or if there is a feature you would like implemented.
+- Forking the project and creating pull requests. Please see the [contributing guidelines](CONTRIBUTING.md) for more information.
+- Donating to help fund project maintenance and to support an independent developer. (TBD)
+- Giving `ci` a GitHub star if you've found it helpful.
 
 ## Acknowledgements
 Special thanks goes to these resources and tools, without which `ci` would not have been made possible.
@@ -81,7 +81,7 @@ Special thanks goes to these resources and tools, without which `ci` would not h
 - [Tcell](https://github.com/gdamore/tcell)
 - [go-flags](https://github.com/jessevdk/go-flags)
 - [semantic-release](https://github.com/semantic-release/semantic-release)
-- [commitizen](https://github.com/commitizen-tools/commitizen)
+- [commitizen](https://github.com/commitizen-tools/commitizen) for helping to keep `ci`'s commits clean
 - ... and all the resources credited throughout the source code
 
 Feel free to [reach out](https://github.com/goldenpathtechnologies) if you discover a resource that hasn't been properly acknowledged here.

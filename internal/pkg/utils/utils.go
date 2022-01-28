@@ -1,3 +1,4 @@
+// Package utils contains helpful tools that assist in program operation.
 package utils
 
 import (

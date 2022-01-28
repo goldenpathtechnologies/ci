@@ -1,14 +1,14 @@
 package ui
 
 import (
-	"github.com/goldenpathtechnologies/ci/internal/pkg/flags"
+	"github.com/goldenpathtechnologies/ci/internal/pkg/options"
 	"regexp"
 	"testing"
 	"time"
 )
 
 func Test_Help_GetHelpText_BuildDateDefaultsToNowWhenInputFormatIsInvalid(t *testing.T) {
-	appOptions := &flags.AppOptions{}
+	appOptions := &options.AppOptions{}
 
 	// Note: The Time values we're working with have a low enough precision to be
 	//  sufficiently deterministic. Abstract all direct references to Time as soon

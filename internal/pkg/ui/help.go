@@ -3,11 +3,12 @@ package ui
 import (
 	"fmt"
 	"github.com/gdamore/tcell/v2"
-	"github.com/goldenpathtechnologies/ci/internal/pkg/flags"
+	"github.com/goldenpathtechnologies/ci/internal/pkg/options"
 	"time"
 )
 
-func GetHelpText(options *flags.AppOptions) string {
+// GetHelpText returns the text of the in-app help info.
+func GetHelpText(options *options.AppOptions) string {
 	var (
 		copyrightYear int
 		buildDate     time.Time

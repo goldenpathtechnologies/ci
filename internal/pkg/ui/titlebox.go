@@ -5,6 +5,8 @@ import (
 	"github.com/rivo/tview"
 )
 
+// CreateTitleBox creates and configures the title box of the application that displays
+// the current navigated directory.
 func CreateTitleBox() *tview.TextView {
 	titleBox := tview.NewTextView().
 		SetText("No directory has been selected yet!").

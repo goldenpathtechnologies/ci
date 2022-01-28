@@ -1,12 +1,14 @@
+// Package ui contains the primary application logic and user interface for ci.
 package ui
 
 import (
 	"github.com/gdamore/tcell/v2"
 	"github.com/goldenpathtechnologies/ci/internal/pkg/dirctrl"
-	"github.com/goldenpathtechnologies/ci/internal/pkg/flags"
+	"github.com/goldenpathtechnologies/ci/internal/pkg/options"
 	"github.com/rivo/tview"
 )
 
+// setApplicationStyles configures the default app-wide component styles.
 func setApplicationStyles() {
 	// TODO: Setting this interferes with the styles of other components such
 	//  as the List. Find a way to target styles to specific components.
@@ -15,7 +17,8 @@ func setApplicationStyles() {
 	tview.Styles.PrimitiveBackgroundColor = tcell.ColorDefault
 }
 
-func Run(app *App, options *flags.AppOptions) error {
+// Run initializes the App's components and runs its main process loop.
+func Run(app *App, appOptions *options.AppOptions) error {
 	setApplicationStyles()
 
 	pages := tview.NewPages()
@@ -32,7 +35,7 @@ func Run(app *App, options *flags.AppOptions) error {
 		pages,
 		details,
 		directoryController,
-		options).
+		appOptions).
 		Init()
 
 	flex := tview.NewFlex().SetDirection(tview.FlexRow).

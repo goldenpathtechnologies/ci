@@ -2,7 +2,7 @@ package main
 
 import (
 	"context"
-	"github.com/goldenpathtechnologies/ci/internal/pkg/flags"
+	"github.com/goldenpathtechnologies/ci/internal/pkg/options"
 	"github.com/goldenpathtechnologies/ci/internal/pkg/ui"
 	"github.com/goldenpathtechnologies/ci/internal/pkg/utils"
 	"log"
@@ -28,7 +28,7 @@ func main() {
 	defer closeLogFile()
 
 	var (
-		options = &flags.AppOptions{
+		appOptions = &options.AppOptions{
 			AppName:      AppName,
 			BuildVersion: BuildVersion,
 			BuildDate:    BuildDate,
@@ -39,10 +39,10 @@ func main() {
 		err error
 	)
 
-	if options, err = flags.InitFlags(options); err != nil {
-		fErr, isFlagError := err.(*flags.FlagError)
+	if appOptions, err = appOptions.Init(); err != nil {
+		fErr, isFlagError := err.(*options.OptionError)
 		if isFlagError {
-			if fErr.ErrorCode == flags.FlagErrorNormalExit {
+			if fErr.ErrorCode == options.OptionErrorNormalExit {
 				os.Exit(0)
 			} else {
 				log.Fatal(fErr)
@@ -77,7 +77,7 @@ func main() {
 		os.Exit(exitCodeInterrupt)
 	}()
 
-	if err = ui.Run(app, options); err != nil {
+	if err = ui.Run(app, appOptions); err != nil {
 		app.HandleError(err, true)
 	}
 }

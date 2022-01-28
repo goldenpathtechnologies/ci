@@ -13,6 +13,7 @@ const (
 	bufferExitSequence  = "\033[?1049l"
 )
 
+// App is an abstraction of the tview.Application with additional functionality.
 type App struct {
 	*tview.Application
 	screenBufferActive bool
@@ -28,6 +29,7 @@ type App struct {
 	//  for issues related to this change.
 }
 
+// NewApp creates a new instance of an App.
 func NewApp(screen tcell.Screen, stream io.Writer, errStream io.Writer) *App {
 	return &App{
 		Application:        tview.NewApplication().SetScreen(screen),
@@ -43,6 +45,7 @@ func NewApp(screen tcell.Screen, stream io.Writer, errStream io.Writer) *App {
 	}
 }
 
+// PrintAndExit prints data to the App's configured output stream and exits the program.
 func (a *App) PrintAndExit(data string) {
 	a.Stop()
 	_, err := a.outputStream.Write([]byte(data))
@@ -50,6 +53,7 @@ func (a *App) PrintAndExit(data string) {
 	a.handleNormalExit()
 }
 
+// HandleError logs errors and gracefully exits the program with a code of 1.
 func (a *App) HandleError(err error, logError bool) {
 	if err != nil {
 		if logError {
@@ -65,7 +69,7 @@ func (a *App) HandleError(err error, logError bool) {
 	}
 }
 
-// enterScreenBuffer Switches terminal to alternate screen buffer to retain command history
+// enterScreenBuffer switches terminal to alternate screen buffer to retain command history
 //  of host process
 func (a *App) enterScreenBuffer() {
 	if a.screenBufferActive {
@@ -80,7 +84,7 @@ func (a *App) enterScreenBuffer() {
 	a.screenBufferActive = true
 }
 
-// exitScreenBuffer Exits the alternate screen buffer and returns to that of host process
+// exitScreenBuffer exits the alternate screen buffer and returns to that of host process.
 func (a *App) exitScreenBuffer() {
 	if !a.screenBufferActive {
 		return
@@ -94,10 +98,12 @@ func (a *App) exitScreenBuffer() {
 	a.screenBufferActive = false
 }
 
+// Start starts the application by switching to an alternate screen buffer.
 func (a *App) Start() {
 	a.enterScreenBuffer()
 }
 
+// Stop stops the application and switches to the screen buffer of the host process.
 func (a *App) Stop() {
 	a.Application.Stop()
 	a.exitScreenBuffer()

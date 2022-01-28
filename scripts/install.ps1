@@ -1,6 +1,19 @@
 # TODO: Consider publishing to the PSGallery in the future, see below:
 #  https://docs.microsoft.com/en-us/powershell/module/powershellget/publish-module?view=powershell-7.1
-# TODO: Create a manifest file for this module. See below comments for more information.
+
+$origLocation = Get-Location
+$installLocation = $origLocation
+
+if ($origLocation -like "*\scripts") {
+    $installLocation = Get-Location | Split-Path -Parent
+}
+
+if (!(Test-Path "$installLocation\bin\ci.exe")) {
+    Write-Host "ci executable not present, unable to install"
+    exit 1
+}
+
+Set-Location $installLocation
 
 $relModulePath = "$home\Documents\WindowsPowerShell\Modules\ci"
 $ciExe = "$relModulePath\ci.exe"
@@ -36,17 +49,8 @@ if (Test-Path $relModulePath) {
     }
 }
 
-# Step 1: Create the module directory
-# - mkdir $home\Documents\WindowsPowerShell\Modules\ci
 $modulePath = $(New-Item -Path $home\Documents\WindowsPowerShell\Modules\ci -ItemType "directory").FullName
 
-# Step 2: Download files to the module directory
-# - ci.exe
-# - ci.psm1 (contains the function that calls the exe and the export call for that fn)
-# - ci.psd1 (module manifest file, see https://adamtheautomator.com/powershell-modules/)
-# - README.md
-# - LICENSE.txt
-# - Above files are the basics, there may be more that need to be downloaded
-#   but there may be ones that will be created such as log files and other
-#   files that persist information crucial to program operation.
-Copy-Item .\bin\ci.exe,.\ci.psm1,.\ci.psd1,.\LICENSE,.\CHANGELOG.md -Destination $modulePath
+Copy-Item .\bin\ci.exe,.\scripts\ci.psm1,.\scripts\ci.psd1,.\LICENSE,.\CHANGELOG.md -Destination $modulePath
+
+Set-Location $origLocation

@@ -20,6 +20,8 @@ const (
 	filterMethodField
 )
 
+// FilterForm provides the user interface that enables the user to filter the list of directories
+// in the DirectoryList.
 type FilterForm struct {
 	*tview.Form
 	filterText   *tview.InputField
@@ -27,6 +29,7 @@ type FilterForm struct {
 	doneHandler  func(key tcell.Key)
 }
 
+// CreateFilterForm creates a new instance of FilterForm and initializes its form fields.
 func CreateFilterForm() *FilterForm {
 	filterText := tview.NewInputField().
 		SetLabel("Enter filter text:").
@@ -67,6 +70,8 @@ func CreateFilterForm() *FilterForm {
 	return filterForm
 }
 
+// handleFilterAcceptance is a handler that determines which characters can be entered in
+// the filterText field.
 func (f *FilterForm) handleFilterAcceptance(textToCheck string, lastChar rune) bool {
 	if lastChar == '/' || lastChar == '\\' {
 		return false
@@ -81,6 +86,7 @@ func (f *FilterForm) handleFilterAcceptance(textToCheck string, lastChar rune) b
 	return len(textToCheck) <= maxFilterLength
 }
 
+// handleFilterFormInput is an event handler that processes key events for the FilterForm.
 func (f *FilterForm) handleFilterFormInput(event *tcell.EventKey) *tcell.EventKey {
 	key := event.Key()
 	switch key {
@@ -106,6 +112,7 @@ func (f *FilterForm) handleFilterFormInput(event *tcell.EventKey) *tcell.EventKe
 	return event
 }
 
+// GetText returns the text that is in the FilterForm's filterText field.
 func (f *FilterForm) GetText() string {
 	filterText := f.filterText.GetText()
 	if filterText == "" {
@@ -128,16 +135,20 @@ func (f *FilterForm) GetText() string {
 	}
 }
 
+// SetText sets the text in the FilterForm's filterText field.
 func (f *FilterForm) SetText(text string) *FilterForm {
 	f.filterText.SetText(text)
 
 	return f
 }
 
+// Clear resets the filterText field to empty.
 func (f *FilterForm) Clear() {
 	f.filterText.SetText("")
 }
 
+// SetDoneHandler sets a key press event handler for external components to implement when input
+// is completed on the FilterForm.
 func (f *FilterForm) SetDoneHandler(handler func(key tcell.Key)) *FilterForm {
 	f.doneHandler = handler
 

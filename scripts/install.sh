@@ -1,5 +1,22 @@
 #!/bin/bash
 
+ORIG_DIR=$(pwd)
+INSTALL_DIR=$ORIG_DIR
+
+if [[ $ORIG_DIR == */scripts ]]
+then
+  # Note: Simple way to get the parent directory, https://stackoverflow.com/a/42956288/3141986
+  INSTALL_DIR=$(builtin cd .. && pwd)
+fi
+
+if [ ! -f "$INSTALL_DIR/bin/ci" ]
+then
+  echo "ci executable not present, unable to install"
+  exit 1
+fi
+
+cd "$INSTALL_DIR" || { echo "Install directory '$INSTALL_DIR' does not exist"; exit 1; }
+
 CI_INSTALL_DIR=~/.ci
 CI_CMD=$CI_INSTALL_DIR/bin/ci
 
@@ -34,5 +51,7 @@ cp ./bin/ci $CI_INSTALL_DIR/bin/ci
 cp ./{LICENSE,CHANGELOG.md} $CI_INSTALL_DIR
 
 { echo "### BEGIN CI COMMAND";
-cat ./ci.sh;
+cat ./scripts/ci.sh;
 echo "### END CI COMMAND";} >> ~/.bashrc
+
+cd "$ORIG_DIR" || exit
