@@ -1,3 +1,10 @@
+## [1.0.0-dev.20](https://github.com/goldenpathtechnologies/ci/compare/v1.0.0-dev.19...v1.0.0-dev.20) (2022-01-28)
+
+
+### Bug Fixes
+
+* **installation:** changed the encoding of the PS module manifest to UTF-8 ([ad2586d](https://github.com/goldenpathtechnologies/ci/commit/ad2586dc43e479b80660d96787bc7c3d3fe848f2)), closes [#27](https://github.com/goldenpathtechnologies/ci/issues/27)
+
 ## [1.0.0-dev.19](https://github.com/goldenpathtechnologies/ci/compare/v1.0.0-dev.18...v1.0.0-dev.19) (2022-01-18)
 
 
