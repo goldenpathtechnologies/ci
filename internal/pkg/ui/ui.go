@@ -1,3 +1,4 @@
+// Package ui contains the primary application logic and user interface for ci.
 package ui
 
 import (
@@ -7,6 +8,7 @@ import (
 	"github.com/rivo/tview"
 )
 
+// setApplicationStyles configures the default app-wide component styles.
 func setApplicationStyles() {
 	// TODO: Setting this interferes with the styles of other components such
 	//  as the List. Find a way to target styles to specific components.
@@ -15,6 +17,7 @@ func setApplicationStyles() {
 	tview.Styles.PrimitiveBackgroundColor = tcell.ColorDefault
 }
 
+// Run initializes the App's components and runs its main process loop.
 func Run(app *App, appOptions *options.AppOptions) error {
 	setApplicationStyles()
 

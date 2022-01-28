@@ -12,15 +12,20 @@ import (
 	"strings"
 )
 
+// DirectoryCommands specifies the filesystem path functions that ci uses.
 type DirectoryCommands interface {
 	ReadDirectory(dirname string) ([]fs.FileInfo, error)
 	GetAbsolutePath(path string) (string, error)
 	ScanDirectory(path string, callback func(dirName string)) error
 }
 
+// DefaultDirectoryCommands is a placeholder struct for implemented methods
+// of the DirectoryCommands interface.
 type DefaultDirectoryCommands struct{}
 
+// ReadDirectory returns a list of fs.FileInfo objects from the specified directory.
 func (d *DefaultDirectoryCommands) ReadDirectory(dirname string) ([]fs.FileInfo, error) {
+	// TODO: Consider switching to os.ReadDir(). Note that this func returns []fs.DirEntry.
 	items, err := ioutil.ReadDir(dirname)
 	if err != nil {
 		return nil, fmt.Errorf(
@@ -32,6 +37,8 @@ func (d *DefaultDirectoryCommands) ReadDirectory(dirname string) ([]fs.FileInfo,
 	return items, nil
 }
 
+// getFileInfoSliceSortHandler sorts a list of files case-insensitively and with underscore
+// prefixed files ordered above alphanumeric ones.
 func (*DefaultDirectoryCommands) getFileInfoSliceSortHandler(items []fs.FileInfo) func (i, j int) bool {
 	return func(i, j int) bool {
 		compareI := items[i].Name()
@@ -63,10 +70,13 @@ func (*DefaultDirectoryCommands) getFileInfoSliceSortHandler(items []fs.FileInfo
 	}
 }
 
+// GetAbsolutePath gets the full path of the specified directory.
 func (*DefaultDirectoryCommands) GetAbsolutePath(path string) (string, error) {
 	return filepath.Abs(path)
 }
 
+// ScanDirectory iterates over each file in the path and executes a callback that is
+// provided the name of that file.
 func (d *DefaultDirectoryCommands) ScanDirectory(
 	path string,
 	callback func(dirName string),

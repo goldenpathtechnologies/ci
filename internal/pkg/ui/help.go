@@ -7,6 +7,7 @@ import (
 	"time"
 )
 
+// GetHelpText returns the text of the in-app help info.
 func GetHelpText(options *options.AppOptions) string {
 	var (
 		copyrightYear int

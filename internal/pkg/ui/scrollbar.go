@@ -14,11 +14,17 @@ const (
 	horizontalThumbBlur = tview.BoxDrawingsLightHorizontal
 )
 
+// Scrollable represents a tview Primitive that has the GetInnerRect function. The
+// GetInnerRect function is crucial for calculations that draw scroll bars on
+// Primitive components.
 type Scrollable interface {
 	tview.Primitive
 	GetInnerRect() (int, int, int, int)
 }
 
+// GetScrollBarDrawFunc returns a handler function responsible for drawing scroll bars
+// on ui components. This handler satisfies the signature for the SetDrawFunc on the
+// underlying tview.Box which most other components are composed of.
 func GetScrollBarDrawFunc(
 	s Scrollable,
 	getScrollArea func() (width, height int),

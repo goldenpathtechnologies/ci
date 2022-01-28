@@ -11,14 +11,19 @@ import (
 )
 
 const (
-	listTitle           = "Directory List"
-	listItemQuit        = "<Quit>"
-	listItemHelp        = "<Help>"
-	listItemFilter      = "<Filter>"
-	listItemEnterDir    = "<Enter directory>"
-	detailsHelpTitle    = "Help"
+	listItemQuit     = "<Quit>"
+	listItemHelp     = "<Help>"
+	listItemFilter   = "<Filter>"
+	listItemEnterDir = "<Enter directory>"
 )
 
+const (
+	listTitle        = "Directory List"
+	detailsHelpTitle = "Help"
+)
+
+// DirectoryList is responsible for providing the user interface that enables users to
+// quickly navigate directories and select other options.
 type DirectoryList struct {
 	*tview.List
 	app        *App
@@ -33,6 +38,7 @@ type DirectoryList struct {
 	menuItems  map[string]string
 }
 
+// CreateDirectoryList creates a new instance of DirectoryList.
 func CreateDirectoryList(
 	app *App,
 	titleBox *tview.TextView,
@@ -66,6 +72,7 @@ func CreateDirectoryList(
 	}
 }
 
+// Init prepares the DirectoryList for usage by initializing data and event handlers.
 func (d *DirectoryList) Init() *DirectoryList {
 	var err error
 
@@ -85,6 +92,8 @@ func (d *DirectoryList) Init() *DirectoryList {
 	return d
 }
 
+// loadDetailsForCurrentDirectory updates the details component with the file list for the
+// current active directory of the DirectoryList.
 func (d *DirectoryList) loadDetailsForCurrentDirectory() {
 	d.details.
 		Clear().
@@ -92,6 +101,7 @@ func (d *DirectoryList) loadDetailsForCurrentDirectory() {
 		ScrollToBeginning()
 }
 
+// getDetailsText returns the file list text that gets displayed in the Details pane.
 func (d *DirectoryList) getDetailsText(directory string) string {
 	var (
 		detailsText string
@@ -110,6 +120,8 @@ func (d *DirectoryList) getDetailsText(directory string) string {
 	return detailsText
 }
 
+// handleDetailsInputCapture is an event handler that processes key events for the details
+// component of the DirectoryList.
 func (d *DirectoryList) handleDetailsInputCapture(event *tcell.EventKey) *tcell.EventKey {
 	switch event.Key() {
 	case tcell.KeyEscape:
@@ -127,6 +139,8 @@ func (d *DirectoryList) handleDetailsInputCapture(event *tcell.EventKey) *tcell.
 	return event
 }
 
+// handleFilterEntry is an event handler for the DirectoryList's filter component that
+// triggers when text entry is completed or cancelled.
 func (d *DirectoryList) handleFilterEntry(key tcell.Key) {
 	if key == tcell.KeyEsc {
 		d.filter.Clear()
@@ -146,6 +160,7 @@ func (d *DirectoryList) handleFilterEntry(key tcell.Key) {
 	d.load()
 }
 
+// configureBorder applies default settings to the DirectoryList border and enables scroll bars.
 func (d *DirectoryList) configureBorder() *DirectoryList {
 	d.SetBorder(true).
 		SetTitle(listTitle).
@@ -158,6 +173,9 @@ func (d *DirectoryList) configureBorder() *DirectoryList {
 	return d
 }
 
+// handleScrollArea calculates the width and height of the area that is scrollable in the
+// DirectoryList. This is a handler function that assists in drawing scroll bars on
+// the DirectoryList's borders.
 func (d *DirectoryList) handleScrollArea() (width, height int) {
 	_, _, listWidth, _ := d.GetInnerRect()
 	listHeight := d.GetItemCount()
@@ -165,6 +183,8 @@ func (d *DirectoryList) handleScrollArea() (width, height int) {
 	return listWidth, listHeight
 }
 
+// handleScrollPosition calculates the current scroll position of the DirectoryList. This
+// is a handler function that assists in drawing scroll bars on the DirectoryList's borders.
 func (d *DirectoryList) handleScrollPosition() (vScroll, hScroll int) {
 	selectedItem := d.GetCurrentItem()
 	itemCount := d.GetItemCount()
@@ -183,12 +203,14 @@ func (d *DirectoryList) handleScrollPosition() (vScroll, hScroll int) {
 	return v, h
 }
 
+// configureInputEvents sets the input capture handler function for the DirectoryList.
 func (d *DirectoryList) configureInputEvents() *DirectoryList {
 	d.SetInputCapture(d.handleInputCapture)
 
 	return d
 }
 
+// handleInputCapture is an event handler that processes key events for the DirectoryList.
 func (d *DirectoryList) handleInputCapture(event *tcell.EventKey) *tcell.EventKey {
 	switch event.Key() {
 	case tcell.KeyLeft:
@@ -211,6 +233,7 @@ func (d *DirectoryList) handleInputCapture(event *tcell.EventKey) *tcell.EventKe
 	return event
 }
 
+// handleLeftKeyEvent handles left arrow key presses. The left arrow key navigates to the parent directory.
 func (d *DirectoryList) handleLeftKeyEvent() {
 	paths := strings.Split(strings.TrimRight(d.currentDir, dirctrl.OsPathSeparator), dirctrl.OsPathSeparator)
 	if len(paths) > 1 {
@@ -227,6 +250,7 @@ func (d *DirectoryList) handleLeftKeyEvent() {
 	}
 }
 
+// load refreshes static menu items and the list of navigable directories.
 func (d *DirectoryList) load() {
 	d.Clear()
 
@@ -259,6 +283,7 @@ func (d *DirectoryList) load() {
 	d.titleBox.SetText(d.currentDir)
 }
 
+// addNavigableItem adds to the DirectoryList an item that contains a directory name and selection handler.
 func (d *DirectoryList) addNavigableItem(dirName string) {
 	if isMatch, _ := filepath.Match(d.filterText, dirName); len(d.filterText) == 0 || isMatch {
 		d.AddItem(dirName,
@@ -268,6 +293,8 @@ func (d *DirectoryList) addNavigableItem(dirName string) {
 	}
 }
 
+// getNavigableItemSelectionHandler handles the navigable item event by printing the path to the dirName
+// and exiting the program in the function it returns.
 func (d *DirectoryList) getNavigableItemSelectionHandler(dirName string) func() {
 	return func() {
 		path := d.currentDir + dirctrl.OsPathSeparator + dirName
@@ -275,10 +302,14 @@ func (d *DirectoryList) getNavigableItemSelectionHandler(dirName string) func() 
 	}
 }
 
+// handleHelpSelection handles the display of help information in the details component when the help
+// list item is selected.
 func (d *DirectoryList) handleHelpSelection() {
 	d.setDetailsText(listItemHelp)
 }
 
+// handleRightKeyEvent handles right arrow key presses. The right arrow key navigates to the selected
+// directory or indicates if the navigation is not possible due to insufficient privileges.
 func (d *DirectoryList) handleRightKeyEvent() {
 	selectedItem, _ := d.GetItemText(d.GetCurrentItem())
 
@@ -304,16 +335,21 @@ func (d *DirectoryList) handleRightKeyEvent() {
 	}
 }
 
+// isMenuItem determines if the supplied text equals the name of any menuItems.
 func (d *DirectoryList) isMenuItem(text string) bool {
 	_, exists := d.menuItems[text]
 	return exists
 }
 
+// setPreviousDetailsText sets the content of the details component to the directory info of
+// the previous item in the DirectoryList.
 func (d *DirectoryList) setPreviousDetailsText() {
 	item, _ := d.List.GetItemText(d.getNextItemIndex(false))
 	d.setDetailsText(item)
 }
 
+// getNextItemIndex calculates the indices of adjacent items to the current one in the
+// DirectoryList.
 func (d *DirectoryList) getNextItemIndex(isIncrementing bool) int {
 	var increment int
 	if isIncrementing {
@@ -327,6 +363,9 @@ func (d *DirectoryList) getNextItemIndex(isIncrementing bool) int {
 	return ((nextItemIndex % itemCount) + itemCount) % itemCount
 }
 
+// setDetailsText sets the content of the details component depending on the dirName supplied.
+// Items representing a directory will display the list of files in that directory. Menu items
+// display different content depending on which one is provided to this function.
 func (d *DirectoryList) setDetailsText(dirName string) {
 	d.details.Clear()
 	if !d.isMenuItem(dirName) {
@@ -340,6 +379,8 @@ func (d *DirectoryList) setDetailsText(dirName string) {
 	d.details.ScrollToBeginning()
 }
 
+// setNextDetailsText sets the content of the details component to the directory info of
+// the next item in the DirectoryList.
 func (d *DirectoryList) setNextDetailsText() {
 	item, _ := d.List.GetItemText(d.getNextItemIndex(true))
 	d.setDetailsText(item)
