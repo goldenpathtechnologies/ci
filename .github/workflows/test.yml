@@ -49,7 +49,7 @@ jobs:
           go-version: ${{env.GO_VERSION}}
 
       - name: Set up gotestfmt
-        run: go install github.com/haveyoudebuggedit/gotestfmt/v2/cmd/gotestfmt@latest
+        run: go install github.com/gotesttools/gotestfmt/v2/cmd/gotestfmt@latest
 
       - name: Run tests
         run: |
@@ -78,7 +78,7 @@ jobs:
           go-version: ${{env.GO_VERSION}}
 
       - name: Set up gotestfmt
-        run: go install github.com/haveyoudebuggedit/gotestfmt/v2/cmd/gotestfmt@latest
+        run: go install github.com/gotesttools/gotestfmt/v2/cmd/gotestfmt@latest
 
       - name: Store gotest.log path in env
         run: Write-Output "GOTESTLOG_PATH=$env:TEMP/gotest.log" >> $env:GITHUB_ENV
